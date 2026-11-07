@@ -12,7 +12,7 @@ export function HistoryScreen({ plant, days }: Props) {
   return (
     <div className="screen-page">
       <div className="top-row">
-        <Sprite plantTypeId={plant.plant_type_id} />
+        <Sprite plantTypeId={plant.plant_type_id} spriteRef={plant.sprite_ref} />
         <div className="meta">
           <div className="name">History</div>
           <div className="sci">Daily average health · {plant.common_names[0]}</div>

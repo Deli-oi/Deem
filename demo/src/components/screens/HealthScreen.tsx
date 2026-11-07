@@ -15,7 +15,11 @@ export function HealthScreen({ plant, telemetry }: Props) {
   return (
     <div className="screen-page">
       <div className="top-row">
-        <Sprite plantTypeId={plant.plant_type_id} title={plant.common_names[0]} />
+        <Sprite
+          plantTypeId={plant.plant_type_id}
+          spriteRef={plant.sprite_ref}
+          title={plant.common_names[0]}
+        />
         <div className="meta">
           <div className="name">{plant.common_names[0]}</div>
           <div className="sci">{plant.scientific_name}</div>

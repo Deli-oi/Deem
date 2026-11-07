@@ -456,5 +456,11 @@
         }
       }
     }
-  ]
+  ],
+  "sprites": {
+    "status": "reference_pending_approval",
+    "reference_plant": "dracaena",
+    "path": "data/plants/sprites/dracaena.png",
+    "public_path": "/sprites/dracaena.png"
+  }
 }
