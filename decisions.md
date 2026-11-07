@@ -11,6 +11,11 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Prefer Tiger Data (Postgres) over MongoDB Atlas
+- **Decision:** If MongoDB is off the table, use **Tiger Data** (Timescale/Postgres) as the cloud data store. Sensor history → hypertables; plant-type knowledge + embeddings → Postgres + **pgvector** (Tiger documents this path). Gemini still does reasoning; Fish Audio still does voice. Atlas is no longer required for MVP.
+- **Why:** One SQL database covers time-series telemetry *and* vector RAG. Better fit for 10‑minute readings + daily averages than document Mongo. Railway can host the app while Tiger hosts the DB (or Postgres on Railway as a thinner fallback).
+- **Alternatives considered:** MongoDB Atlas (original plan; may be unavailable). Pure Railway Postgres without Timescale (fine for hackathon scale; lose hypertables niceties).
+
 ### 2026-11-07: Local demo UI with mock backend
 - **Decision:** Ship a Vite/React scaled device demo in `demo/` with a `DeemBackend` interface and `MockBackend` implementation. UI covers setup → sensor check → swipeable health/history, plus fake hardware buttons. Plant seed JSON lives in `data/plants/` (MiFloraDB-derived) and is loaded by the mock until Atlas/Gemini replace it.
 - **Why:** Unblocks product iteration and demo rehearsal before Mongo/Fish/Gemini secrets and ESP firmware are ready. Backend swap is a single export change.

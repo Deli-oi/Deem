@@ -31,7 +31,11 @@ for the software build order.
 | `decisions.md` | project decision log |
 
 ## Getting started
-- **Local device demo (UI + mock backend):** `demo/README.md` → `cd demo && npm install && npm run dev`
+- **Local device demo (UI + mock backend):** `cd demo && npm install && npm run dev` → http://127.0.0.1:5173/ (see `demo/README.md`)
+- **Dev workflow (branch / PR / no forks):** `docs/dev_workflow.md`
 - **Pi / controller:** `pi/README.md`
 - **ESP32 / firmware:** `docs/esp32_integration.md`
-- **Plant seed JSON (Atlas-ready):** `data/plants/`
+- **Plant seed JSON:** `data/plants/`
+
+## Iteration practice
+Same repo only — branch off `main`, push, open a PR, merge, pull. Close stale PRs; don’t fork.
