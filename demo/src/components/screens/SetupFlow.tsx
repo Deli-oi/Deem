@@ -9,10 +9,11 @@ type Props = {
   sensorsOnline: string[]
   busy: boolean
   onSubmitUtterance: (text: string) => void
+  onConfirmMatch: () => void
   onRetry: () => void
 }
 
-const SENSOR_ORDER = ['Soil moisture', 'Air quality', 'Temp / RH', 'Relay']
+const SENSOR_ORDER = ['Soil', 'AQI', 'Temp/RH', 'Relay']
 
 export function SetupFlow({
   phase,
@@ -20,6 +21,7 @@ export function SetupFlow({
   sensorsOnline,
   busy,
   onSubmitUtterance,
+  onConfirmMatch,
   onRetry,
 }: Props) {
   const [text, setText] = useState('dracaena')
@@ -27,24 +29,28 @@ export function SetupFlow({
   if (phase === 'prompt') {
     return (
       <div className="setup-screen">
-        <h1>Say your plant</h1>
-        <p>
-          Press the voice button below, or type a stand-in for speech. We&apos;ll match it to the
-          plant knowledge base.
-        </p>
+        <div className="act-title">Setup</div>
+        <p className="setup-copy">Say the plant, or type it.</p>
         <input
           className="setup-input"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="e.g. panda plant"
+          placeholder="plant name"
           aria-label="Plant name"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && text.trim()) onSubmitUtterance(text.trim())
           }}
         />
-        <p style={{ fontSize: '0.78rem', marginTop: 'auto' }}>
-          {busy ? 'Listening / matching…' : 'Tip: try “corn plant” or “peace lily”.'}
-        </p>
+        <div className="touch-actions">
+          <button
+            type="button"
+            className="touch-btn primary"
+            disabled={busy || !text.trim()}
+            onClick={() => onSubmitUtterance(text.trim())}
+          >
+            {busy ? '...' : 'MATCH'}
+          </button>
+        </div>
       </div>
     )
   }
@@ -52,18 +58,20 @@ export function SetupFlow({
   if (phase === 'match' && match) {
     return (
       <div className="setup-screen">
-        <h1>Is this right?</h1>
-        <p>Matched from your voice input.</p>
+        <div className="act-title">Confirm?</div>
         <div className="match-card">
           <strong>{prettyName(match.plant)}</strong>
           <div className="sci">{match.plant.scientific_name}</div>
-          <div style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-            confidence {(match.confidence * 100).toFixed(0)}%
-          </div>
+          <div className="conf">{Math.round(match.confidence * 100)}%</div>
         </div>
-        <p style={{ fontSize: '0.78rem', marginTop: 'auto' }}>
-          Confirm with the OK button, or voice again to retry.
-        </p>
+        <div className="touch-actions dual">
+          <button type="button" className="touch-btn" onClick={onRetry}>
+            RETRY
+          </button>
+          <button type="button" className="touch-btn primary" onClick={onConfirmMatch}>
+            CONFIRM
+          </button>
+        </div>
       </div>
     )
   }
@@ -71,33 +79,32 @@ export function SetupFlow({
   if (phase === 'match' && !match) {
     return (
       <div className="setup-screen">
-        <h1>No close match</h1>
-        <p>Hackathon MVP skips the “contact team” path. Try another common houseplant name.</p>
-        <button className="chip" type="button" onClick={onRetry} style={{ marginTop: 'auto' }}>
-          Try again
-        </button>
+        <div className="act-title">No match</div>
+        <p className="setup-copy">Try another houseplant.</p>
+        <div className="touch-actions">
+          <button type="button" className="touch-btn primary" onClick={onRetry}>
+            RETRY
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="setup-screen">
-      <h1>Sensor check</h1>
-      <p>Bringing the plant monitor online…</p>
+      <div className="act-title">Sensors</div>
       <ul className="sensor-list">
-        {SENSOR_ORDER.map((name) => {
-          const ok = sensorsOnline.includes(name)
+        {SENSOR_ORDER.map((name, idx) => {
+          const done = idx < sensorsOnline.length
           return (
-            <li key={name} className={ok ? 'ok' : 'pending'}>
+            <li key={name} className={done ? 'ok' : 'pending'}>
               <span>{name}</span>
-              <span>{ok ? '✓' : '…'}</span>
+              <span>{done ? 'OK' : '..'}</span>
             </li>
           )
         })}
       </ul>
-      {sensorsOnline.length >= SENSOR_ORDER.length && (
-        <p style={{ marginTop: 'auto', color: 'var(--moss)' }}>Done — loading health page…</p>
-      )}
+      {sensorsOnline.length >= SENSOR_ORDER.length && <p className="setup-copy done">ready</p>}
     </div>
   )
 }

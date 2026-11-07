@@ -1,3 +1,4 @@
+import { ActivityRings, metricProgress } from '../ActivityRings'
 import { healthLabel } from '../../lib/healthScore'
 import type { PlantType, Telemetry } from '../../lib/types'
 import { Sprite } from '../Sprite'
@@ -10,64 +11,110 @@ type Props = {
 export function HealthScreen({ plant, telemetry }: Props) {
   const score = telemetry.health_score ?? 0
   const m = telemetry.metrics
-  const thr = plant.thresholds
+  const t = plant.thresholds
+
+  const soilP = metricProgress(m.soil_moisture, t.soil_moisture.min, t.soil_moisture.max)
+  const tempP = metricProgress(m.temp_c, t.temp_c.min, t.temp_c.max)
+  const rhP = metricProgress(m.rh_pct, t.rh_pct.min, t.rh_pct.max)
 
   return (
-    <div className="screen-page">
-      <div className="top-row">
+    <div className="screen-page health-activity">
+      <header className="act-header">
         <Sprite
           plantTypeId={plant.plant_type_id}
           spriteRef={plant.sprite_ref}
           title={plant.common_names[0]}
         />
-        <div className="meta">
-          <div className="name">{plant.common_names[0]}</div>
-          <div className="sci">{plant.scientific_name}</div>
+        <div className="act-title-block">
+          <div className="act-title">Health</div>
+          <div className="act-sub">{plant.common_names[0]}</div>
+        </div>
+      </header>
+
+      <div className="act-main">
+        <div className="act-stats">
+          <Stat
+            label="Soil"
+            value={`${m.soil_moisture}`}
+            unit=""
+            color="var(--ring-soil)"
+            warn={out(m.soil_moisture, t.soil_moisture.min, t.soil_moisture.max)}
+          />
+          <Stat
+            label="Temp"
+            value={`${m.temp_c.toFixed(0)}`}
+            unit="°C"
+            color="var(--ring-temp)"
+            warn={out(m.temp_c, t.temp_c.min, t.temp_c.max)}
+          />
+          <Stat
+            label="Air RH"
+            value={`${m.rh_pct}`}
+            unit="%"
+            color="var(--ring-rh)"
+            warn={out(m.rh_pct, t.rh_pct.min, t.rh_pct.max)}
+          />
+        </div>
+
+        <div className="act-rings-wrap">
+          <ActivityRings
+            size={118}
+            rings={[
+              { progress: soilP, color: 'var(--ring-soil)', track: 'var(--ring-track)' },
+              { progress: tempP, color: 'var(--ring-temp)', track: 'var(--ring-track)' },
+              { progress: rhP, color: 'var(--ring-rh)', track: 'var(--ring-track)' },
+            ]}
+          />
+          <div className="act-score-pip">
+            <span className="n">{score}</span>
+            <span className="l">{healthLabel(score).split(' ')[0]}</span>
+          </div>
         </div>
       </div>
 
-      <div className="health-hero">
-        <div className="score">{score}</div>
-        <div className="label">{healthLabel(score)}</div>
+      <div className="act-divider" />
+
+      <div className="act-footer">
+        <div>
+          <div className="k">CO₂</div>
+          <div className="v">{m.co2_ppm}</div>
+        </div>
+        <div>
+          <div className="k">Soil °C</div>
+          <div className="v">{m.soil_temp_c.toFixed(1)}</div>
+        </div>
       </div>
 
-      <div className="metrics-grid">
-        <Metric
-          k="Soil"
-          v={`${m.soil_moisture}`}
-          warn={outOfRange(m.soil_moisture, thr.soil_moisture.min, thr.soil_moisture.max)}
-        />
-        <Metric
-          k="Temp"
-          v={`${m.temp_c.toFixed(1)}°C`}
-          warn={outOfRange(m.temp_c, thr.temp_c.min, thr.temp_c.max)}
-        />
-        <Metric
-          k="Humidity"
-          v={`${m.rh_pct}%`}
-          warn={outOfRange(m.rh_pct, thr.rh_pct.min, thr.rh_pct.max)}
-        />
-        <Metric k="CO₂" v={`${m.co2_ppm}`} warn={m.co2_ppm > 1000} />
-      </div>
-
-      <div className="ask-hint">
-        <span>-v solution needed?</span>
-        <span className="arrow">↓</span>
-      </div>
+      <div className="act-hint">swipe → history · ask ↓</div>
     </div>
   )
 }
 
-function Metric({ k, v, warn }: { k: string; v: string; warn?: boolean }) {
+function Stat({
+  label,
+  value,
+  unit,
+  color,
+  warn,
+}: {
+  label: string
+  value: string
+  unit: string
+  color: string
+  warn?: boolean
+}) {
   return (
-    <div className={`metric${warn ? ' warn' : ''}`}>
-      <div className="k">{k}</div>
-      <div className="v">{v}</div>
+    <div className={`act-stat${warn ? ' warn' : ''}`}>
+      <div className="act-stat-label">{label}</div>
+      <div className="act-stat-value" style={{ color }}>
+        {value}
+        <span className="u">{unit}</span>
+      </div>
     </div>
   )
 }
 
-function outOfRange(value: number, min: number | null | undefined, max: number | null | undefined) {
+function out(value: number, min: number | null | undefined, max: number | null | undefined) {
   if (min != null && value < min) return true
   if (max != null && value > max) return true
   return false
