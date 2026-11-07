@@ -13,15 +13,15 @@ A log of key project decisions. Add newest entries at the top.
 
 ### 2026-11-07: Product scope and software design (software lead)
 - **Decision:**
-  - MVP is a single-plant display device with physical buttons (not touch). The master greenhouse dashboard is the production product and appears only as a mock at the end of the live demo.
+  - MVP is a single-plant display device with physical buttons (touch only for swiping between screens). The master greenhouse dashboard is the production product and appears only as a mock at the end of the live demo.
   - Voice and AI pipeline: Fish Audio for speech, a Gemini model for reasoning, MongoDB Atlas vector storage for plant knowledge and per-plant data.
   - Setup is voice-driven: user says the plant type, Gemini matches it to the database, user confirms, sensor check runs, then the health page loads. No-match handling is not in the hackathon MVP.
   - The vector store for each plant type also holds that type's retro sprite (top-left of the screen). Sprites are generated after the vector storage is set up.
   - MVP plant types: golden pothos, common house plants, dracaena and panda plant. The live demo uses dracaena or panda plant (TBD).
   - Overall health score is a rule-based placeholder for now. A researched calculation replaces it later.
   - Data is collected every 10 minutes, plus a physical "collect now" button that collects and displays the current data point for the live demo.
-  - A camera photo is captured with every data collection. Images are stored in the backend and linked to that data point.
-  - A second screen, swipeable to the right of the main health page, shows a day-by-day plant health graph. It is in the MVP.
+  - A camera photo is captured with every data collection. In the live data stored in MongoDB for the plant, each collected entry includes the image as one of its data points.
+  - A second screen, swipeable to the right of the main health page, shows a day-by-day plant health graph. It is in the MVP. Touch is used only for swiping between screens. Each daily point is the average of that day's overall health scores, based on the health metric to be researched later.
   - All screens share one retro, simple, user-friendly style for non-technical people.
   - Data endpoints use JSON (Connor is building them). Our job is to collect all sensor input in that format and build everything else on top.
 - **Why:** Keep the hackathon scope to one fully working plant, while the mock dashboard shows how it scales. The consumer device is friendly and fun. The collected data is the investor value.
