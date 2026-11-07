@@ -1,0 +1,18 @@
+{
+  "id": "cold_snap",
+  "label": "Cold temperature swing",
+  "device_id": "esp32-pot-01",
+  "ts": 1731010800,
+  "fw": "0.1.0-mock",
+  "metrics": {
+    "co2_ppm": 700,
+    "temp_c": 8.5,
+    "rh_pct": 60,
+    "pm1_0": 3.0,
+    "pm2_5": 4.2,
+    "pm4_0": 4.8,
+    "pm10_0": 5.1,
+    "soil_moisture": 40,
+    "soil_temp_c": 12.0
+  }
+}

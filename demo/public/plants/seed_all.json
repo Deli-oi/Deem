@@ -1,0 +1,1495 @@
+[
+  {
+    "plant_type_id": "dracaena",
+    "common_names": [
+      "dracaena",
+      "corn plant",
+      "dragon tree"
+    ],
+    "scientific_name": "Dracaena fragrans",
+    "synonyms": [],
+    "demo_candidate": true,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "dracaena fragrans",
+      "display_pid": "Dracaena fragrans",
+      "alias_in_source": "dracaena draco",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": "Prefer confirming cultivar with Zion (fragrans vs marginata). Also have massangeana/marginata in DB."
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 35
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 2000,
+        "max": 50000
+      },
+      "soil_ec": {
+        "min": 200,
+        "max": 1500
+      },
+      "light_mmol": {
+        "min": 2800,
+        "max": 6300
+      }
+    },
+    "care": {
+      "soil": "Peat or soil with specific nutrients",
+      "sunlight": "Take more sunlight during spring and autumn, put in places with scattered light in summer",
+      "watering": "Resistant to drought, water thoroughly after soil surface dries, avoid saturated water",
+      "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly",
+      "pruning": "Remove aged tissues, dead and pest branches timely",
+      "blooming": "Flowering period in spring and summer, fruiting period August-September",
+      "size": "Diameter â¥ 15 cm, height â¥ 25 cm",
+      "category": "Agavaceae, Dracaena",
+      "origin": "Africa"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 35
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/ZHJhY2FlbmEgZnJhZ3JhbnMuanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": "/sprites/dracaena.png",
+    "embedding_text": "Dracaena fragrans (dracaena, corn plant, dragon tree). Soil: Peat or soil with specific nutrients. Sunlight: Take more sunlight during spring and autumn, put in places with scattered light in summer. Watering: Resistant to drought, water thoroughly after soil surface dries, avoid saturated water. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly. Pruning: Remove aged tissues, dead and pest branches timely. Ideal temperature 10-35 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 2000-50000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  },
+  {
+    "plant_type_id": "panda_plant",
+    "common_names": [
+      "panda plant",
+      "panda bear plant",
+      "pussy ears"
+    ],
+    "scientific_name": "Kalanchoe tomentosa",
+    "synonyms": [],
+    "demo_candidate": true,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "kalanchoe tomentosa",
+      "display_pid": "Kalanchoe tomentosa",
+      "alias_in_source": "kalanchoe tomentosa",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 5,
+        "max": 35
+      },
+      "rh_pct": {
+        "min": 15,
+        "max": 80
+      },
+      "soil_moisture": {
+        "min": 7,
+        "max": 50
+      },
+      "light_lux": {
+        "min": 2800,
+        "max": 55000
+      },
+      "soil_ec": {
+        "min": 300,
+        "max": 1000
+      },
+      "light_mmol": {
+        "min": 3000,
+        "max": 7300
+      }
+    },
+    "care": {
+      "soil": "Peat and akadama mixed in 3:1 ratio",
+      "sunlight": "Likes light, and resistant to half shade, short period of dormancy in summer, use half shade for better care",
+      "watering": "Water thoroughly 2 times during summer dormancy, keep soil moist in other time, water thoroughly when soil is dry",
+      "fertilization": "Dilute fertilizers following instructions,  apply once monthly in spring and autumn",
+      "pruning": "Remove dead and rotten part timely",
+      "blooming": "Succulent plants, sometimes flowers, white flowers",
+      "size": "Diameter 6-10 cm, height 5-15 cm",
+      "category": "Crassulaceae, Kalanchoe",
+      "origin": "Central America"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 7
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 50
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 5
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 35
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 80
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Water thoroughly 2 times during summer dormancy, keep soil moist in other time, water thoroughly when soil is dry"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch",
+      "keeping soil too wet for a drought-tolerant species"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/a2FsYW5jaG9lIHRvbWVudG9zYS5qcGc=?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Kalanchoe tomentosa (panda plant, panda bear plant, pussy ears). Soil: Peat and akadama mixed in 3:1 ratio. Sunlight: Likes light, and resistant to half shade, short period of dormancy in summer, use half shade for better care. Watering: Water thoroughly 2 times during summer dormancy, keep soil moist in other time, water thoroughly when soil is dry. Fertilization: Dilute fertilizers following instructions,  apply once monthly in spring and autumn. Pruning: Remove dead and rotten part timely. Ideal temperature 5-35 C. Ideal humidity 15-80%. Ideal soil moisture 7-50. Ideal light 2800-55000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch; keeping soil too wet for a drought-tolerant species. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Water thoroughly 2 times during summer dormancy, keep soil moist in other time, water thoroughly when soil is dry"
+  },
+  {
+    "plant_type_id": "golden_pothos",
+    "common_names": [
+      "golden pothos",
+      "pothos",
+      "devil's ivy"
+    ],
+    "scientific_name": "Epipremnum aureum",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "epipremnum aureum 'golden pothos'",
+      "display_pid": "Epipremnum aureum 'Golden Pothos'",
+      "alias_in_source": "epipremnum aureum",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 500,
+        "max": 12000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 700,
+        "max": 3200
+      }
+    },
+    "care": {
+      "soil": "Peat or soil with specific nutrientsï¼äº¦å¯æ°´å¹å»æ¤",
+      "sunlight": "Resistance to shade plant, put in places with bright scattered light, in winter may take 2-3h sunlight",
+      "watering": "Likes wet environments, water thoroughly when soil is dry, may spray water around the leaves",
+      "fertilization": "Dilute fertilizers following instructions, apply once monthly",
+      "pruning": "Remove dead leaves timely",
+      "blooming": "Foliage plants, rarely flowers",
+      "size": "Diameterâ¥10cmï¼Height15-18cm",
+      "category": "Araceae, Epipremnum",
+      "origin": "Solomon Islands"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, may spray water around the leaves"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/ZXBpcHJlbW51bSBhdXJldW0gJ2dvbGRlbiBwb3Rob3MnLmpwZw==?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Epipremnum aureum (golden pothos, pothos, devil's ivy). Soil: Peat or soil with specific nutrientsï¼äº¦å¯æ°´å¹å»æ¤. Sunlight: Resistance to shade plant, put in places with bright scattered light, in winter may take 2-3h sunlight. Watering: Likes wet environments, water thoroughly when soil is dry, may spray water around the leaves. Fertilization: Dilute fertilizers following instructions, apply once monthly. Pruning: Remove dead leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 500-12000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, may spray water around the leaves"
+  },
+  {
+    "plant_type_id": "snake_plant",
+    "common_names": [
+      "snake plant",
+      "mother-in-law's tongue"
+    ],
+    "scientific_name": "Dracaena trifasciata",
+    "synonyms": [
+      "Sansevieria trifasciata"
+    ],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "sansevieria trifasciata",
+      "display_pid": "Sansevieria trifasciata",
+      "alias_in_source": "saint georges sword",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 7,
+        "max": 50
+      },
+      "light_lux": {
+        "min": 1500,
+        "max": 60000
+      },
+      "soil_ec": {
+        "min": 300,
+        "max": 1000
+      },
+      "light_mmol": {
+        "min": 2000,
+        "max": 5400
+      }
+    },
+    "care": {
+      "soil": "No strict requirements on the soil, better planted in sandy loam",
+      "sunlight": "Resistant to half shade, likes moderate sunshine, avoid direct strong light",
+      "watering": "Resistant to drought, water thoroughly when soil is dry, reduce water in winter dormancy",
+      "fertilization": "Dilute fertilizers following instructions, dilute fertilizers following instructions,  in early summer, spring and autumn apply fertilizers once monthly, except winter in dormancy",
+      "pruning": "Remove dead, yellowish and disease leaves timely",
+      "blooming": "Foliage plants, sometimes flowers in November-December, white flowers",
+      "size": "Diameter â¥ 10 cm, height â¥ 15 cm",
+      "category": "Liliaceae, Sansevieria",
+      "origin": "Africa"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 7
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 50
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Resistant to drought, water thoroughly when soil is dry, reduce water in winter dormancy"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch",
+      "keeping soil too wet for a drought-tolerant species"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/c2Fuc2V2aWVyaWEgdHJpZmFzY2lhdGEuanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Dracaena trifasciata (snake plant, mother-in-law's tongue). Soil: No strict requirements on the soil, better planted in sandy loam. Sunlight: Resistant to half shade, likes moderate sunshine, avoid direct strong light. Watering: Resistant to drought, water thoroughly when soil is dry, reduce water in winter dormancy. Fertilization: Dilute fertilizers following instructions, dilute fertilizers following instructions,  in early summer, spring and autumn apply fertilizers once monthly, except winter in dormancy. Pruning: Remove dead, yellowish and disease leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-85%. Ideal soil moisture 7-50. Ideal light 1500-60000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch; keeping soil too wet for a drought-tolerant species. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Resistant to drought, water thoroughly when soil is dry, reduce water in winter dormancy"
+  },
+  {
+    "plant_type_id": "zz_plant",
+    "common_names": [
+      "zz plant",
+      "zanzibar gem"
+    ],
+    "scientific_name": "Zamioculcas zamiifolia",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "zamioculcas zamiifolia",
+      "display_pid": "Zamioculcas zamiifolia",
+      "alias_in_source": "zamioculcas zamiifolia",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 80
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 600,
+        "max": 20000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1400,
+        "max": 3400
+      }
+    },
+    "care": {
+      "soil": "Peat or soil with specific nutrients",
+      "sunlight": "Likes half shade, may take 3-4h moderate sunlight",
+      "watering": "Resistant to drought, water thoroughly after soil surface dries, avoid saturated water",
+      "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly",
+      "pruning": "Remove aged tissues, yellowing and diseased leaves timely",
+      "blooming": "Foliage plants, sometimes flowers, spathe flowers",
+      "size": "Diameter â¥ 20 cm, height â¥ 30 cm",
+      "category": "Araceae, Zamioculcas",
+      "origin": "Africa"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 80
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/emFtaW9jdWxjYXMgemFtaWlmb2xpYS5qcGc=?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Zamioculcas zamiifolia (zz plant, zanzibar gem). Soil: Peat or soil with specific nutrients. Sunlight: Likes half shade, may take 3-4h moderate sunlight. Watering: Resistant to drought, water thoroughly after soil surface dries, avoid saturated water. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly. Pruning: Remove aged tissues, yellowing and diseased leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-80%. Ideal soil moisture 15-60. Ideal light 600-20000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  },
+  {
+    "plant_type_id": "peace_lily",
+    "common_names": [
+      "peace lily"
+    ],
+    "scientific_name": "Spathiphyllum wallisii",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "spathiphyllum 'figaro'",
+      "display_pid": "Spathiphyllum 'Figaro'",
+      "alias_in_source": "spathiphyllum figaro",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": "Exact Spathiphyllum wallisii not in MiFloraDB; using representative entry \"spathiphyllum 'figaro'\" with typical peace-lily care ranges."
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 15,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 65
+      },
+      "light_lux": {
+        "min": 1000,
+        "max": 22500
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1600,
+        "max": 3200
+      }
+    },
+    "care": {
+      "soil": "Peat covered with a layer of sphagnum moss on soil surface to keep moisture",
+      "sunlight": "Like half shade, should put in places with bright scattered light",
+      "watering": "Likes wet environments, water thoroughly when soil is dry, may spray water in the air or on leaves, reduce water in winter, keep soil moist",
+      "fertilization": "Dilute fertilizers following instructions, apply liquid fertilizers 1-2 times monthly",
+      "pruning": "Remove rotten roots, old diseased and dead leaves timely",
+      "blooming": "Flowers year around with spathe flower, viewing period 2-3 months",
+      "size": "Diameter â¥ 10 cm, height 16-20 cm",
+      "category": "Araceae, Spathiphyllum",
+      "origin": "Holland"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 65
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, may spray water in the air or on leaves, reduce water in winter, keep soil moist"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/c3BhdGhpcGh5bGx1bSAnZmlnYXJvJy5qcGc=?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Spathiphyllum wallisii (peace lily). Soil: Peat covered with a layer of sphagnum moss on soil surface to keep moisture. Sunlight: Like half shade, should put in places with bright scattered light. Watering: Likes wet environments, water thoroughly when soil is dry, may spray water in the air or on leaves, reduce water in winter, keep soil moist. Fertilization: Dilute fertilizers following instructions, apply liquid fertilizers 1-2 times monthly. Pruning: Remove rotten roots, old diseased and dead leaves timely. Ideal temperature 15-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-65. Ideal light 1000-22500 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, may spray water in the air or on leaves, reduce water in winter, keep soil moist"
+  },
+  {
+    "plant_type_id": "spider_plant",
+    "common_names": [
+      "spider plant",
+      "airplane plant"
+    ],
+    "scientific_name": "Chlorophytum comosum",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "chlorophytum comosum",
+      "display_pid": "Chlorophytum comosum",
+      "alias_in_source": "chlorophytum comosum",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 500,
+        "max": 30000
+      },
+      "soil_ec": {
+        "min": 200,
+        "max": 1300
+      },
+      "light_mmol": {
+        "min": 1600,
+        "max": 2700
+      }
+    },
+    "care": {
+      "soil": "Peat mixed with coarse sand soil",
+      "sunlight": "Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter",
+      "watering": "Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter",
+      "fertilization": "Dilute fertilizers following instructions, apply once every 10-15 days in spring and autumn",
+      "pruning": "Remove dead and yellowish leaves timely",
+      "blooming": "Foliage plants, sometimes flowers, white flowers",
+      "size": "Diameter â¥ 10 cm, height â¥ 15 cm",
+      "category": "Liliaceae, Chlorophytum",
+      "origin": "Africa"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/Y2hsb3JvcGh5dHVtIGNvbW9zdW0uanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Chlorophytum comosum (spider plant, airplane plant). Soil: Peat mixed with coarse sand soil. Sunlight: Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter. Watering: Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter. Fertilization: Dilute fertilizers following instructions, apply once every 10-15 days in spring and autumn. Pruning: Remove dead and yellowish leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 500-30000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  },
+  {
+    "plant_type_id": "monstera",
+    "common_names": [
+      "monstera",
+      "swiss cheese plant"
+    ],
+    "scientific_name": "Monstera deliciosa",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "monstera deliciosa",
+      "display_pid": "Monstera deliciosa",
+      "alias_in_source": "monstera",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 12,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 800,
+        "max": 15000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1500,
+        "max": 3400
+      }
+    },
+    "care": {
+      "soil": "Peat mixed with coarse sand soil or hydroponics",
+      "sunlight": "Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter",
+      "watering": "Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter",
+      "fertilization": "Dilute fertilizers following instructions, every 15 days apply fertilizers once in April to Septermber",
+      "pruning": "Remove dead and yellowish leaves timely",
+      "blooming": "Foliage plants, sometimes flowers in summer",
+      "size": "Diameter â¥ 10 cm, height â¥ 30 cm",
+      "category": "Araceae, Monstera",
+      "origin": "Mexico"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 12
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/bW9uc3RlcmEgZGVsaWNpb3NhLmpwZw==?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Monstera deliciosa (monstera, swiss cheese plant). Soil: Peat mixed with coarse sand soil or hydroponics. Sunlight: Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter. Watering: Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter. Fertilization: Dilute fertilizers following instructions, every 15 days apply fertilizers once in April to Septermber. Pruning: Remove dead and yellowish leaves timely. Ideal temperature 12-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 800-15000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  },
+  {
+    "plant_type_id": "chinese_evergreen",
+    "common_names": [
+      "chinese evergreen"
+    ],
+    "scientific_name": "Aglaonema commutatum",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "aglaonema commutatum",
+      "display_pid": "Aglaonema commutatum",
+      "alias_in_source": "aglanonema spp.",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 1500,
+        "max": 6000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1200,
+        "max": 2500
+      }
+    },
+    "care": {
+      "soil": "Peat or soil with specific nutrients",
+      "sunlight": "Likes bright scattered light",
+      "watering": "Only need keep soil moist",
+      "fertilization": "Apply enough base fertilizers",
+      "pruning": "In spring pruning and remove old, diseased and dead leaves timely",
+      "blooming": "Foliage plants, rarely flowers",
+      "size": "Diameter â¥ 20 cm, height 15-20 cm",
+      "category": "Araceae, Aglaonema",
+      "origin": "Tropical Asia"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/YWdsYW9uZW1hIGNvbW11dGF0dW0uanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Aglaonema commutatum (chinese evergreen). Soil: Peat or soil with specific nutrients. Sunlight: Likes bright scattered light. Watering: Only need keep soil moist. Fertilization: Apply enough base fertilizers. Pruning: In spring pruning and remove old, diseased and dead leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 1500-6000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  },
+  {
+    "plant_type_id": "rubber_plant",
+    "common_names": [
+      "rubber plant",
+      "rubber tree"
+    ],
+    "scientific_name": "Ficus elastica",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "ficus elastica",
+      "display_pid": "Ficus elastica",
+      "alias_in_source": "ficus elastica",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 10,
+        "max": 35
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 85
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 1000,
+        "max": 30000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1400,
+        "max": 3500
+      }
+    },
+    "care": {
+      "soil": "Peat or soil with specific nutrients",
+      "sunlight": "Like half shade, avoid strong direct light in summer, in winter may take 3-4h sunlight",
+      "watering": "Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer",
+      "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly in spring and autumn",
+      "pruning": "Remove dead, yellowish and disease leaves timely",
+      "blooming": "Foliage plants, sometimes flowers in May-June, white flowers",
+      "size": "Diameter â¥ 10 cm, height â¥ 10 cm",
+      "category": "Moraceae, Ficus",
+      "origin": "Brazil"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 10
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 35
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 85
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/ZmljdXMgZWxhc3RpY2EuanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Ficus elastica (rubber plant, rubber tree). Soil: Peat or soil with specific nutrients. Sunlight: Like half shade, avoid strong direct light in summer, in winter may take 3-4h sunlight. Watering: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly in spring and autumn. Pruning: Remove dead, yellowish and disease leaves timely. Ideal temperature 10-35 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 1000-30000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer"
+  },
+  {
+    "plant_type_id": "heartleaf_philodendron",
+    "common_names": [
+      "heartleaf philodendron",
+      "philodendron",
+      "sweetheart plant"
+    ],
+    "scientific_name": "Philodendron hederaceum",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "philodendron hederaceum",
+      "display_pid": "Philodendron hederaceum",
+      "alias_in_source": "philodendron hederaceum",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 8,
+        "max": 32
+      },
+      "rh_pct": {
+        "min": 30,
+        "max": 80
+      },
+      "soil_moisture": {
+        "min": 15,
+        "max": 60
+      },
+      "light_lux": {
+        "min": 1000,
+        "max": 15000
+      },
+      "soil_ec": {
+        "min": 350,
+        "max": 2000
+      },
+      "light_mmol": {
+        "min": 1200,
+        "max": 3000
+      }
+    },
+    "care": {
+      "soil": "Slightly acidic soil with loose texture or soil with specific nutrients",
+      "sunlight": "Resistant to shade, put in places with scattered light",
+      "watering": "Likes wet environments, water thoroughly when soil is dry, avoid saturated water",
+      "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly",
+      "pruning": "Remove aged tissues, dead, rotten, diseased leaves timely",
+      "blooming": "Foliage plants, viewing period year around",
+      "size": "Diameter â¥ 10 cm, can climb",
+      "category": "Araceae, Philodendron",
+      "origin": "Solomon Islands"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 60
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 8
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 32
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 30
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 80
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      },
+      {
+        "problem": "overwatering_risk",
+        "advice": "Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, avoid saturated water"
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/cGhpbG9kZW5kcm9uIGhlZGVyYWNldW0uanBn?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Philodendron hederaceum (heartleaf philodendron, philodendron, sweetheart plant). Soil: Slightly acidic soil with loose texture or soil with specific nutrients. Sunlight: Resistant to shade, put in places with scattered light. Watering: Likes wet environments, water thoroughly when soil is dry, avoid saturated water. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly. Pruning: Remove aged tissues, dead, rotten, diseased leaves timely. Ideal temperature 8-32 C. Ideal humidity 30-80%. Ideal soil moisture 15-60. Ideal light 1000-15000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, avoid saturated water"
+  },
+  {
+    "plant_type_id": "aloe_vera",
+    "common_names": [
+      "aloe vera",
+      "aloe"
+    ],
+    "scientific_name": "Aloe vera",
+    "synonyms": [],
+    "demo_candidate": false,
+    "source": {
+      "primary": "mifloradb",
+      "pid": "aloe vera",
+      "display_pid": "Aloe vera",
+      "alias_in_source": "aloe vera",
+      "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+      "url": "https://github.com/khronimo/MiFloraDB",
+      "notes": null
+    },
+    "thresholds": {
+      "temp_c": {
+        "min": 8,
+        "max": 35
+      },
+      "rh_pct": {
+        "min": 15,
+        "max": 80
+      },
+      "soil_moisture": {
+        "min": 7,
+        "max": 50
+      },
+      "light_lux": {
+        "min": 3000,
+        "max": 70000
+      },
+      "soil_ec": {
+        "min": 300,
+        "max": 1000
+      },
+      "light_mmol": {
+        "min": 3200,
+        "max": 6400
+      }
+    },
+    "care": {
+      "soil": "Peat mixed with coarse sand soil",
+      "sunlight": "Like sunshine, resistant to half shade, avoid strong direct light at noon in summer, excessive growth with less light",
+      "watering": "Need a lot of water when in peak growth stages during April to May, reduce water in summer and winter",
+      "fertilization": "Apply liquid fertilizers during April to May and September to November, except in summer and winter",
+      "pruning": "Remove dead and rotten part timely",
+      "blooming": "Succulent plants, sometimes flowers, yellow or orange flowers",
+      "size": "Diameter â¥ 10 cm, height â¥ 15 cm",
+      "category": "Liliaceae, Aloe",
+      "origin": "Africa"
+    },
+    "solutions": [
+      {
+        "problem": "soil_too_dry",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": "<",
+          "value": 7
+        },
+        "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+      },
+      {
+        "problem": "soil_too_wet",
+        "trigger": {
+          "metric": "soil_moisture",
+          "op": ">",
+          "value": 50
+        },
+        "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+      },
+      {
+        "problem": "temp_too_low",
+        "trigger": {
+          "metric": "temp_c",
+          "op": "<",
+          "value": 8
+        },
+        "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+      },
+      {
+        "problem": "temp_too_high",
+        "trigger": {
+          "metric": "temp_c",
+          "op": ">",
+          "value": 35
+        },
+        "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+      },
+      {
+        "problem": "humidity_too_low",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": "<",
+          "value": 15
+        },
+        "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+      },
+      {
+        "problem": "humidity_too_high",
+        "trigger": {
+          "metric": "rh_pct",
+          "op": ">",
+          "value": 80
+        },
+        "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+      }
+    ],
+    "common_problems": [
+      "overwatering / root rot",
+      "underwatering",
+      "insufficient light",
+      "temperature stress",
+      "too much direct sun / leaf scorch",
+      "keeping soil too wet for a drought-tolerant species"
+    ],
+    "image_url_source": "http://pkb.resource.huahuacaocao.com/YWxvZSB2ZXJhLmpwZw==?imageView2/1/w/%d/h/%d",
+    "sprite_ref": null,
+    "embedding_text": "Aloe vera (aloe vera, aloe). Soil: Peat mixed with coarse sand soil. Sunlight: Like sunshine, resistant to half shade, avoid strong direct light at noon in summer, excessive growth with less light. Watering: Need a lot of water when in peak growth stages during April to May, reduce water in summer and winter. Fertilization: Apply liquid fertilizers during April to May and September to November, except in summer and winter. Pruning: Remove dead and rotten part timely. Ideal temperature 8-35 C. Ideal humidity 15-80%. Ideal soil moisture 7-50. Ideal light 3000-70000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch; keeping soil too wet for a drought-tolerant species. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+  }
+]
