@@ -1,24 +1,26 @@
-import type { DailyHealth } from './types'
+import type { HealthPoint } from './types'
 
 type Bucket = { sum: number; n: number }
 type Stored = Record<string, Bucket>
 
-const KEY = 'deem.dailyHealth.v1'
-const MAX_DAYS = 14
+const KEY = 'deem.hourlyHealth.v1'
+const MAX_HOURS = 24
 
-function localDate(tsSeconds: number): string {
+/** Local-time hour bucket key, e.g. "2026-11-07 16". Sorts correctly as a string. */
+export function hourKey(tsSeconds: number): string {
   const d = new Date(tsSeconds * 1000)
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
-  return `${d.getFullYear()}-${mm}-${dd}`
+  const hh = String(d.getHours()).padStart(2, '0')
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}`
 }
 
 /**
- * One point per day = average of that day's overall health scores
- * (project decision). Kept in localStorage so it survives a reload.
- * Storage may be missing or throw (private mode), so every access is guarded.
+ * One point per hour = average of that hour's overall health scores
+ * (project decision). Keeps the last 24 hours in localStorage so it survives a
+ * reload. Storage may be missing or throw (private mode), so every access is guarded.
  */
-export class DailyHealthStore {
+export class HourlyHealthStore {
   private data: Stored = {}
   private storage: Pick<Storage, 'getItem' | 'setItem'> | null
   private key: string
@@ -35,9 +37,9 @@ export class DailyHealthStore {
   }
 
   add(tsSeconds: number, score: number) {
-    const date = localDate(tsSeconds)
-    const b = this.data[date] ?? { sum: 0, n: 0 }
-    this.data[date] = { sum: b.sum + score, n: b.n + 1 }
+    const hour = hourKey(tsSeconds)
+    const b = this.data[hour] ?? { sum: 0, n: 0 }
+    this.data[hour] = { sum: b.sum + score, n: b.n + 1 }
     this.trim()
     try {
       this.storage?.setItem(this.key, JSON.stringify(this.data))
@@ -46,15 +48,15 @@ export class DailyHealthStore {
     }
   }
 
-  days(): DailyHealth[] {
+  hours(): HealthPoint[] {
     return Object.keys(this.data)
       .sort()
-      .map((date) => ({ date, avg_health: Math.round(this.data[date].sum / this.data[date].n) }))
+      .map((hour) => ({ hour, avg_health: Math.round(this.data[hour].sum / this.data[hour].n) }))
   }
 
   private trim() {
-    const dates = Object.keys(this.data).sort()
-    for (const d of dates.slice(0, Math.max(0, dates.length - MAX_DAYS))) delete this.data[d]
+    const keys = Object.keys(this.data).sort()
+    for (const k of keys.slice(0, Math.max(0, keys.length - MAX_HOURS))) delete this.data[k]
   }
 }
 

@@ -261,42 +261,60 @@ input {
 
 .history-chart {
   flex: 1;
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  padding: 8px 4px 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px 4px;
   background: var(--card);
   border-radius: 14px;
 }
 
-.bar-wrap {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 4px;
-  min-height: 0;
-}
-
-.bar-val {
-  font-family: var(--font-num);
-  font-size: 16px;
-  color: var(--temp);
-}
-
-.bar {
+.history-chart svg {
   width: 100%;
-  background: linear-gradient(180deg, var(--temp), #3a7d2a);
-  border-radius: 3px 3px 0 0;
-  min-height: 6px;
+  height: 100%;
   image-rendering: pixelated;
 }
 
-.day {
+.chart-grid {
+  stroke: #2c2c2e;
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--temp);
+  stroke-width: 2;
+  stroke-linejoin: miter;
+}
+
+.chart-dot {
+  fill: var(--temp);
+}
+
+.chart-dot.now {
+  fill: var(--soil);
+}
+
+.chart-label {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 6px;
+  fill: var(--muted);
+}
+
+.chart-now {
+  font-family: var(--font-num);
+  font-size: 14px;
+  fill: var(--soil);
+}
+
+.chart-empty {
+  margin: 0;
+  padding: 0 12px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  line-height: 1.6;
   color: var(--muted);
 }
 
@@ -435,7 +453,7 @@ input {
   position: absolute;
   left: 8px;
   right: 8px;
-  bottom: 8px;
+  bottom: 112px;
   z-index: 4;
   text-align: left;
   background: #1c1c1e;
@@ -471,50 +489,118 @@ input {
   z-index: 5;
 }
 
-.hardware-deck {
+/* Bottom strip of each live page. The right 76px stays clear for .screen-buttons. */
+.page-foot {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-right: 76px;
+  min-height: 96px;
+  align-content: end;
+}
+
+.page-nav {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.hw-btn {
-  appearance: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 12px;
-  padding: 10px 4px 8px;
-  background: #1a1a1a;
-  color: var(--ink);
-  box-shadow: 0 5px 0 #000;
+.page-dots {
+  display: inline-flex;
+  gap: 4px;
 }
 
-.hw-btn:active:not(:disabled) {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 #000;
+.page-dots i {
+  width: 6px;
+  height: 6px;
+  background: #3a3a3c;
 }
 
-.hw-btn:disabled {
-  opacity: 0.4;
+.page-dots i.on {
+  background: var(--temp);
 }
 
-.hw-btn .glyph {
-  display: block;
+.page-nav .act-hint {
+  text-align: left;
+}
+
+.act-test {
+  margin-left: auto;
+  text-align: right;
+  display: grid;
+  gap: 2px;
+}
+
+.act-test span {
   font-family: var(--font-pixel);
-  font-size: 8px;
-}
-
-.hw-btn .txt {
-  display: block;
-  margin-top: 4px;
-  font-family: var(--font-num);
-  font-size: 16px;
+  font-size: 6px;
   color: var(--muted);
 }
 
-.hw-btn.primary {
-  background: #16301f;
+.act-test b {
+  font-family: var(--font-num);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--temp);
+  line-height: 1;
 }
 
-.hw-btn.accent {
+.reserve-right {
+  margin-right: 76px;
+}
+
+/* On-screen buttons, bottom-right of the display: TEST stacked over MIC. */
+.screen-buttons {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 64px;
+  display: grid;
+  gap: 6px;
+  z-index: 6;
+}
+
+.sb {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  height: 44px;
+  border: 2px solid #3a3a3c;
+  border-radius: 10px;
+  background: #1c1c1e;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sb:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.sb:disabled {
+  opacity: 0.5;
+}
+
+.sb-glyph {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.sb-sub {
+  font-family: var(--font-num);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.sb-test {
+  background: #16301f;
+  border-color: var(--temp);
+  color: var(--temp);
+}
+
+.sb-mic {
   background: #2a2410;
+  border-color: #ffb340;
+  color: #ffb340;
 }

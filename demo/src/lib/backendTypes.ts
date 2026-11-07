@@ -1,5 +1,5 @@
 import type { SensorCheck } from './telemetry'
-import type { AskAnswer, DailyHealth, PlantMatch, PlantType, Telemetry } from './types'
+import type { AskAnswer, HealthPoint, PlantMatch, PlantType, Telemetry } from './types'
 
 export type BackendEvent =
   | { type: 'telemetry'; telemetry: Telemetry }
@@ -25,7 +25,8 @@ export interface DeemBackend {
   /** Live updates (new telemetry, link up/down). Returns an unsubscribe function. */
   subscribe(listener: (event: BackendEvent) => void): () => void
 
-  getHistory(plantTypeId: string): Promise<DailyHealth[]>
+  /** Hourly average health, oldest first (the chart on the swipe-right screen). */
+  getHistory(plantTypeId: string): Promise<HealthPoint[]>
   ask(plantTypeId: string, question: string, telemetry?: Telemetry): Promise<AskAnswer>
 
   /** Pump relay on/off. Resolves when the device acks, rejects on nack or timeout. */

@@ -108,7 +108,7 @@ export function parseAckMessage(payload: string | Uint8Array): CommandAck {
   return { cmd_id: body.cmd_id, ok: body.ok, detail: typeof body.detail === 'string' ? body.detail : undefined }
 }
 
-export type CommandAction = 'set_relay' | 'set_interval' | 'identify' | 'reboot'
+export type CommandAction = 'set_relay' | 'set_interval' | 'identify' | 'reboot' | 'sample_now'
 
 export type Command = {
   cmd_id: string

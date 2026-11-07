@@ -2,6 +2,14 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
+## 2026-11-07: Buttons move onto the screen; hourly chart
+
+- No hardware button row under the device. Everything is on the 2.8" screen.
+- Confirm and retry stay on the screen. Voice (Fish Audio) is a **MIC** button on the right, with a **TEST** button (take a test input) stacked above it.
+- The health page shows the most recent test (with its time).
+- The chart on the swipe-right page is the **average health per hour**, not per day.
+- Water is not a button; the pump is for the automatic watering logic.
+
 ## 2026-11-07: Test the current screen on Railway
 
 - Push the new UI so it can be opened and tested.

@@ -37,12 +37,12 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
 | Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (the 10-minute reading and the "collect now" button). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
-| Data collection | One data point every 10 minutes, plus a physical "collect now" button that takes a reading immediately and shows it on the display (used in the live demo) |
+| Data collection | One data point every 10 minutes, plus an on-screen **TEST** button that takes a test input immediately and shows it on the health page (used in the live demo) |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
 ### Display
 
-The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple Watch screen. We use physical buttons for everything except one thing: the touch layer is used only for swiping back and forth between screens.
+The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple Watch screen. All controls are on the screen: confirm/retry buttons, a **MIC** button (Fish Audio voice) on the right, and a **TEST** button (take a test input) stacked above it. The touch layer is also used for swiping back and forth between screens.
 
 - **Style:** Glanceable, rounded and clean, in the spirit of Apple Health / Apple Watch, with a retro videogame look. Every screen uses the same style. It must be simple and user friendly, showing data easily to non-technical people.
 - **Screens:** The main health page, plus a history page to its right (below). The user swipes between them.
@@ -116,7 +116,7 @@ This is the main screen after setup.
 
 A second screen, to the right of the main health page. The user swipes to it (touch is used only for swiping). It is part of the MVP.
 
-- **Content:** Day-by-day plant health, shown as a plotted graph.
+- **Content:** Average plant health per hour, shown as a plotted line graph.
 - **Style:** Same retro, simple, user-friendly style as the main page.
 - **Data:** One point per day, which is the average of that day's overall health scores. The score comes from our overall health metric (placeholder now, researched later, see below).
 
@@ -187,8 +187,8 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 
 ## Key decisions
 
-- The device is controlled with physical buttons because it's more fun. Touch is used only for swiping between screens.
-- Sensors log one data point every 10 minutes. A separate physical button collects and displays the current data point on demand, for the live demo.
+- All controls are on the screen (confirm, MIC for voice, TEST for a test input). Touch is also used for swiping between screens.
+- Sensors log one data point every 10 minutes. The on-screen TEST button takes and displays a test input on demand, for the live demo. The health page shows the most recent test.
 - The MVP is a single-plant display device. The master dashboard is the production product and only appears as a mock in the demo.
 - Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in MongoDB Atlas.
 - Setup is voice-driven: the user says the plant type, Gemini matches it, and the user confirms.
@@ -196,9 +196,9 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 - Sprites are generated after the MongoDB vector storage is set up with all MVP plant types.
 - The overall health score is a placeholder we decide ourselves. It will be replaced by a researched calculation later.
 - The camera captures a photo with every data collection. Each data entry stored in MongoDB for the plant includes the image as one of its data points. There is no computer vision in the MVP.
-- Touch is used only for swiping back and forth between screens. Everything else uses physical buttons.
-- The daily value on the history graph is the average of that day's overall health scores.
-- A second swipeable screen to the right of the main health page shows day-by-day plant health as a plotted graph. It is part of the MVP.
+- Touch is used for the on-screen buttons and for swiping back and forth between screens.
+- Each point on the history graph is the average of that hour's overall health scores.
+- A second swipeable screen to the right of the main health page shows average plant health per hour as a plotted graph. It is part of the MVP.
 - All screens share one style: retro, simple and user friendly, so non-technical people can read the data easily.
 - MVP plant types are golden pothos, common house plants, dracaena and panda plant. The live demo uses dracaena or panda plant (decide later).
 - Handling "no close match" (contacting the team about a new plant type) is not in the hackathon MVP.
@@ -228,7 +228,7 @@ With better hardware and more time:
 - The display's exact model number isn't listed, only its size and interface.
 - The DHT11 and SEN63C both map to `temp_c` and `rh_pct` in the contract, so one overwrites the other. Decide which one is the source of truth, or give them separate keys.
 - Who drives the 2.8" display and the physical buttons: an ESP32, or the Pi? The architecture docs have the ESP32 driving its local display, but our design runs the health card and the AI on the Pi side.
-- The "collect now" button needs a new command in `docs/mqtt_contract.md`. Who adds it?
+- The TEST button sends a new `sample_now` command (added to `docs/mqtt_contract.md`). The firmware needs to implement it.
 - The `e2/` firmware still runs as a WiFi access point. When does it move to MQTT client mode?
 - Which job does each of the two ESP32s have? Only one is covered by existing code (`e2/`).
 - How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
