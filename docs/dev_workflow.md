@@ -43,9 +43,15 @@ npm run build
 
 Project: `hackrpi-delts` · Service: `Deem` · Root directory: **`demo`**
 
-Deploys from GitHub on this repo. After UI changes merge (or when the service watches the feature branch), Railway rebuilds the demo static app.
+**Live URL:** https://deem-production.up.railway.app/
 
-If a deploy fails with “could not determine how to build”, confirm **Root Directory = `demo`** in the service settings.
+Deploy options:
+
+- GitHub auto-deploy once the service watches the right branch, **or**
+- From repo root (with CLI linked): `railway up --ci --service Deem`  
+  (Keep **Root Directory = `demo`**. Uploading from inside `demo/` while root is also `demo` fails.)
+
+If a deploy fails with “could not determine how to build”, confirm Root Directory is `demo`.
 
 ## Secrets (do not paste in chat)
 
