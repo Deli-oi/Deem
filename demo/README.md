@@ -39,13 +39,40 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 - Plant knowledge seed: `public/plants/` (copied from repo `data/plants/`)
 - Dracaena telemetry fixtures: `src/mock/fixtures/dracaena/`
 
-## Swap the backend later
+## Live mode: read a real ESP32
 
-```ts
-// src/mock/backend.ts
-export const backend: DeemBackend = new MockBackend()
-// → export const backend: DeemBackend = new RailwayBackend({ ... })
+The UI can run against the real MQTT contract (`docs/mqtt_contract.md`, v1) instead of fixtures.
+
+```bash
+cp .env.example .env.local     # then uncomment and edit the three lines
+npm run dev
 ```
 
-Secrets (Mongo, Gemini, Fish Audio, Railway) stay out of the repo — add them in
-Cursor / Railway when you’re ready to deploy.
+| Variable | Example | Meaning |
+|----------|---------|---------|
+| `VITE_BACKEND` | `mqtt` | Use the real device. Omit for the fixture mock. |
+| `VITE_MQTT_URL` | `ws://deem-pi.local:9001` | Mosquitto **WebSocket** listener on the Pi (added to `pi/deploy/mosquitto.conf`; restart mosquitto after copying it). |
+| `VITE_DEVICE_ID` | `esp32-pot-01` | The pot's `device_id`. One ESP32 per pot. |
+
+What the UI does against the contract:
+
+- Subscribes to `deem/<id>/telemetry`, `deem/<id>/status` and `deem/<id>/cmd/ack`.
+- Every telemetry message updates the screens live. Missing metrics show `--`. Unknown numeric keys still show on the Inputs page. Malformed packets are dropped.
+- `ts: 0` is fine (no clock on the ESP32): arrival time is used.
+- Setup's sensor check passes when the first telemetry message contains each sensor's metrics (Soil: `soil_moisture`, AQI: `co2_ppm`, Temp/RH: `temp_c` + `rh_pct`). It fails if the device never reports.
+- "device offline" shows when the broker drops or the device's Last Will (`status: offline`) arrives.
+- **Water** publishes `set_relay { channel: 1, state: "on" }`, waits for the ack, then sends `off` after 5 seconds (always, even if the `on` ack never came).
+- **Collect** is an ESP button: the ESP publishes a fresh telemetry message itself. There is no Pi to ESP "sample now" command in v1, so the on-screen Collect just shows the newest reading.
+- History: one point per day, the average of that day's health scores, kept in `localStorage`.
+
+Things for the firmware to confirm:
+
+- `soil_moisture`: the UI treats 0-100 as percent and anything higher as raw, converted with `SOIL_RAW_DRY=200` / `SOIL_RAW_WET=2000` in `src/lib/telemetry.ts`. Tune against the real Stemma sensor, or send percent.
+- The pump relay is `channel: 1` (`PUMP_CHANNEL` in `src/mock/mqttBackend.ts`).
+- Publish retained `status` `{"state":"online"}` after connecting, with `{"state":"offline"}` as the Last Will.
+
+## Swap the knowledge backend later
+
+Plant matching, Q&A and sprites still come from the mock (`MockBackend`). Atlas / Gemini replace that
+by implementing `listPlants`, `matchPlant` and `ask` and passing it as `knowledge` in `src/backend.ts`.
+Telemetry, status, commands and history are already real in live mode.

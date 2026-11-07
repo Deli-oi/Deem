@@ -42,8 +42,12 @@ input {
 }
 
 .device {
-  width: min(320px, 100%);
+  /* Fixed width: a percentage here resolves against the 300%-wide swipe track and grows the screen. */
+  width: 320px;
+  max-width: calc(100vw - 32px);
   display: grid;
+  /* minmax(0, 1fr): an auto column would grow to the swipe track's intrinsic width. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -407,6 +411,24 @@ input {
 
 .sensor-list li.pending {
   color: #636366;
+}
+
+.sensor-list li.fail {
+  color: var(--soil);
+}
+
+.link-banner {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #1c1c1e;
+  border: 2px solid var(--soil);
+  color: var(--soil);
 }
 
 .ask-sheet {
