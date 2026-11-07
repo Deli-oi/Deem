@@ -31,5 +31,7 @@ for the software build order.
 | `decisions.md` | project decision log |
 
 ## Getting started
+- **Local device demo (UI + mock backend):** `demo/README.md` → `cd demo && npm install && npm run dev`
 - **Pi / controller:** `pi/README.md`
 - **ESP32 / firmware:** `docs/esp32_integration.md`
+- **Plant seed JSON (Atlas-ready):** `data/plants/`

@@ -1,0 +1,20 @@
+# Node / demo
+demo/node_modules/
+demo/dist/
+node_modules/
+dist/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+pi/.venv/
+pi/deem_buffer.sqlite3
+pi/config.yaml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

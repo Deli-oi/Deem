@@ -1,0 +1,18 @@
+{
+  "id": "high_co2",
+  "label": "High CO2 / stale air",
+  "device_id": "esp32-demo-01",
+  "ts": 1731007200,
+  "fw": "0.1.0-mock",
+  "metrics": {
+    "co2_ppm": 1450,
+    "temp_c": 24.0,
+    "rh_pct": 55,
+    "pm1_0": 8.2,
+    "pm2_5": 12.5,
+    "pm4_0": 14.1,
+    "pm10_0": 15.0,
+    "soil_moisture": 34,
+    "soil_temp_c": 22.4
+  }
+}

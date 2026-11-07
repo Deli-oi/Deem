@@ -1,0 +1,122 @@
+{
+  "plant_type_id": "monstera",
+  "common_names": [
+    "monstera",
+    "swiss cheese plant"
+  ],
+  "scientific_name": "Monstera deliciosa",
+  "synonyms": [],
+  "demo_candidate": false,
+  "source": {
+    "primary": "mifloradb",
+    "pid": "monstera deliciosa",
+    "display_pid": "Monstera deliciosa",
+    "alias_in_source": "monstera",
+    "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+    "url": "https://github.com/khronimo/MiFloraDB",
+    "notes": null
+  },
+  "thresholds": {
+    "temp_c": {
+      "min": 12,
+      "max": 32
+    },
+    "rh_pct": {
+      "min": 30,
+      "max": 85
+    },
+    "soil_moisture": {
+      "min": 15,
+      "max": 60
+    },
+    "light_lux": {
+      "min": 800,
+      "max": 15000
+    },
+    "soil_ec": {
+      "min": 350,
+      "max": 2000
+    },
+    "light_mmol": {
+      "min": 1500,
+      "max": 3400
+    }
+  },
+  "care": {
+    "soil": "Peat mixed with coarse sand soil or hydroponics",
+    "sunlight": "Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter",
+    "watering": "Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter",
+    "fertilization": "Dilute fertilizers following instructions, every 15 days apply fertilizers once in April to Septermber",
+    "pruning": "Remove dead and yellowish leaves timely",
+    "blooming": "Foliage plants, sometimes flowers in summer",
+    "size": "Diameter â¥ 10 cm, height â¥ 30 cm",
+    "category": "Araceae, Monstera",
+    "origin": "Mexico"
+  },
+  "solutions": [
+    {
+      "problem": "soil_too_dry",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": "<",
+        "value": 15
+      },
+      "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+    },
+    {
+      "problem": "soil_too_wet",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": ">",
+        "value": 60
+      },
+      "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+    },
+    {
+      "problem": "temp_too_low",
+      "trigger": {
+        "metric": "temp_c",
+        "op": "<",
+        "value": 12
+      },
+      "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+    },
+    {
+      "problem": "temp_too_high",
+      "trigger": {
+        "metric": "temp_c",
+        "op": ">",
+        "value": 32
+      },
+      "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+    },
+    {
+      "problem": "humidity_too_low",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": "<",
+        "value": 30
+      },
+      "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+    },
+    {
+      "problem": "humidity_too_high",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": ">",
+        "value": 85
+      },
+      "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+    }
+  ],
+  "common_problems": [
+    "overwatering / root rot",
+    "underwatering",
+    "insufficient light",
+    "temperature stress",
+    "too much direct sun / leaf scorch"
+  ],
+  "image_url_source": "http://pkb.resource.huahuacaocao.com/bW9uc3RlcmEgZGVsaWNpb3NhLmpwZw==?imageView2/1/w/%d/h/%d",
+  "sprite_ref": null,
+  "embedding_text": "Monstera deliciosa (monstera, swiss cheese plant). Soil: Peat mixed with coarse sand soil or hydroponics. Sunlight: Relatively resistant to shade, likes half shade environments, leaves are fresh and green with some sunlight in winter. Watering: Likes wet environments, spray water in the surrounding environment to keep air moist, reduce watering in winter. Fertilization: Dilute fertilizers following instructions, every 15 days apply fertilizers once in April to Septermber. Pruning: Remove dead and yellowish leaves timely. Ideal temperature 12-32 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 800-15000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+}
