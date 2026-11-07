@@ -1,0 +1,18 @@
+{
+  "id": "dry_soil",
+  "label": "Dry soil stress",
+  "device_id": "esp32-pot-01",
+  "ts": 1731003600,
+  "fw": "0.1.0-mock",
+  "metrics": {
+    "co2_ppm": 640,
+    "temp_c": 23.1,
+    "rh_pct": 42,
+    "pm1_0": 2.4,
+    "pm2_5": 3.6,
+    "pm4_0": 4.0,
+    "pm10_0": 4.3,
+    "soil_moisture": 9,
+    "soil_temp_c": 22.0
+  }
+}
