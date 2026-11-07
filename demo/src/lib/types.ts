@@ -1,14 +1,7 @@
-export type Metrics = {
-  co2_ppm: number
-  temp_c: number
-  rh_pct: number
-  pm1_0: number
-  pm2_5: number
-  pm4_0: number
-  pm10_0: number
-  soil_moisture: number
-  soil_temp_c: number
-}
+import type { MetricMap } from './mqttContract'
+
+/** Numeric `metrics` object from docs/mqtt_contract.md. Devices may omit keys. */
+export type Metrics = MetricMap
 
 export type Telemetry = {
   id?: string
@@ -72,4 +65,4 @@ export type SetupPhase =
   | 'sensor_check'
   | 'ready'
 
-export type ScreenPage = 'health' | 'history'
+export type ScreenPage = 'health' | 'inputs' | 'history'

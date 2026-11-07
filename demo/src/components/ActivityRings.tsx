@@ -61,11 +61,11 @@ export function ActivityRings({ rings, size = 128 }: Props) {
 
 /** Map sensor values into 0..1+ ring fills against plant thresholds. */
 export function metricProgress(
-  value: number,
+  value: number | undefined,
   min: number | null | undefined,
   max: number | null | undefined,
 ): number {
-  if (min == null || max == null || max <= min) return 0.5
+  if (value == null || min == null || max == null || max <= min) return 0.5
   if (value < min) return Math.max(0.08, value / Math.max(min, 1))
   if (value > max) return 1 + Math.min(0.35, (value - max) / Math.max(max, 1))
   // in range → how far through the ideal band (prefer mid = full)

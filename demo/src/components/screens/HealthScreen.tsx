@@ -35,23 +35,23 @@ export function HealthScreen({ plant, telemetry }: Props) {
         <div className="act-stats">
           <Stat
             label="Soil"
-            value={`${m.soil_moisture}`}
+            value={num(m.soil_moisture)}
             unit=""
-            color="var(--ring-soil)"
+            color="var(--soil)"
             warn={out(m.soil_moisture, t.soil_moisture.min, t.soil_moisture.max)}
           />
           <Stat
             label="Temp"
-            value={`${m.temp_c.toFixed(0)}`}
+            value={num(m.temp_c, 0)}
             unit="°C"
-            color="var(--ring-temp)"
+            color="var(--temp)"
             warn={out(m.temp_c, t.temp_c.min, t.temp_c.max)}
           />
           <Stat
             label="Air RH"
-            value={`${m.rh_pct}`}
+            value={num(m.rh_pct)}
             unit="%"
-            color="var(--ring-rh)"
+            color="var(--rh)"
             warn={out(m.rh_pct, t.rh_pct.min, t.rh_pct.max)}
           />
         </div>
@@ -60,9 +60,9 @@ export function HealthScreen({ plant, telemetry }: Props) {
           <ActivityRings
             size={118}
             rings={[
-              { progress: soilP, color: 'var(--ring-soil)', track: 'var(--ring-track)' },
-              { progress: tempP, color: 'var(--ring-temp)', track: 'var(--ring-track)' },
-              { progress: rhP, color: 'var(--ring-rh)', track: 'var(--ring-track)' },
+              { progress: soilP, color: 'var(--soil)', track: 'var(--track)' },
+              { progress: tempP, color: 'var(--temp)', track: 'var(--track)' },
+              { progress: rhP, color: 'var(--rh)', track: 'var(--track)' },
             ]}
           />
           <div className="act-score-pip">
@@ -77,15 +77,15 @@ export function HealthScreen({ plant, telemetry }: Props) {
       <div className="act-footer">
         <div>
           <div className="k">CO₂</div>
-          <div className="v">{m.co2_ppm}</div>
+          <div className="v">{num(m.co2_ppm)}</div>
         </div>
         <div>
           <div className="k">Soil °C</div>
-          <div className="v">{m.soil_temp_c.toFixed(1)}</div>
+          <div className="v">{num(m.soil_temp_c, 1)}</div>
         </div>
       </div>
 
-      <div className="act-hint">swipe → history · ask ↓</div>
+      <div className="act-hint">swipe → inputs · ask ↓</div>
     </div>
   )
 }
@@ -114,7 +114,13 @@ function Stat({
   )
 }
 
-function out(value: number, min: number | null | undefined, max: number | null | undefined) {
+function num(value: number | undefined, digits?: number) {
+  if (value == null) return '--'
+  return digits == null || Number.isInteger(value) ? String(value) : value.toFixed(digits)
+}
+
+function out(value: number | undefined, min: number | null | undefined, max: number | null | undefined) {
+  if (value == null) return false
   if (min != null && value < min) return true
   if (max != null && value > max) return true
   return false

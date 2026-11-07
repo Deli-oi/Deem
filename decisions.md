@@ -11,6 +11,11 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: UI ingests the MQTT v1 metric list
+- **Decision:** The device mock accepts `docs/mqtt_contract.md` telemetry. Known keys (`co2_ppm`, `temp_c`, `rh_pct`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0`, `soil_moisture`, `soil_temp_c`) render on an Inputs page; missing keys are allowed; extra numeric keys still show. Health rings stay soil / temp / humidity.
+- **Why:** Firmware may publish a subset per board, and the contract is the source of truth for what the screen must take in.
+- **Alternatives considered:** Hard-requiring every metric on every message (rejected — the contract says include only what the device has).
+
 ### 2026-11-07: Device mock is screen + buttons only
 - **Decision:** The local demo shows only a 2.8" portrait screen and four hardware stand-in buttons under it. Health uses a retro Activity-rings layout (soil / temp / humidity) with the plant sprite. Setup confirm/retry/match are touch buttons on the screen. Swipe moves between health and history. No surrounding marketing chrome.
 - **Why:** Matches the latest hardware-facing request: the ESP TFT is the whole product surface; physical buttons sit below; touch is for swipe plus on-screen confirms.
