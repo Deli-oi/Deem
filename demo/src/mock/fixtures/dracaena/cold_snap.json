@@ -1,7 +1,7 @@
 {
   "id": "cold_snap",
   "label": "Cold temperature swing",
-  "device_id": "esp32-demo-01",
+  "device_id": "esp32-pot-01",
   "ts": 1731010800,
   "fw": "0.1.0-mock",
   "metrics": {

@@ -1,7 +1,7 @@
 {
   "id": "healthy",
   "label": "Healthy baseline",
-  "device_id": "esp32-demo-01",
+  "device_id": "esp32-pot-01",
   "ts": 1731000000,
   "fw": "0.1.0-mock",
   "metrics": {

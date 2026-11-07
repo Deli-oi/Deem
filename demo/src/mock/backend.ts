@@ -1,5 +1,7 @@
 import { matchPlantLocal } from '../lib/matchPlant'
 import { scoreHealth, withHealth } from '../lib/healthScore'
+import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
+import type { SensorCheck } from '../lib/telemetry'
 import type {
   AskAnswer,
   DailyHealth,
@@ -15,23 +17,6 @@ import coldSnap from './fixtures/dracaena/cold_snap.json'
 import overwatered from './fixtures/dracaena/overwatered.json'
 import historyDaily from './fixtures/dracaena/history_daily.json'
 
-/**
- * Backend contract. MockBackend is the local stand-in.
- * Later: RailwayBackend / AtlasGeminiBackend implementing the same methods.
- */
-export interface DeemBackend {
-  listPlants(): Promise<PlantType[]>
-  matchPlant(utterance: string): Promise<PlantMatch | null>
-  getLatestTelemetry(plantTypeId: string): Promise<Telemetry>
-  collectNow(plantTypeId: string): Promise<Telemetry>
-  advanceFixture(plantTypeId: string): Promise<Telemetry>
-  setFixture(plantTypeId: string, index: number): Promise<Telemetry>
-  getHistory(plantTypeId: string): Promise<DailyHealth[]>
-  ask(plantTypeId: string, question: string): Promise<AskAnswer>
-  listFixtureLabels(plantTypeId: string): string[]
-  getFixtureIndex(): number
-}
-
 const FIXTURE_CYCLE: Telemetry[] = [
   healthy as Telemetry,
   drySoil as Telemetry,
@@ -40,6 +25,7 @@ const FIXTURE_CYCLE: Telemetry[] = [
   overwatered as Telemetry,
 ]
 
+/** Fixture-driven stand-in. Used for local UI work when no ESP32 is attached. */
 export class MockBackend implements DeemBackend {
   private plants: PlantType[] = []
   private fixtureIndex = 0
@@ -69,6 +55,29 @@ export class MockBackend implements DeemBackend {
     // Simulate network / model latency for the demo
     await delay(350)
     return matchPlantLocal(utterance, this.plants)
+  }
+
+  selectPlant(plant: PlantType): void {
+    void plant
+  }
+
+  async checkSensors(): Promise<SensorCheck[]> {
+    await delay(320)
+    return [
+      { name: 'Soil', ok: true },
+      { name: 'AQI', ok: true },
+      { name: 'Temp/RH', ok: true },
+    ]
+  }
+
+  subscribe(listener: (event: BackendEvent) => void): () => void {
+    void listener
+    return () => {}
+  }
+
+  async setRelay(on: boolean): Promise<void> {
+    void on
+    await delay(150)
   }
 
   async getLatestTelemetry(plantTypeId: string): Promise<Telemetry> {
@@ -107,10 +116,10 @@ export class MockBackend implements DeemBackend {
     }))
   }
 
-  async ask(plantTypeId: string, question: string): Promise<AskAnswer> {
+  async ask(plantTypeId: string, question: string, live?: Telemetry): Promise<AskAnswer> {
     await this.ensurePlants()
     const plant = this.plantOrThrow(plantTypeId)
-    const telemetry = await this.getLatestTelemetry(plantTypeId)
+    const telemetry = live ?? (await this.getLatestTelemetry(plantTypeId))
     await delay(400)
 
     const m = telemetry.metrics
@@ -180,6 +189,3 @@ function delay(ms: number) {
 function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n))
 }
-
-/** Singleton used by the UI. Replace this export when wiring Railway/Atlas. */
-export const backend: DeemBackend = new MockBackend()

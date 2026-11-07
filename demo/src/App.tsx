@@ -4,13 +4,16 @@ import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
 import { InputsScreen } from './components/screens/InputsScreen'
 import { SetupFlow } from './components/screens/SetupFlow'
-import { backend } from './mock/backend'
+import { backend } from './backend'
+import type { SensorState } from './components/screens/SetupFlow'
 import type { AskAnswer, DailyHealth, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
 import './styles/global.css'
 
 type AppPhase = 'boot' | 'setup_prompt' | 'setup_match' | 'sensor_check' | 'live'
 
-const SENSOR_ORDER = ['Soil', 'AQI', 'Temp/RH', 'Relay']
+const SENSOR_NAMES = ['Soil', 'AQI', 'Temp/RH']
+/** How long the pump relay stays on for one press of Water. */
+const WATER_SECONDS = 5
 
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>('boot')
@@ -20,7 +23,10 @@ export default function App() {
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null)
   const [history, setHistory] = useState<DailyHealth[]>([])
   const [page, setPage] = useState<ScreenPage>('health')
-  const [sensorsOnline, setSensorsOnline] = useState<string[]>([])
+  const [sensors, setSensors] = useState<SensorState[]>([])
+  const [sensorError, setSensorError] = useState<string | null>(null)
+  const [linkOnline, setLinkOnline] = useState(true)
+  const [watering, setWatering] = useState(false)
   const [answer, setAnswer] = useState<AskAnswer | null>(null)
   const [asking, setAsking] = useState(false)
   const [question, setQuestion] = useState('why is it drooping?')
@@ -46,21 +52,34 @@ export default function App() {
 
   async function runSensorCheck(selected: PlantType) {
     setPhase('sensor_check')
-    setSensorsOnline([])
-    for (const name of SENSOR_ORDER) {
-      await delay(320)
-      setSensorsOnline((prev) => [...prev, name])
+    setSensorError(null)
+    setSensors(SENSOR_NAMES.map((name) => ({ name, state: 'pending' })))
+    try {
+      backend.selectPlant(selected)
+      const checks = await backend.checkSensors()
+      for (const check of checks) {
+        await delay(320)
+        setSensors((prev) =>
+          prev.map((s) => (s.name === check.name ? { name: s.name, state: check.ok ? 'ok' : 'fail' } : s)),
+        )
+      }
+      if (checks.some((c) => !c.ok)) {
+        setSensorError('Some sensors are not reporting.')
+        return
+      }
+      const [tel, hist] = await Promise.all([
+        backend.getLatestTelemetry(selected.plant_type_id),
+        backend.getHistory(selected.plant_type_id),
+      ])
+      setPlant(selected)
+      setTelemetry(tel)
+      setHistory(hist)
+      await delay(280)
+      setPhase('live')
+      setPage('health')
+    } catch (err) {
+      setSensorError(err instanceof Error ? err.message : 'Sensor check failed.')
     }
-    const [tel, hist] = await Promise.all([
-      backend.getLatestTelemetry(selected.plant_type_id),
-      backend.getHistory(selected.plant_type_id),
-    ])
-    setPlant(selected)
-    setTelemetry(tel)
-    setHistory(hist)
-    await delay(280)
-    setPhase('live')
-    setPage('health')
   }
 
   async function onConfirm() {
@@ -68,6 +87,19 @@ export default function App() {
       await runSensorCheck(match.plant)
     }
   }
+
+  // Live updates: new readings (the ESP publishes every 10 min and on Collect) and link status.
+  useEffect(() => {
+    if (phase !== 'live' || !plant) return
+    return backend.subscribe((event) => {
+      if (event.type === 'link') {
+        setLinkOnline(event.online)
+        return
+      }
+      setTelemetry(event.telemetry)
+      void backend.getHistory(plant.plant_type_id).then(setHistory)
+    })
+  }, [phase, plant])
 
   function onVoice() {
     if (phase === 'live') {
@@ -80,7 +112,7 @@ export default function App() {
     if (!plant || !question.trim()) return
     setBusy(true)
     try {
-      const res = await backend.ask(plant.plant_type_id, question.trim())
+      const res = await backend.ask(plant.plant_type_id, question.trim(), telemetry ?? undefined)
       setAnswer(res)
       setAsking(false)
     } finally {
@@ -100,10 +132,25 @@ export default function App() {
     }
   }
 
-  function onWater() {
-    if (phase !== 'live') return
-    setNotice('relay on')
-    window.setTimeout(() => setNotice(null), 1200)
+  async function onWater() {
+    if (phase !== 'live' || watering) return
+    setWatering(true)
+    try {
+      await backend.setRelay(true)
+      setNotice('watering')
+      await delay(WATER_SECONDS * 1000)
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : 'water failed')
+    } finally {
+      // Always try to switch the pump off, even if the "on" ack never came.
+      try {
+        await backend.setRelay(false)
+      } catch {
+        setNotice('pump off failed')
+      }
+      setWatering(false)
+      window.setTimeout(() => setNotice(null), 1500)
+    }
   }
 
   function onPointerDown(e: React.PointerEvent) {
@@ -141,7 +188,8 @@ export default function App() {
                   phase === 'setup_prompt' ? 'prompt' : phase === 'setup_match' ? 'match' : 'sensor_check'
                 }
                 match={match}
-                sensorsOnline={sensorsOnline}
+                sensors={sensors}
+                sensorError={sensorError}
                 busy={busy}
                 onSubmitUtterance={submitUtterance}
                 onConfirmMatch={onConfirm}
@@ -149,11 +197,15 @@ export default function App() {
                   setMatch(null)
                   setPhase('setup_prompt')
                 }}
+                onRecheck={() => {
+                  if (match) void runSensorCheck(match.plant)
+                }}
               />
             )}
 
             {phase === 'live' && plant && telemetry && (
               <>
+                {!linkOnline && <div className="link-banner">device offline</div>}
                 <div className="screen-track" data-page={page}>
                   <HealthScreen plant={plant} telemetry={telemetry} />
                   <InputsScreen plant={plant} telemetry={telemetry} />
@@ -204,11 +256,11 @@ export default function App() {
         </div>
 
         <FakeButtons
-          disabled={busy || phase === 'boot' || phase === 'sensor_check'}
+          disabled={busy || watering || phase === 'boot' || phase === 'sensor_check'}
           onVoice={onVoice}
           onCollect={() => void onCollect()}
           onConfirm={() => void onConfirm()}
-          onWater={onWater}
+          onWater={() => void onWater()}
         />
       </div>
     </div>

@@ -3,26 +3,30 @@ import type { PlantMatch, PlantType } from '../../lib/types'
 
 type Phase = 'prompt' | 'match' | 'sensor_check'
 
+export type SensorState = { name: string; state: 'pending' | 'ok' | 'fail' }
+
 type Props = {
   phase: Phase
   match: PlantMatch | null
-  sensorsOnline: string[]
+  sensors: SensorState[]
+  sensorError: string | null
   busy: boolean
   onSubmitUtterance: (text: string) => void
   onConfirmMatch: () => void
   onRetry: () => void
+  onRecheck: () => void
 }
-
-const SENSOR_ORDER = ['Soil', 'AQI', 'Temp/RH', 'Relay']
 
 export function SetupFlow({
   phase,
   match,
-  sensorsOnline,
+  sensors,
+  sensorError,
   busy,
   onSubmitUtterance,
   onConfirmMatch,
   onRetry,
+  onRecheck,
 }: Props) {
   const [text, setText] = useState('dracaena')
 
@@ -83,17 +87,29 @@ export function SetupFlow({
     <div className="setup-screen">
       <div className="act-title">Sensors</div>
       <ul className="sensor-list">
-        {SENSOR_ORDER.map((name, idx) => {
-          const done = idx < sensorsOnline.length
-          return (
-            <li key={name} className={done ? 'ok' : 'pending'}>
-              <span>{name}</span>
-              <span>{done ? 'OK' : '..'}</span>
-            </li>
-          )
-        })}
+        {sensors.map(({ name, state }) => (
+          <li key={name} className={state === 'ok' ? 'ok' : state === 'fail' ? 'fail' : 'pending'}>
+            <span>{name}</span>
+            <span>{state === 'ok' ? 'OK' : state === 'fail' ? 'X' : '..'}</span>
+          </li>
+        ))}
       </ul>
-      {sensorsOnline.length >= SENSOR_ORDER.length && <p className="setup-copy done">ready</p>}
+      {sensorError && (
+        <>
+          <p className="setup-copy">{sensorError}</p>
+          <div className="touch-actions dual">
+            <button type="button" className="touch-btn" onClick={onRetry}>
+              BACK
+            </button>
+            <button type="button" className="touch-btn primary" onClick={onRecheck}>
+              RECHECK
+            </button>
+          </div>
+        </>
+      )}
+      {!sensorError && sensors.length > 0 && sensors.every((s) => s.state === 'ok') && (
+        <p className="setup-copy done">ready</p>
+      )}
     </div>
   )
 }
