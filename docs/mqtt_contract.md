@@ -138,6 +138,7 @@ Initial action vocabulary (extend as needed, keep this table updated):
 |--------|--------|---------|
 | `set_relay` | `{ "channel": <int>, "state": "on"\|"off" }` | Switch a relay channel. |
 | `set_interval` | `{ "seconds": <int> }` | Change telemetry publish interval. |
+| `sample_now` | `{}` | Take a reading immediately and publish it as normal telemetry (does not wait for the interval). Ack, then publish. Used by the on-screen TEST button. |
 | `identify` | `{}` | Blink LED / show on display to find the device. |
 | `reboot` | `{}` | Soft-reboot the ESP32. |
 

@@ -1,6 +1,7 @@
 import { ActivityRings, metricProgress } from '../ActivityRings'
 import { healthLabel } from '../../lib/healthScore'
 import type { PlantType, Telemetry } from '../../lib/types'
+import { PageFoot } from '../PageFoot'
 import { Sprite } from '../Sprite'
 
 type Props = {
@@ -10,6 +11,10 @@ type Props = {
 
 export function HealthScreen({ plant, telemetry }: Props) {
   const score = telemetry.health_score ?? 0
+  const testedAt = new Date((telemetry.received_ts ?? telemetry.ts) * 1000).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  })
   const m = telemetry.metrics
   const t = plant.thresholds
 
@@ -28,6 +33,10 @@ export function HealthScreen({ plant, telemetry }: Props) {
         <div className="act-title-block">
           <div className="act-title">Health</div>
           <div className="act-sub">{plant.common_names[0]}</div>
+        </div>
+        <div className="act-test">
+          <span>LAST TEST</span>
+          <b>{testedAt}</b>
         </div>
       </header>
 
@@ -72,20 +81,18 @@ export function HealthScreen({ plant, telemetry }: Props) {
         </div>
       </div>
 
-      <div className="act-divider" />
-
-      <div className="act-footer">
-        <div>
-          <div className="k">CO₂</div>
-          <div className="v">{num(m.co2_ppm)}</div>
+      <PageFoot index={0} hint="swipe →">
+        <div className="act-footer">
+          <div>
+            <div className="k">CO₂</div>
+            <div className="v">{num(m.co2_ppm)}</div>
+          </div>
+          <div>
+            <div className="k">Soil °C</div>
+            <div className="v">{num(m.soil_temp_c, 1)}</div>
+          </div>
         </div>
-        <div>
-          <div className="k">Soil °C</div>
-          <div className="v">{num(m.soil_temp_c, 1)}</div>
-        </div>
-      </div>
-
-      <div className="act-hint">swipe → inputs · ask ↓</div>
+      </PageFoot>
     </div>
   )
 }

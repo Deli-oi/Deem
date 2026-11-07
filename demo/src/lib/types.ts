@@ -46,8 +46,9 @@ export type PlantMatch = {
   utterance: string
 }
 
-export type DailyHealth = {
-  date: string
+/** One hourly average of the overall health score. `hour` is a local "YYYY-MM-DD HH" key. */
+export type HealthPoint = {
+  hour: string
   avg_health: number
 }
 
