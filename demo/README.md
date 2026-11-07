@@ -25,14 +25,15 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 
 ## Demo flow
 
+All controls are on the screen. There is no button row under the device.
+
 1. Boot → setup prompt
-2. Type a plant name (or press **Voice / Ask** for a mock transcript)
-3. **Confirm** the match → sensor check animation
-4. Health page with score + metrics
-5. **Swipe** left/right on the screen for history
-6. **Collect** pulls the current fixture reading
-7. Fixture chips under the device cycle dry soil / high CO₂ / etc.
-8. **Voice / Ask** on the live screen runs the mock Q&A agent
+2. Type a plant name, or press **MIC** (bottom-right; stand-in for Fish Audio) to "say" it
+3. **CONFIRM** the match → sensor check
+4. Health page: the most recent test, with a **LAST TEST** time at the top
+5. **TEST** (bottom-right, above MIC) takes a test input now. The mock walks the fixtures (healthy, dry soil, high CO2, ...)
+6. **MIC** on the live screen opens the Q&A box (mock agent)
+7. **Swipe** left/right (mouse drag, finger swipe, or arrow keys): health → inputs → history. The history page is a line chart of the **average health per hour**
 
 ## Data
 
@@ -61,9 +62,9 @@ What the UI does against the contract:
 - `ts: 0` is fine (no clock on the ESP32): arrival time is used.
 - Setup's sensor check passes when the first telemetry message contains each sensor's metrics (Soil: `soil_moisture`, AQI: `co2_ppm`, Temp/RH: `temp_c` + `rh_pct`). It fails if the device never reports.
 - "device offline" shows when the broker drops or the device's Last Will (`status: offline`) arrives.
-- **Water** publishes `set_relay { channel: 1, state: "on" }`, waits for the ack, then sends `off` after 5 seconds (always, even if the `on` ack never came).
-- **Collect** is an ESP button: the ESP publishes a fresh telemetry message itself. There is no Pi to ESP "sample now" command in v1, so the on-screen Collect just shows the newest reading.
-- History: one point per day, the average of that day's health scores, kept in `localStorage`.
+- The backend can switch the pump with `set_relay { channel: 1 }` (acked, always followed by `off`). There is no Water button on the screen; it is for the automatic watering logic.
+- **TEST** sends `sample_now` (added to the contract as an additive action) and shows the fresh telemetry the ESP publishes. If the firmware doesn't support it (no ack, or `ok:false`), the screen shows the newest reading and says "no new reading".
+- History: one point per hour, the average of that hour's health scores. The last 24 hours are kept in `localStorage`.
 
 Things for the firmware to confirm:
 

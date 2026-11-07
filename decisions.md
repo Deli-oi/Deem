@@ -11,6 +11,17 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: On-screen buttons, hourly chart, sample_now
+- **Decision:**
+  - All controls move onto the 2.8" screen: confirm/retry, a MIC button (Fish Audio voice) on the right, and a TEST button (take a test input) stacked above it. No hardware button row.
+  - The health page shows the most recent test. The swipe-right chart is the average health per hour (was per day).
+  - Added an additive `sample_now` command to the MQTT contract so TEST makes the ESP publish a fresh reading. Firmware that doesn't support it falls back to the newest reading.
+- **Why:** Everything the user touches belongs on the screen; the hourly average gives a useful chart within a short demo.
+- **Alternatives considered:** Keeping hardware buttons (rejected). Daily chart (replaced).
+- **Detail:** `Eli_decisions.md`, `docs/mqtt_contract.md`.
+
+---
+
 ### 2026-11-07: Product scope and software design (software lead)
 - **Decision:**
   - MVP is a single-plant display device with physical buttons (touch only for swiping between screens). The master greenhouse dashboard is the production product and appears only as a mock at the end of the live demo.

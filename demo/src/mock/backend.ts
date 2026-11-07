@@ -1,10 +1,11 @@
 import { matchPlantLocal } from '../lib/matchPlant'
 import { scoreHealth, withHealth } from '../lib/healthScore'
+import { hourKey } from '../lib/historyStore'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
 import type { SensorCheck } from '../lib/telemetry'
 import type {
   AskAnswer,
-  DailyHealth,
+  HealthPoint,
   PlantMatch,
   PlantType,
   Telemetry,
@@ -87,8 +88,9 @@ export class MockBackend implements DeemBackend {
     return withHealth({ ...raw, ts: Math.floor(Date.now() / 1000) }, plant)
   }
 
+  /** TEST in the mock walks the fixtures (healthy, dry soil, high CO2, ...) so the demo shows variety. */
   async collectNow(plantTypeId: string): Promise<Telemetry> {
-    return this.getLatestTelemetry(plantTypeId)
+    return this.advanceFixture(plantTypeId)
   }
 
   async advanceFixture(plantTypeId: string): Promise<Telemetry> {
@@ -105,14 +107,15 @@ export class MockBackend implements DeemBackend {
     return this.fixtureIndex
   }
 
-  async getHistory(plantTypeId: string): Promise<DailyHealth[]> {
+  async getHistory(plantTypeId: string): Promise<HealthPoint[]> {
     await this.ensurePlants()
     this.plantOrThrow(plantTypeId)
-    if (plantTypeId === 'dracaena') return historyDaily.days as DailyHealth[]
-    // synthetic history for other plants in the mock
-    return historyDaily.days.map((d, i) => ({
-      ...d,
-      avg_health: clamp(d.avg_health - 4 + ((i * 3) % 9), 40, 98),
+    // Fixture values stand in for the last N hourly averages, ending at the current hour.
+    const values = historyDaily.days.map((d) => d.avg_health)
+    const nowHour = Math.floor(Date.now() / 3_600_000)
+    return values.map((v, i) => ({
+      hour: hourKey((nowHour - (values.length - 1 - i)) * 3600),
+      avg_health: plantTypeId === 'dracaena' ? v : clamp(v - 4 + ((i * 3) % 9), 40, 98),
     }))
   }
 

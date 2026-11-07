@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DailyHealthStore } from '../lib/historyStore'
+import { HourlyHealthStore } from '../lib/historyStore'
 import type { BackendEvent } from '../lib/backendTypes'
 import type { PlantType } from '../lib/types'
 import { MqttBackend } from './mqttBackend'
@@ -55,7 +55,7 @@ function setup() {
       matchPlant: async () => null,
       ask: async (_id, q) => ({ question: q, answer: 'ok', based_on: [] }),
     },
-    history: new DailyHealthStore(null),
+    history: new HourlyHealthStore(null),
   })
   backend.subscribe((e) => events.push(e))
   return { f, backend, events }
@@ -129,6 +129,37 @@ describe('MqttBackend', () => {
     const sent = JSON.parse(f.published[0].payload)
     f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: false, detail: 'bad channel' })
     await expect(done).rejects.toThrow('bad channel')
+  })
+
+  it('TEST sends sample_now and returns the fresh reading the ESP publishes', async () => {
+    const { f, backend } = setup()
+    f.connect()
+    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 100 })
+    const pending = backend.collectNow('dracaena')
+    await Promise.resolve()
+    await Promise.resolve()
+    const sent = JSON.parse(f.published[0].payload)
+    expect(sent.action).toBe('sample_now')
+    expect(sent.params).toEqual({})
+    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: true })
+    await Promise.resolve()
+    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 200, metrics: { ...good.metrics, temp_c: 25 } })
+    const t = await pending
+    expect(t.ts).toBe(200)
+    expect(t.metrics.temp_c).toBe(25)
+  })
+
+  it('TEST falls back to the newest reading when the firmware refuses sample_now', async () => {
+    const { f, backend } = setup()
+    f.connect()
+    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 100 })
+    const pending = backend.collectNow('dracaena')
+    await Promise.resolve()
+    await Promise.resolve()
+    const sent = JSON.parse(f.published[0].payload)
+    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: false, detail: 'unsupported' })
+    const t = await pending
+    expect(t.ts).toBe(100)
   })
 
   it('refuses commands while disconnected', async () => {
