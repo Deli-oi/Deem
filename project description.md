@@ -33,15 +33,16 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Capability | Notes |
 |------------|-------|
 | Soil moisture monitoring | Stemma I2C Soil Sensor |
-| Automatic watering | Water pump driven through a relay |
+| Automatic watering | Water pump driven through a 5V relay module |
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
-| Camera | Used only to link each data point to an image. No computer vision in the MVP. |
+| Camera | Raspberry Pi Camera 3. Used only to link each data point to an image. No computer vision in the MVP. |
+| Data collection | One data point every 10 minutes, plus a physical "collect now" button that takes a reading immediately and shows it on the display (used in the live demo) |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
 ### Display
 
-The display is slightly larger than an Apple Watch screen. We still need its model number (see "Open questions").
+The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple Watch screen. We use physical buttons instead of touch input because it's more fun. The screen's touch layer is not used.
 
 - **Style:** Apple Health / Apple Watch style: glanceable, rounded, clean.
 - **Overall health:** One headline plant health score.
@@ -127,8 +128,13 @@ From `hardware_info.md` (updated by Zion):
 | Air quality sensor | Sensirion SEN63C |
 | Temp / humidity sensor | DHT11 |
 | Soil moisture sensor | Stemma I2C Soil Sensor |
+| Camera | Raspberry Pi Camera 3 |
+| Display | 2.8" SPI serial TFT touch screen |
+| Relay | 5V relay module |
 | Microphone | USB mic |
 | Speaker | USB speaker |
+
+Still missing from the list: the water pump.
 
 Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C over I2C and serves a live dashboard from a WiFi access point. It also drives an SSD1306 128x64 OLED. The Adafruit seesaw library (for the soil sensor) is already listed as a dependency but isn't used in code yet.
 
@@ -147,6 +153,8 @@ Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C
 
 ## Key decisions
 
+- The device is controlled with physical buttons, not the touch screen, because it's more fun.
+- Sensors log one data point every 10 minutes. A separate physical button collects and displays the current data point on demand, for the live demo.
 - The MVP is a single-plant display device. The master dashboard is the production product and only appears as a mock in the demo.
 - Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in MongoDB Atlas.
 - Setup is voice-driven: the user says the plant type, Gemini matches it, and the user confirms.
@@ -178,9 +186,8 @@ With better hardware and more time:
 
 ## Open questions
 
-- The display's model number isn't in `hardware_info.md` yet.
-- The camera model isn't in the repo. The only folder pulled so far is `e2/`, and it has no camera model.
-- Water pump and relay parts aren't listed.
+- The water pump isn't listed in `hardware_info.md` yet.
+- The display's exact model number isn't listed, only its size and interface.
 - The DHT11 and SEN63C both read temperature and humidity. Decide which one is the source of truth.
 - Which job does each of the two ESP32s have? Only one is covered by existing code (`e2/`).
 - How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
