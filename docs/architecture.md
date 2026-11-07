@@ -16,34 +16,34 @@ greenhouses. Responsibilities are split across two tiers:
 ## Roles
 
 ### ESP32 (edge / "the physicals")
-Owned by the firmware teammate (Zion). **Both ESP32 boards** live in this lane.
-Each ESP32 (as applicable):
+Owned by the firmware teammate. Each ESP32:
 - Reads sensors (SEN63C air quality, DHT11 temp/RH, Stemma soil moisture, …).
-- Drives actuators via the 5V relay module (pump, etc.).
-- Drives the **2.8" TFT display** (health + history UI) and handles **physical
-  buttons** + swipe touch.
-- **Publishes** telemetry to the Pi over MQTT and **subscribes** for commands
-  (e.g. `set_relay`). Collect-now is local: button → sample → publish telemetry.
+- Drives actuators via the 5V relay module (fans, pumps, lights, …).
+- Drives its local OLED/TFT display.
+- **Publishes** telemetry to the Pi over MQTT and **subscribes** for commands.
 
 > Note: the current `e2/` firmware runs as its own WiFi **access point** with an
 > onboard web dashboard. For the central-controller model this flips: the ESP32
 > becomes a WiFi **client** that joins the Pi's network and talks MQTT. See
 > `docs/esp32_integration.md`.
 
-### Raspberry Pi 5 (central controller + voice)
-- Runs the **Mosquitto** MQTT broker and **`deem_controller`** (ingest → SQLite
-  buffer → relay to cloud).
-- Owns **microphone + speaker**: Fish Audio STT/TTS, spoken alarms, Gemini Q&A.
-- Does **not** own the plant display or buttons (those stay on the ESP).
-- Camera is deferred past the first iteration.
+### Raspberry Pi 5 (central controller)
+Owned by the Pi teammate. The Pi:
+- Runs the **Mosquitto** MQTT broker (the message bus for all devices).
+- Runs the **`deem_controller`** Python service, which:
+  1. Ingests telemetry from every ESP32.
+  2. Buffers readings durably (SQLite) so nothing is lost if the network or the
+     web endpoint is down.
+  3. Relays normalized readings to a web endpoint (pluggable; not yet defined).
+  4. Sends commands back down to devices (relay control, config, etc.).
+- Later: hosts the camera, local dashboard/touchscreen UI, and higher-level
+  automation logic.
 
-### Cloud
-- **MongoDB Atlas** over the internet: plant-type knowledge (vectors + thresholds
-  + sprites) and per-plant live data.
-- **Railway** hosts software services / APIs (account setup pending).
-- The controller’s HTTP sink remains pluggable
-  (`pi/deem_controller/sink.py`) so wiring Atlas/Railway is a config + adapter
-  change.
+### Web endpoint (TBD)
+The cloud/remote destination for data and the source of remote commands. Not yet
+designed. The controller treats it as a **pluggable sink** (`pi/deem_controller/sink.py`)
+so the rest of the system doesn't block on this decision. Swapping it in should
+mostly be a `config.yaml` change.
 
 ## Why MQTT
 - Decouples devices from the controller — add/remove ESP32s without code changes.
