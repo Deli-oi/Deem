@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { PlantMatch, PlantType } from '../../lib/types'
 
 type Phase = 'prompt' | 'match' | 'sensor_check'
@@ -57,22 +57,11 @@ export function SetupFlow({
 
   if (phase === 'match' && match) {
     return (
-      <div className="setup-screen">
-        <div className="act-title">Confirm?</div>
-        <div className="match-card">
-          <strong>{prettyName(match.plant)}</strong>
-          <div className="sci">{match.plant.scientific_name}</div>
-          <div className="conf">{Math.round(match.confidence * 100)}%</div>
-        </div>
-        <div className="touch-actions dual">
-          <button type="button" className="touch-btn" onClick={onRetry}>
-            RETRY
-          </button>
-          <button type="button" className="touch-btn primary" onClick={onConfirmMatch}>
-            CONFIRM
-          </button>
-        </div>
-      </div>
+      <ConfirmMatch
+        match={match}
+        onRetry={onRetry}
+        onConfirmMatch={onConfirmMatch}
+      />
     )
   }
 
@@ -105,6 +94,41 @@ export function SetupFlow({
         })}
       </ul>
       {sensorsOnline.length >= SENSOR_ORDER.length && <p className="setup-copy done">ready</p>}
+    </div>
+  )
+}
+
+function ConfirmMatch({
+  match,
+  onRetry,
+  onConfirmMatch,
+}: {
+  match: PlantMatch
+  onRetry: () => void
+  onConfirmMatch: () => void
+}) {
+  const [ready, setReady] = useState(false)
+  useEffect(() => {
+    const t = window.setTimeout(() => setReady(true), 350)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  return (
+    <div className="setup-screen">
+      <div className="act-title">Confirm?</div>
+      <div className="match-card">
+        <strong>{prettyName(match.plant)}</strong>
+        <div className="sci">{match.plant.scientific_name}</div>
+        <div className="conf">{Math.round(match.confidence * 100)}%</div>
+      </div>
+      <div className="touch-actions dual">
+        <button type="button" className="touch-btn" onClick={onRetry}>
+          RETRY
+        </button>
+        <button type="button" className="touch-btn primary" disabled={!ready} onClick={onConfirmMatch}>
+          CONFIRM
+        </button>
+      </div>
     </div>
   )
 }
