@@ -168,7 +168,7 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 ### What this means for our features
 
 - **10-minute collection:** Use `set_interval` to set the ESP32 publish rate to 600 seconds. The docs' sample code publishes every 5 seconds.
-- **"Collect now" button:** The contract has no command for an immediate reading. We need to add one (for example a `sample_now` action) to `docs/mqtt_contract.md`, and the firmware has to publish a reading when it receives it.
+- **"Collect now" button:** ESP-owned. Button triggers an immediate sample + telemetry publish. A Pi→ESP `sample_now` command is optional and not required for MVP.
 - **Camera:** Deferred for first iteration (was going to live on the Pi). No image capture/storage in MVP v1.
 - **Pump state and button presses:** Neither is in the contract yet.
 
