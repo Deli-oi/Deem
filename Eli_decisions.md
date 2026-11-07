@@ -2,7 +2,15 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
-## 2026-11-07: Buttons move onto the screen; hourly chart
+## 2026-11-07: MIC and TEST are physical keys; voice is Fish Audio only
+
+- MIC and TEST are **hardware**: mechanical-keyboard keys, never drawn on the screen. Only confirm/retry are on the screen.
+- No typing anywhere. Setup and questions are voice only (hold MIC to talk, release to send), using Fish Audio speech-to-text.
+- The screen shows what it heard, so a mis-hearing is obvious.
+- The health page's "solution needed? ↓" hint points at the physical MIC key.
+- Kiosk mode (`?kiosk`) fits the real 240x320 panel exactly.
+
+## 2026-11-07: Buttons move onto the screen; hourly chart (partly replaced by the entry above: MIC and TEST are physical keys)
 
 - No hardware button row under the device. Everything is on the 2.8" screen.
 - Confirm and retry stay on the screen. Voice (Fish Audio) is a **MIC** button on the right, with a **TEST** button (take a test input) stacked above it.

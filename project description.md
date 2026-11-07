@@ -37,12 +37,12 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
 | Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (the 10-minute reading and the "collect now" button). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
-| Data collection | One data point every 10 minutes, plus an on-screen **TEST** button that takes a test input immediately and shows it on the health page (used in the live demo) |
+| Data collection | One data point every 10 minutes, plus a physical **TEST** key that takes a test input immediately and shows it on the health page (used in the live demo) |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
 ### Display
 
-The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple Watch screen. All controls are on the screen: confirm/retry buttons, a **MIC** button (Fish Audio voice) on the right, and a **TEST** button (take a test input) stacked above it. The touch layer is also used for swiping back and forth between screens.
+The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple Watch screen. Confirm/retry are touch buttons on the screen, and the touch layer is also used for swiping between screens. **MIC** (hold to talk, Fish Audio speech-to-text) and **TEST** (take a test input) are physical mechanical-keyboard keys, never drawn on the screen. There is no typing: setup and questions are voice only.
 
 - **Style:** Glanceable, rounded and clean, in the spirit of Apple Health / Apple Watch, with a retro videogame look. Every screen uses the same style. It must be simple and user friendly, showing data easily to non-technical people.
 - **Screens:** The main health page, plus a history page to its right (below). The user swipes between them.
@@ -187,8 +187,8 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 
 ## Key decisions
 
-- All controls are on the screen (confirm, MIC for voice, TEST for a test input). Touch is also used for swiping between screens.
-- Sensors log one data point every 10 minutes. The on-screen TEST button takes and displays a test input on demand, for the live demo. The health page shows the most recent test.
+- MIC and TEST are physical keyboard keys (not on the screen). Confirm/retry are on-screen touch buttons, and touch is also used for swiping. No typing: voice only.
+- Sensors log one data point every 10 minutes. The physical TEST key takes and displays a test input on demand, for the live demo. The health page shows the most recent test.
 - The MVP is a single-plant display device. The master dashboard is the production product and only appears as a mock in the demo.
 - Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in MongoDB Atlas.
 - Setup is voice-driven: the user says the plant type, Gemini matches it, and the user confirms.
@@ -196,7 +196,7 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 - Sprites are generated after the MongoDB vector storage is set up with all MVP plant types.
 - The overall health score is a placeholder we decide ourselves. It will be replaced by a researched calculation later.
 - The camera captures a photo with every data collection. Each data entry stored in MongoDB for the plant includes the image as one of its data points. There is no computer vision in the MVP.
-- Touch is used for the on-screen buttons and for swiping back and forth between screens.
+- Touch is used for the confirm/retry buttons and for swiping back and forth between screens.
 - Each point on the history graph is the average of that hour's overall health scores.
 - A second swipeable screen to the right of the main health page shows average plant health per hour as a plotted graph. It is part of the MVP.
 - All screens share one style: retro, simple and user friendly, so non-technical people can read the data easily.

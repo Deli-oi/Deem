@@ -81,7 +81,7 @@ export function HealthScreen({ plant, telemetry }: Props) {
         </div>
       </div>
 
-      <PageFoot index={0} hint="swipe →">
+      <PageFoot index={0} hint="swipe →" keyHint="solution needed? ↓">
         <div className="act-footer">
           <div>
             <div className="k">CO₂</div>
