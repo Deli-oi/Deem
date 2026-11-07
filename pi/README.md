@@ -79,10 +79,46 @@ sink:
 If the endpoint expects a different JSON shape than `{"readings": [...]}`, edit
 `HttpSink.build_body()` in `deem_controller/sink.py`.
 
+## Touchscreen display (kiosk)
+The Pi's 2.8" touchscreen shows the live **plant-health** UI (the `demo/` app).
+It subscribes to the ESP32 over Mosquitto's WebSocket listener (`:9001`, already
+in `deploy/mosquitto.conf`) and refreshes on every telemetry message, so the
+screen always shows the most recent reading + health score. This runs *alongside*
+the controller: the UI is just a live view, while `deem_controller` is what
+aggregates readings, relays them to the cloud, and wipes local storage on success.
+
+### 1. Build the UI in live mode
+Bakes the broker URL + pot id into the build (`VITE_*` are compile-time):
+```bash
+cd ~/Deem/pi
+# defaults: ws://localhost:9001 and esp32-pot-01 — override via env if needed
+deploy/build-ui.sh
+# e.g. a second pot: VITE_DEVICE_ID=esp32-pot-02 deploy/build-ui.sh
+```
+Node 20+ is required (`sudo apt install -y nodejs npm` or nvm).
+
+### 2. Install the browser + services
+```bash
+sudo apt install -y chromium-browser unclutter
+sudo cp deploy/deem-ui.service deploy/deem-kiosk.service /etc/systemd/system/
+# edit User/paths inside the units if your layout differs
+sudo systemctl daemon-reload
+sudo systemctl enable --now deem-ui.service    # serves demo/dist on :3000
+sudo systemctl enable --now deem-kiosk.service # full-screen Chromium on the panel
+```
+`deem-ui.service` serves the built UI; `deem-kiosk.service` runs
+`deploy/kiosk/start-kiosk.sh`, which waits for the UI, disables screen blanking,
+and opens Chromium in `--kiosk` mode. Rerun `deploy/build-ui.sh` and
+`sudo systemctl restart deem-ui` after pulling UI changes.
+
+> The kiosk service must run as the user that owns the Pi's graphical (X)
+> session; check `DISPLAY`/`XAUTHORITY` in `deem-kiosk.service` if the window
+> doesn't appear.
+
 ## Sending a command to a device
 ```bash
 .venv/bin/python -m deem_controller --config config.yaml send \
-  --device esp32-aqi-01 --action set_relay --params '{"channel":1,"state":"on"}'
+  --device esp32-pot-01 --action set_relay --params '{"channel":1,"state":"on"}'
 ```
 
 ## Quick local sanity checks
