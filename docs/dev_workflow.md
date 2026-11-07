@@ -68,4 +68,4 @@ Local mock UI works without these.
 
 ## Decision log
 
-Record product/architecture calls in `decisions.md` (newest first). Keep `docs/build_plan.md` phase checkboxes current.
+Record product/architecture calls in `decisions.md` (newest first).
