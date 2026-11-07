@@ -55,25 +55,21 @@ calls Gemini. Do not commit keys. Gemini via Google AI Studio API key is fine
 for hackathon; GitHub secret is optional, not required for local/agent work.
 
 ### Phase 1 — Plant knowledge base
-- [ ] Finalize 12 plant types (list in research doc)
-- [ ] Seed script: Open Plantbook → normalized JSON → Atlas
-- [ ] Vector index on care/solutions text for Gemini RAG
+- [x] Finalize 12 plant types + collect seed JSON from MiFloraDB (`data/plants/`)
+- [ ] Upsert seed into Atlas + vector index on `embedding_text` / care+solutions
 - [ ] One reference sprite for one plant; then generate + attach sprites per type
-- [ ] Spot-check dracaena + panda plant documents end-to-end
+- [ ] Spot-check dracaena + panda plant documents end-to-end against live Atlas
 
 ### Phase 2 — Local demo environment (before / parallel to hardware)
-Scaled fake device in the browser (or small local web app):
+Scaled fake device in the browser (`demo/`):
 
-- [ ] **Fixture suite:** multiple JSON telemetry files for **dracaena** that
-      mimic MQTT `metrics` pulls (healthy, dry soil, high CO2, temp swing, etc.)
-- [ ] Loader that plays fixtures as timed “data pulls” (10‑min cadence simulated,
-      plus collect-now)
-- [ ] **Scaled display mock** of the ESP screen (same two pages + style)
-- [ ] **Full setup workflow** against real Atlas vectors: voice/text plant name →
-      Gemini match → confirm → sensor check (fixture-driven) → health page
-- [ ] **Swipe** between health page and day-by-day history graph
-- [ ] **Test buttons below the fake screen** standing in for hardware:
-      voice/ask, collect-now, confirm, (optional) water/relay
+- [x] **Fixture suite:** dracaena JSON telemetry (healthy, dry soil, high CO2, cold, overwatered)
+- [x] Fixture chips + collect-now against mock backend (`DeemBackend` interface)
+- [x] **Scaled display mock** of the ESP screen (health + history, retro style)
+- [x] **Setup workflow (mocked):** text/voice stand-in → local plant match → confirm → sensor check → health
+- [x] **Swipe** between health page and day-by-day history graph
+- [x] **Test buttons below the fake screen:** voice/ask, collect-now, confirm, water
+- [ ] Wire setup match + ask to real Atlas vectors / Gemini (keep UI; swap backend)
 - [ ] Later: swap button stubs for real ESP button events over MQTT
 
 ### Phase 3 — Pi software services

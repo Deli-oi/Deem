@@ -11,6 +11,11 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Local demo UI with mock backend
+- **Decision:** Ship a Vite/React scaled device demo in `demo/` with a `DeemBackend` interface and `MockBackend` implementation. UI covers setup → sensor check → swipeable health/history, plus fake hardware buttons. Plant seed JSON lives in `data/plants/` (MiFloraDB-derived) and is loaded by the mock until Atlas/Gemini replace it.
+- **Why:** Unblocks product iteration and demo rehearsal before Mongo/Fish/Gemini secrets and ESP firmware are ready. Backend swap is a single export change.
+- **Alternatives considered:** Waiting on live APIs before UI (rejected). Pi-rendered UI (rejected earlier — ESP owns display; this demo mocks that display).
+
 ### 2026-11-07: Railway project linked
 - **Decision:** Use the Railway project already linked to Deem / the software lead’s GitHub as the cloud host for app services.
 - **Refs (from dashboard URL):**
