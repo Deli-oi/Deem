@@ -45,7 +45,8 @@ it unless Zion wants Pi-triggered sampling.
 ### Phase 0 — Research & connectors (now)
 - [x] Research plant care / health datasets → see `docs/plant_data_research.md`
 - [ ] Software lead connects MongoDB Atlas, Gemini, Fish Audio (secrets)
-- [ ] Software lead sets up Railway account (share access when ready)
+- [x] Railway project linked to Deem GitHub (project `594f967f-…`, service `f3619240-…`, env `8bc02acd-…`)
+- [ ] Add `RAILWAY_TOKEN` (and later Mongo/Gemini/Fish) as Cursor secrets so the agent can deploy/configure
 - [ ] Decide Open Plantbook as seed source (recommended)
 
 **Secrets plan:** Prefer **Railway env vars** for runtime + **Cursor/cloud-agent
