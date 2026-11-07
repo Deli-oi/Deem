@@ -11,6 +11,11 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Device mock is screen + buttons only
+- **Decision:** The local demo shows only a 2.8" portrait screen and four hardware stand-in buttons under it. Health uses a retro Activity-rings layout (soil / temp / humidity) with the plant sprite. Setup confirm/retry/match are touch buttons on the screen. Swipe moves between health and history. No surrounding marketing chrome.
+- **Why:** Matches the latest hardware-facing request: the ESP TFT is the whole product surface; physical buttons sit below; touch is for swipe plus on-screen confirms.
+- **Alternatives considered:** Full-page demo stage with fixture chips and brand lockup (replaced).
+
 ### 2026-11-07: Prefer Tiger Data (Postgres) over MongoDB Atlas
 - **Decision:** If MongoDB is off the table, use **Tiger Data** (Timescale/Postgres) as the cloud data store. Sensor history → hypertables; plant-type knowledge + embeddings → Postgres + **pgvector** (Tiger documents this path). Gemini still does reasoning; Fish Audio still does voice. Atlas is no longer required for MVP.
 - **Why:** One SQL database covers time-series telemetry *and* vector RAG. Better fit for 10‑minute readings + daily averages than document Mongo. Railway can host the app while Tiger hosts the DB (or Postgres on Railway as a thinner fallback).
