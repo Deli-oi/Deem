@@ -11,3 +11,6 @@ Development machine specs (collected 2026-11-07).
 | Speaker | USB Speaker |
 | Temp/RH Sensor | DHT11 |
 | Soil Moisture Sensor | Stemma I2C Soil Sensor |
+| Camera | RASPBERRY PI CAMERA 3 |
+| Touch Screen Display | 2.8" SPI Serial TFT Display|
+| Relay Module| 5v Relay Module|
