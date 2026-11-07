@@ -36,7 +36,7 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Automatic watering | Water pump driven through a 5V relay module |
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
-| Camera | **Deferred for first iteration.** Pi Camera 3 stays on the BOM but we are not capturing or storing images yet (storage cost, low health signal). No computer vision. |
+| Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (the 10-minute reading and the "collect now" button). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
 | Data collection | One data point every 10 minutes, plus a physical "collect now" button that takes a reading immediately and shows it on the display (used in the live demo) |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
@@ -168,8 +168,8 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 ### What this means for our features
 
 - **10-minute collection:** Use `set_interval` to set the ESP32 publish rate to 600 seconds. The docs' sample code publishes every 5 seconds.
-- **"Collect now" button:** ESP-owned. Button triggers an immediate sample + telemetry publish. A Pi→ESP `sample_now` command is optional and not required for MVP.
-- **Camera:** Deferred for first iteration (was going to live on the Pi). No image capture/storage in MVP v1.
+- **"Collect now" button:** The contract has no command for an immediate reading. We need to add one (for example a `sample_now` action) to `docs/mqtt_contract.md`, and the firmware has to publish a reading when it receives it.
+- **Camera:** The contract has no camera support. The docs place the camera on the Pi. Our decision: capture a photo at every data collection, store it in MongoDB as one data point of that collection entry.
 - **Pump state and button presses:** Neither is in the contract yet.
 
 ## Team and roles
@@ -195,7 +195,7 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 - Every plant type in the database has a retro sprite linked to its vector storage, and the sprite appears in the top-left corner after setup.
 - Sprites are generated after the MongoDB vector storage is set up with all MVP plant types.
 - The overall health score is a placeholder we decide ourselves. It will be replaced by a researched calculation later.
-- Camera capture/storage is deferred past the first iteration. There is no computer vision in the MVP.
+- The camera captures a photo with every data collection. Each data entry stored in MongoDB for the plant includes the image as one of its data points. There is no computer vision in the MVP.
 - Touch is used only for swiping back and forth between screens. Everything else uses physical buttons.
 - The daily value on the history graph is the average of that day's overall health scores.
 - A second swipeable screen to the right of the main health page shows day-by-day plant health as a plotted graph. It is part of the MVP.
@@ -227,12 +227,11 @@ With better hardware and more time:
 - The water pump isn't listed in `hardware_info.md` yet.
 - The display's exact model number isn't listed, only its size and interface.
 - The DHT11 and SEN63C both map to `temp_c` and `rh_pct` in the contract, so one overwrites the other. Decide which one is the source of truth, or give them separate keys.
-- ~~Who drives the 2.8" display and the physical buttons?~~ **Resolved:** ESP owns display + buttons; Pi owns mic/speaker (alarms + voice).
-- ~~Does collect-now need MQTT `sample_now`?~~ **Resolved for MVP:** ESP button samples locally and publishes telemetry immediately.
+- Who drives the 2.8" display and the physical buttons: an ESP32, or the Pi? The architecture docs have the ESP32 driving its local display, but our design runs the health card and the AI on the Pi side.
+- The "collect now" button needs a new command in `docs/mqtt_contract.md`. Who adds it?
 - The `e2/` firmware still runs as a WiFi access point. When does it move to MQTT client mode?
-- How are the two ESP32s divided for sensors/relay in firmware? (Both still ESP-owned.)
-- Sprite tool still TBD; process locked: one reference sprite, then variants per plant type in Mongo.
+- Which job does each of the two ESP32s have? Only one is covered by existing code (`e2/`).
+- How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
 - Which dracaena or panda plant is the live demo plant? (Decide later.)
 - What happens if the user rejects the matched plant at the confirm step? (Probably retry the voice input.)
-- Exact 12-plant MVP list: see proposed list in `docs/plant_data_research.md` (confirm Open Plantbook as seed).
-- Camera deferred for first iteration.
+- "Common house plants" is broad. Which specific plants does it include?
