@@ -21,7 +21,7 @@ relay / pump                      Gemini client                         + sprite
 |-------|------|
 | **ESP** | Sensors, display UI, physical buttons, relay |
 | **Pi** | MQTT ingest/buffer/relay, **microphone + speaker** (voice + alarms), Gemini/Fish clients, camera deferred |
-| **Cloud** | MongoDB Atlas over the internet; **Railway** hosts software services |
+| **Cloud** | **Tiger Data (Postgres/Timescale)** preferred over Mongo for telemetry + pgvector plant knowledge; **Railway** hosts the app (`hackrpi-delts` / service Deem) |
 
 Camera is **out of first iteration** (storage cost, low health signal for MVP).
 
@@ -44,10 +44,12 @@ it unless Zion wants Pi-triggered sampling.
 
 ### Phase 0 — Research & connectors (now)
 - [x] Research plant care / health datasets → see `docs/plant_data_research.md`
-- [ ] Software lead connects MongoDB Atlas, Gemini, Fish Audio (secrets)
-- [x] Railway project linked to Deem GitHub (project `594f967f-…`, service `f3619240-…`, env `8bc02acd-…`)
-- [ ] Add `RAILWAY_TOKEN` (and later Mongo/Gemini/Fish) as Cursor secrets so the agent can deploy/configure
-- [ ] Decide Open Plantbook as seed source (recommended)
+- [ ] Software lead connects Tiger Data (or Railway Postgres), Gemini, Fish Audio via Cursor secrets (`TIGER_DATABASE_URL`, `GEMINI_API_KEY`, `FISH_AUDIO_API_KEY`, `RAILWAY_API_TOKEN`)
+- [x] Railway project linked: workspace ConnorLaMora / project `hackrpi-delts` / service Deem (IDs recorded earlier)
+- [x] Account token works as `RAILWAY_API_TOKEN` (not `RAILWAY_TOKEN`)
+- [ ] Fix failed Railway deployment of Deem service
+- [x] Prefer Tiger Data over Mongo if Atlas is unavailable
+- [ ] Decide Open Plantbook as seed source (recommended; MiFloraDB seed already collected)
 
 **Secrets plan:** Prefer **Railway env vars** for runtime + **Cursor/cloud-agent
 secrets** for this environment. GitHub Actions secrets only if we add CI that

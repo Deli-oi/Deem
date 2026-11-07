@@ -5,7 +5,7 @@ backend**. Replace `src/mock/backend.ts`’s exported `backend` with a Railway /
 Mongo / Gemini implementation later — the UI talks only to the `DeemBackend`
 interface.
 
-## Run
+## Run (visual test)
 
 ```bash
 cd demo
@@ -13,12 +13,15 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL (default `http://127.0.0.1:5173`).
+Open **http://127.0.0.1:5173/** (Cursor port-forward / Simple Browser if remote).
 
 ```bash
 npm test
 npm run build
+npm start   # serves dist on PORT (default 3000) — Railway style
 ```
+
+Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`, no forks).
 
 ## Demo flow
 
