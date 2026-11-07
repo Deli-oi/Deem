@@ -138,6 +138,31 @@ Still missing from the list: the water pump.
 
 Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C over I2C and serves a live dashboard from a WiFi access point. It also drives an SSD1306 128x64 OLED. The Adafruit seesaw library (for the soil sensor) is already listed as a dependency but isn't used in code yet.
 
+## Data architecture (from the team's `docs/`)
+
+The hardware team defined how sensor data moves. Our software sits on top of it. Full details are in `docs/architecture.md` and `docs/mqtt_contract.md`.
+
+```
+ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_controller)
+                                              |
+                                              +-> SQLite buffer -> web endpoint (JSON, Connor is building it)
+                                              +-> our software: Gemini, Fish Audio, MongoDB Atlas, display
+```
+
+- **ESP32s** read the sensors and drive the relay. They publish JSON readings to `deem/<device_id>/telemetry` and receive commands on `deem/<device_id>/cmd`.
+- **The Pi** runs the Mosquitto broker and the `pi/deem_controller` Python service. It validates readings, buffers them in SQLite, and relays them to a pluggable web endpoint.
+- **Web endpoint:** The data endpoints use JSON, and Connor is working on that. Our job is to collect input from all sensors in that JSON format, then do everything else in this document.
+- **Reading format:** A flat `metrics` object with keys such as `co2_ppm`, `temp_c`, `rh_pct`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0`, `soil_moisture` and `soil_temp_c`.
+- **Commands:** `set_relay`, `set_interval`, `identify` and `reboot`. The pump runs through `set_relay`.
+- **Current firmware change:** The `e2/` firmware currently runs a WiFi access point with its own web page. The architecture docs retire that. The ESP32s become WiFi clients that publish over MQTT.
+
+### What this means for our features
+
+- **10-minute collection:** Use `set_interval` to set the ESP32 publish rate to 600 seconds. The docs' sample code publishes every 5 seconds.
+- **"Collect now" button:** The contract has no command for an immediate reading. We need to add one (for example a `sample_now` action) to `docs/mqtt_contract.md`, and the firmware has to publish a reading when it receives it.
+- **Camera:** The contract has no camera support. The docs place the camera on the Pi.
+- **Pump state and button presses:** Neither is in the contract yet.
+
 ## Team and roles
 
 - **Software lead:** Builds the connectors from hardware to software, plus the display, AI pipeline and data layer.
@@ -188,7 +213,11 @@ With better hardware and more time:
 
 - The water pump isn't listed in `hardware_info.md` yet.
 - The display's exact model number isn't listed, only its size and interface.
-- The DHT11 and SEN63C both read temperature and humidity. Decide which one is the source of truth.
+- The DHT11 and SEN63C both map to `temp_c` and `rh_pct` in the contract, so one overwrites the other. Decide which one is the source of truth, or give them separate keys.
+- Who drives the 2.8" display and the physical buttons: an ESP32, or the Pi? The architecture docs have the ESP32 driving its local display, but our design runs the health card and the AI on the Pi side.
+- The "collect now" button needs a new command in `docs/mqtt_contract.md`. Who adds it?
+- The `e2/` firmware still runs as a WiFi access point. When does it move to MQTT client mode?
+- Where does the camera capture happen, and how is each image linked to a reading?
 - Which job does each of the two ESP32s have? Only one is covered by existing code (`e2/`).
 - How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
 - Which dracaena or panda plant is the live demo plant? (Decide later.)
