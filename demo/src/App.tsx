@@ -1,32 +1,36 @@
 import { useEffect, useRef, useState } from 'react'
-import { FakeButtons } from './components/FakeButtons'
+import { ScreenButtons } from './components/ScreenButtons'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
 import { InputsScreen } from './components/screens/InputsScreen'
 import { SetupFlow } from './components/screens/SetupFlow'
 import { backend } from './backend'
 import type { SensorState } from './components/screens/SetupFlow'
-import type { AskAnswer, DailyHealth, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
+import type { AskAnswer, HealthPoint, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
 import './styles/global.css'
 
 type AppPhase = 'boot' | 'setup_prompt' | 'setup_match' | 'sensor_check' | 'live'
 
 const SENSOR_NAMES = ['Soil', 'AQI', 'Temp/RH']
-/** How long the pump relay stays on for one press of Water. */
-const WATER_SECONDS = 5
+const PAGES: ScreenPage[] = ['health', 'inputs', 'history']
+/** Horizontal travel (px) that counts as a swipe. */
+const SWIPE_PX = 36
+/** How long the mic "listens" before the stand-in transcript is used (Fish Audio replaces this). */
+const LISTEN_MS = 900
 
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>('boot')
   const [busy, setBusy] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [utterance, setUtterance] = useState('dracaena')
   const [match, setMatch] = useState<PlantMatch | null>(null)
   const [plant, setPlant] = useState<PlantType | null>(null)
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null)
-  const [history, setHistory] = useState<DailyHealth[]>([])
+  const [history, setHistory] = useState<HealthPoint[]>([])
   const [page, setPage] = useState<ScreenPage>('health')
   const [sensors, setSensors] = useState<SensorState[]>([])
   const [sensorError, setSensorError] = useState<string | null>(null)
   const [linkOnline, setLinkOnline] = useState(true)
-  const [watering, setWatering] = useState(false)
   const [answer, setAnswer] = useState<AskAnswer | null>(null)
   const [asking, setAsking] = useState(false)
   const [question, setQuestion] = useState('why is it drooping?')
@@ -82,13 +86,7 @@ export default function App() {
     }
   }
 
-  async function onConfirm() {
-    if (phase === 'setup_match' && match) {
-      await runSensorCheck(match.plant)
-    }
-  }
-
-  // Live updates: new readings (the ESP publishes every 10 min and on Collect) and link status.
+  // Live updates: new readings (every 10 min, and whenever TEST is pressed) and link status.
   useEffect(() => {
     if (phase !== 'live' || !plant) return
     return backend.subscribe((event) => {
@@ -101,8 +99,15 @@ export default function App() {
     })
   }, [phase, plant])
 
-  function onVoice() {
-    if (phase === 'live') {
+  // MIC: voice input for Fish Audio. Setup = say the plant; live = ask a question.
+  async function onMic() {
+    if (phase === 'setup_prompt') {
+      if (!utterance.trim() || listening) return
+      setListening(true)
+      await delay(LISTEN_MS) // stand-in for the Fish Audio transcript
+      setListening(false)
+      await submitUtterance(utterance.trim())
+    } else if (phase === 'live') {
       setAsking(true)
       setAnswer(null)
     }
@@ -120,61 +125,74 @@ export default function App() {
     }
   }
 
-  async function onCollect() {
+  // TEST: take a test input now. The health page then shows this most recent test.
+  async function onTest() {
     if (phase !== 'live' || !plant) return
     setBusy(true)
+    setNotice('testing...')
     try {
+      const before = telemetry
       const tel = await backend.collectNow(plant.plant_type_id)
       setTelemetry(tel)
-      setNotice(`now ${tel.health_score}`)
+      setHistory(await backend.getHistory(plant.plant_type_id))
+      setNotice(tel.ts === before?.ts ? 'no new reading' : `tested · health ${tel.health_score ?? '--'}`)
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : 'test failed')
     } finally {
       setBusy(false)
     }
   }
 
-  async function onWater() {
-    if (phase !== 'live' || watering) return
-    setWatering(true)
+  function go(direction: 1 | -1) {
+    setPage((current) => {
+      const next = Math.max(0, Math.min(PAGES.length - 1, PAGES.indexOf(current) + direction))
+      return PAGES[next]
+    })
+    setAnswer(null)
+  }
+
+  // Swipe: drag (mouse) or swipe (finger) left/right on the screen. Arrow keys work too.
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest('button, input')) return
+    swipeStartX.current = e.clientX
     try {
-      await backend.setRelay(true)
-      setNotice('watering')
-      await delay(WATER_SECONDS * 1000)
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : 'water failed')
-    } finally {
-      // Always try to switch the pump off, even if the "on" ack never came.
-      try {
-        await backend.setRelay(false)
-      } catch {
-        setNotice('pump off failed')
-      }
-      setWatering(false)
-      window.setTimeout(() => setNotice(null), 1500)
+      e.currentTarget.setPointerCapture(e.pointerId) // keep the drag even if the cursor leaves the screen
+    } catch {
+      // pointer already gone: the swipe still works from down/up positions
     }
   }
 
-  function onPointerDown(e: React.PointerEvent) {
-    if ((e.target as HTMLElement).closest('button, input')) return
-    swipeStartX.current = e.clientX
+  function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    const start = swipeStartX.current
+    swipeStartX.current = null
+    if (start == null || phase !== 'live' || asking) return
+    const dx = e.clientX - start
+    if (Math.abs(dx) >= SWIPE_PX) go(dx < 0 ? 1 : -1)
   }
 
-  function onPointerUp(e: React.PointerEvent) {
-    if (swipeStartX.current == null || phase !== 'live') return
-    const dx = e.clientX - swipeStartX.current
-    swipeStartX.current = null
-    if (Math.abs(dx) < 36) return
-    const order: ScreenPage[] = ['health', 'inputs', 'history']
-    const index = order.indexOf(page)
-    const next = dx < 0 ? Math.min(order.length - 1, index + 1) : Math.max(0, index - 1)
-    setPage(order[next])
-    setAnswer(null)
-  }
+  useEffect(() => {
+    if (phase !== 'live' || asking) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof Element && e.target.closest('input')) return
+      if (e.key === 'ArrowRight') go(1)
+      if (e.key === 'ArrowLeft') go(-1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase, asking])
+
+  const showButtons = (phase === 'setup_prompt' || phase === 'live') && !asking
 
   return (
     <div className="app-stage">
       <div className="device">
         <div className="bezel">
-          <div className="screen" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+          <div
+            className="screen"
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerCancel={() => (swipeStartX.current = null)}
+          >
             {phase === 'boot' && (
               <div className="setup-screen">
                 <div className="act-title">Deem</div>
@@ -191,8 +209,12 @@ export default function App() {
                 sensors={sensors}
                 sensorError={sensorError}
                 busy={busy}
+                utterance={utterance}
+                onUtteranceChange={setUtterance}
                 onSubmitUtterance={submitUtterance}
-                onConfirmMatch={onConfirm}
+                onConfirmMatch={() => {
+                  if (match) void runSensorCheck(match.plant)
+                }}
                 onRetry={() => {
                   setMatch(null)
                   setPhase('setup_prompt')
@@ -209,7 +231,7 @@ export default function App() {
                 <div className="screen-track" data-page={page}>
                   <HealthScreen plant={plant} telemetry={telemetry} />
                   <InputsScreen plant={plant} telemetry={telemetry} />
-                  <HistoryScreen plant={plant} days={history} />
+                  <HistoryScreen plant={plant} points={history} />
                 </div>
                 {(answer || notice) && !asking && (
                   <button
@@ -220,7 +242,7 @@ export default function App() {
                       setNotice(null)
                     }}
                   >
-                    <div className="ask-sheet-label">{answer ? 'ASK' : 'NOW'}</div>
+                    <div className="ask-sheet-label">{answer ? 'ASK' : 'TEST'}</div>
                     <div>{answer?.answer ?? notice}</div>
                     <div className="ask-sheet-dismiss">tap to close</div>
                   </button>
@@ -252,16 +274,18 @@ export default function App() {
                 )}
               </>
             )}
+
+            {showButtons && (
+              <ScreenButtons
+                showTest={phase === 'live'}
+                disabled={busy || listening}
+                listening={listening}
+                onTest={() => void onTest()}
+                onMic={() => void onMic()}
+              />
+            )}
           </div>
         </div>
-
-        <FakeButtons
-          disabled={busy || watering || phase === 'boot' || phase === 'sensor_check'}
-          onVoice={onVoice}
-          onCollect={() => void onCollect()}
-          onConfirm={() => void onConfirm()}
-          onWater={() => void onWater()}
-        />
       </div>
     </div>
   )

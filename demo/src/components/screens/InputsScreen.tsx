@@ -1,5 +1,6 @@
 import { metricRows } from '../../lib/mqttContract'
 import type { PlantType, Telemetry } from '../../lib/types'
+import { PageFoot } from '../PageFoot'
 import { Sprite } from '../Sprite'
 
 type Props = {
@@ -35,7 +36,7 @@ export function InputsScreen({ plant, telemetry }: Props) {
           </li>
         ))}
       </ul>
-      <div className="act-hint">← health · history →</div>
+      <PageFoot index={1} hint="← →" />
     </div>
   )
 }

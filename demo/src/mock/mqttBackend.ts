@@ -1,7 +1,8 @@
 import mqtt from 'mqtt'
 import { withHealth } from '../lib/healthScore'
-import { DailyHealthStore } from '../lib/historyStore'
+import { HourlyHealthStore } from '../lib/historyStore'
 import {
+  buildCommand,
   parseAckMessage,
   parseStatusMessage,
   parseTelemetryMessage,
@@ -9,14 +10,15 @@ import {
   sensorChecks,
   topics,
 } from '../lib/telemetry'
-import type { CommandAck, SensorCheck } from '../lib/telemetry'
+import type { Command, CommandAck, SensorCheck } from '../lib/telemetry'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
-import type { AskAnswer, DailyHealth, PlantMatch, PlantType, Telemetry } from '../lib/types'
+import type { AskAnswer, HealthPoint, PlantMatch, PlantType, Telemetry } from '../lib/types'
 
 /** Relay channel wired to the water pump (contract: set_relay { channel }). */
 export const PUMP_CHANNEL = 1
 const ACK_TIMEOUT_MS = 5000
 const FIRST_TELEMETRY_TIMEOUT_MS = 15000
+const SAMPLE_TIMEOUT_MS = 8000
 
 /** The small slice of an MQTT client we use. Lets tests inject a fake. */
 export interface MqttLink {
@@ -50,14 +52,14 @@ type Options = {
   link: MqttLink
   /** Plant knowledge, matching and Q&A come from here until Atlas/Gemini are wired in. */
   knowledge: Pick<DeemBackend, 'listPlants' | 'matchPlant' | 'ask'>
-  history?: DailyHealthStore
+  history?: HourlyHealthStore
 }
 
 export class MqttBackend implements DeemBackend {
   private readonly deviceId: string
   private readonly link: MqttLink
   private readonly knowledge: Options['knowledge']
-  private readonly store: DailyHealthStore
+  private readonly store: HourlyHealthStore
 
   private plant: PlantType | null = null
   private latest: Telemetry | null = null
@@ -72,7 +74,7 @@ export class MqttBackend implements DeemBackend {
     this.deviceId = opts.deviceId
     this.link = opts.link
     this.knowledge = opts.knowledge
-    this.store = opts.history ?? new DailyHealthStore()
+    this.store = opts.history ?? new HourlyHealthStore()
 
     this.link.onConnect(() => {
       this.connected = true
@@ -161,17 +163,30 @@ export class MqttBackend implements DeemBackend {
   }
 
   /**
-   * Collect-now is an ESP button (it publishes a fresh telemetry message itself).
-   * There is no Pi->ESP "sample now" command in the v1 contract, so here we just
-   * return the newest reading.
+   * TEST on the screen: ask the ESP for a fresh reading with `sample_now`, then wait for the
+   * telemetry it publishes. Firmware that doesn't know `sample_now` (no ack, or ok:false)
+   * leaves us with the newest reading, which the UI reports as "no new reading".
    */
   async collectNow(plantTypeId: string): Promise<Telemetry> {
-    return this.getLatestTelemetry(plantTypeId)
+    void plantTypeId
+    const fallback = await this.waitForTelemetry(FIRST_TELEMETRY_TIMEOUT_MS)
+    try {
+      const fresh = this.nextTelemetry(SAMPLE_TIMEOUT_MS)
+      const ack = await this.sendCommand(buildCommand('sample_now', {}, this.nextCmdId()))
+      if (!ack.ok) {
+        void fresh.catch(() => {})
+        return fallback
+      }
+      return await fresh
+    } catch {
+      // Firmware without sample_now (no ack) or no fresh reading in time: show the newest one.
+      return this.latest ?? fallback
+    }
   }
 
-  async getHistory(plantTypeId: string): Promise<DailyHealth[]> {
+  async getHistory(plantTypeId: string): Promise<HealthPoint[]> {
     void plantTypeId
-    return this.store.days()
+    return this.store.hours()
   }
 
   listPlants(): Promise<PlantType[]> {
@@ -186,9 +201,29 @@ export class MqttBackend implements DeemBackend {
     return this.knowledge.ask(plantTypeId, question, telemetry ?? this.latest ?? undefined)
   }
 
-  async setRelay(on: boolean): Promise<void> {
+  private nextCmdId(): string {
+    return `ui-${Date.now()}-${++this.cmdCounter}`
+  }
+
+  private nextTelemetry(timeoutMs: number): Promise<Telemetry> {
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => {
+        off()
+        reject(new Error('No new reading'))
+      }, timeoutMs)
+      const off = this.subscribe((e) => {
+        if (e.type !== 'telemetry') return
+        window.clearTimeout(timer)
+        off()
+        resolve(e.telemetry)
+      })
+    })
+  }
+
+  /** Publish a command and resolve with the device's ack (rejects after ACK_TIMEOUT_MS). */
+  private async sendCommand(command: Command): Promise<CommandAck> {
     if (!this.connected) throw new Error('Not connected to the broker')
-    const cmdId = `ui-${Date.now()}-${++this.cmdCounter}`
+    const cmdId = command.cmd_id
     const ack = new Promise<CommandAck>((resolve, reject) => {
       const timer = window.setTimeout(() => {
         this.acks.delete(cmdId)
@@ -200,8 +235,12 @@ export class MqttBackend implements DeemBackend {
         resolve(a)
       })
     })
-    this.link.publish(topics.cmd(this.deviceId), JSON.stringify(relayCommand(PUMP_CHANNEL, on, cmdId)))
-    const result = await ack
+    this.link.publish(topics.cmd(this.deviceId), JSON.stringify(command))
+    return ack
+  }
+
+  async setRelay(on: boolean): Promise<void> {
+    const result = await this.sendCommand(relayCommand(PUMP_CHANNEL, on, this.nextCmdId()))
     if (!result.ok) throw new Error(result.detail ?? 'Device refused the command')
   }
 

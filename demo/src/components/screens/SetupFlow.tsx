@@ -11,6 +11,8 @@ type Props = {
   sensors: SensorState[]
   sensorError: string | null
   busy: boolean
+  utterance: string
+  onUtteranceChange: (text: string) => void
   onSubmitUtterance: (text: string) => void
   onConfirmMatch: () => void
   onRetry: () => void
@@ -23,12 +25,14 @@ export function SetupFlow({
   sensors,
   sensorError,
   busy,
+  utterance,
+  onUtteranceChange,
   onSubmitUtterance,
   onConfirmMatch,
   onRetry,
   onRecheck,
 }: Props) {
-  const [text, setText] = useState('dracaena')
+  const text = utterance
 
   if (phase === 'prompt') {
     return (
@@ -38,14 +42,14 @@ export function SetupFlow({
         <input
           className="setup-input"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => onUtteranceChange(e.target.value)}
           placeholder="plant name"
           aria-label="Plant name"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && text.trim()) onSubmitUtterance(text.trim())
           }}
         />
-        <div className="touch-actions">
+        <div className="touch-actions reserve-right">
           <button
             type="button"
             className="touch-btn primary"
