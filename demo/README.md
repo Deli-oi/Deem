@@ -25,15 +25,34 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 
 ## Demo flow
 
-All controls are on the screen. There is no button row under the device.
+**MIC** and **TEST** are physical keyboard keys, not buttons on the screen. Defaults: `M` = MIC (hold to talk, release to send), `T` = TEST. Change them in `src/lib/keys.ts`. Confirm/retry are touch buttons on the screen. There is no typing.
 
-1. Boot → setup prompt
-2. Type a plant name, or press **MIC** (bottom-right; stand-in for Fish Audio) to "say" it
-3. **CONFIRM** the match → sensor check
-4. Health page: the most recent test, with a **LAST TEST** time at the top
-5. **TEST** (bottom-right, above MIC) takes a test input now. The mock walks the fixtures (healthy, dry soil, high CO2, ...)
-6. **MIC** on the live screen opens the Q&A box (mock agent)
-7. **Swipe** left/right (mouse drag, finger swipe, or arrow keys): health → inputs → history. The history page is a line chart of the **average health per hour**
+1. Boot → setup prompt: "Hold the MIC key and say your plant."
+2. Hold **MIC**, say the plant, release. The screen shows what it heard, then the match to confirm
+3. Tap **CONFIRM** → sensor check
+4. Health page: the most recent test, with a **LAST TEST** time. A hint ("solution needed? ↓") points at the MIC key
+5. **TEST** takes a test input now. The mock walks the fixtures (healthy, dry soil, high CO2, ...)
+6. Hold **MIC** on the live screen and ask a question out loud; the answer appears on screen
+7. **Swipe** left/right (finger, mouse drag, or arrow keys): health → inputs → history. History is a line chart of the **average health per hour**
+
+## Voice (Fish Audio speech-to-text)
+
+Hold MIC → the browser records → `POST /api/transcribe` → `server/` forwards to Fish Audio (`transcribe-1-pro`) → text.
+The API key lives only on the server.
+
+```bash
+npm run build
+FISH_AUDIO_API_KEY=... npm start      # serves dist/ and /api/transcribe on :3000
+```
+
+- On Railway, add the variable `FISH_AUDIO_API_KEY` to the service. Without it the screen says "Voice is not set up yet."
+- Local dev with real voice: run `npm start` (above, port 3000) next to `npm run dev`; Vite proxies `/api` to it.
+- Local dev with no mic or key: `VITE_VOICE=fake npm run dev` cycles canned phrases ("dracaena", "why is it drooping?", ...). Override with `VITE_FAKE_VOICE_TEXT="a|b|c"`.
+- Safeguards on `/api/transcribe`: same-origin only, 5 MB cap, 20 requests per minute per IP.
+
+## Kiosk mode (the real 2.8" panel)
+
+Open `/?kiosk` to make the page the screen itself (no bezel, 240x320 fits exactly). Details and the open hardware questions: `docs/display_kiosk.md`.
 
 ## Data
 
@@ -63,7 +82,7 @@ What the UI does against the contract:
 - Setup's sensor check passes when the first telemetry message contains each sensor's metrics (Soil: `soil_moisture`, AQI: `co2_ppm`, Temp/RH: `temp_c` + `rh_pct`). It fails if the device never reports.
 - "device offline" shows when the broker drops or the device's Last Will (`status: offline`) arrives.
 - The backend can switch the pump with `set_relay { channel: 1 }` (acked, always followed by `off`). There is no Water button on the screen; it is for the automatic watering logic.
-- **TEST** sends `sample_now` (added to the contract as an additive action) and shows the fresh telemetry the ESP publishes. If the firmware doesn't support it (no ack, or `ok:false`), the screen shows the newest reading and says "no new reading".
+- **TEST** (physical key) sends `sample_now` (added to the contract as an additive action) and shows the fresh telemetry the ESP publishes. If the firmware doesn't support it (no ack, or `ok:false`), the screen shows the newest reading and says "no new reading".
 - History: one point per hour, the average of that hour's health scores. The last 24 hours are kept in `localStorage`.
 
 Things for the firmware to confirm:

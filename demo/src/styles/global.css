@@ -453,7 +453,7 @@ input {
   position: absolute;
   left: 8px;
   right: 8px;
-  bottom: 112px;
+  bottom: 8px;
   z-index: 4;
   text-align: left;
   background: #1c1c1e;
@@ -489,12 +489,10 @@ input {
   z-index: 5;
 }
 
-/* Bottom strip of each live page. The right 76px stays clear for .screen-buttons. */
+/* Bottom strip of each live page. */
 .page-foot {
   display: grid;
   gap: 6px;
-  margin-right: 76px;
-  min-height: 96px;
   align-content: end;
 }
 
@@ -548,59 +546,172 @@ input {
   margin-right: 76px;
 }
 
-/* On-screen buttons, bottom-right of the display: TEST stacked over MIC. */
-.screen-buttons {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 64px;
-  display: grid;
-  gap: 6px;
-  z-index: 6;
+.page-nav {
+  justify-content: space-between;
 }
 
-.sb {
-  appearance: none;
-  display: grid;
-  place-items: center;
-  gap: 2px;
-  height: 44px;
+.key-hint {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--soil);
+  text-align: right;
+}
+
+.setup-copy.hint {
+  font-size: 12px;
+  color: #636366;
+}
+
+/* Voice status while setting up (the MIC key itself is a physical key, not on the screen). */
+.voice-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 12px;
   border: 2px solid #3a3a3c;
   border-radius: 10px;
-  background: #1c1c1e;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.sb:active:not(:disabled) {
-  transform: translateY(2px);
-}
-
-.sb:disabled {
-  opacity: 0.5;
-}
-
-.sb-glyph {
-  font-family: var(--font-pixel);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-}
-
-.sb-sub {
+  background: var(--card);
   font-family: var(--font-num);
-  font-size: 13px;
-  line-height: 1;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.voice-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  background: #636366;
+}
+
+.voice-status.recording {
+  border-color: var(--soil);
+}
+
+.voice-status.recording .voice-dot {
+  background: var(--soil);
+  animation: voice-blink 0.7s steps(2, start) infinite;
+}
+
+.voice-status.transcribing {
+  border-color: var(--rh);
+}
+
+.voice-status.transcribing .voice-dot {
+  background: var(--rh);
+}
+
+.voice-status.error {
+  border-color: #ffb340;
+  color: #ffb340;
+}
+
+@keyframes voice-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.voice-note {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border: 2px solid var(--soil);
+  border-radius: 6px;
+  background: #1c1c1e;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--soil);
+}
+
+.voice-note .voice-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.voice-note.transcribing {
+  border-color: var(--rh);
+  color: var(--rh);
+}
+
+.ask-q {
+  margin-bottom: 4px;
   color: var(--muted);
 }
 
-.sb-test {
-  background: #16301f;
-  border-color: var(--temp);
-  color: var(--temp);
+/* ---- Kiosk mode (?kiosk): the page is the 2.8" screen itself. ---- */
+html.kiosk,
+html.kiosk body,
+html.kiosk #root {
+  overflow: hidden;
+  cursor: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: #000;
 }
 
-.sb-mic {
-  background: #2a2410;
-  border-color: #ffb340;
-  color: #ffb340;
+html.kiosk .app-stage {
+  display: block;
+  padding: 0;
+  min-height: 0;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+html.kiosk .device {
+  position: absolute;
+  left: var(--kx, 0);
+  top: var(--ky, 0);
+  width: 300px;
+  max-width: none;
+  gap: 0;
+  transform: scale(var(--k, 1));
+  transform-origin: top left;
+}
+
+html.kiosk .bezel {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html.kiosk .screen {
+  width: 300px;
+  height: 400px;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+/* On the real 240x320 panel the canvas is scaled 0.8x, so the pixel font's small sizes would
+   land under its 8px grid. Keep every label at >= 10px design size (8px on the panel). */
+html.kiosk .act-test span,
+html.kiosk .act-hint,
+html.kiosk .key-hint,
+html.kiosk .act-score-pip .l,
+html.kiosk .link-banner,
+html.kiosk .voice-note,
+html.kiosk .act-footer .k,
+html.kiosk .act-stat-label,
+html.kiosk .ask-sheet-label,
+html.kiosk .ask-sheet-dismiss,
+html.kiosk .chart-empty,
+html.kiosk .input-list li,
+html.kiosk .sensor-list li {
+  font-size: 10px;
+}
+
+html.kiosk .chart-label {
+  font-size: 10px;
+}
+
+html.kiosk .page-dots i {
+  width: 8px;
+  height: 8px;
 }
