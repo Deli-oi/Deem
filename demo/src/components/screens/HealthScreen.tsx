@@ -60,9 +60,9 @@ export function HealthScreen({ plant, telemetry }: Props) {
           <ActivityRings
             size={118}
             rings={[
-              { progress: soilP, color: 'var(--soil)', track: 'var(--track)' },
-              { progress: tempP, color: 'var(--temp)', track: 'var(--track)' },
-              { progress: rhP, color: 'var(--rh)', track: 'var(--track)' },
+              { progress: soilP, color: '#ff2d55', track: '#2c2c2e' },
+              { progress: tempP, color: '#d4ff4a', track: '#2c2c2e' },
+              { progress: rhP, color: '#64d2ff', track: '#2c2c2e' },
             ]}
           />
           <div className="act-score-pip">
