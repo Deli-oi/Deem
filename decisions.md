@@ -11,12 +11,22 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Railway project linked
+- **Decision:** Use the Railway project already linked to Deem / the software lead’s GitHub as the cloud host for app services.
+- **Refs (from dashboard URL):**
+  - Project: `594f967f-9a15-4c14-8f30-cc6f69ee465f`
+  - Service: `f3619240-43a4-47b3-943b-e7dfed0c991d`
+  - Environment: `8bc02acd-2aed-4b6a-b638-74de3d0d7f49`
+  - URL: `https://railway.com/project/594f967f-9a15-4c14-8f30-cc6f69ee465f/service/f3619240-43a4-47b3-943b-e7dfed0c991d?environmentId=8bc02acd-2aed-4b6a-b638-74de3d0d7f49`
+- **Access:** Agent needs a Railway API/token secret in Cursor (e.g. `RAILWAY_TOKEN`) — the public project link alone is not enough to manage the service from this environment.
+- **Why:** Unblocks deploy/wiring once token + Mongo/Gemini/Fish secrets are available.
+
 ### 2026-11-07: Ownership split, hosting, camera deferral, sprites, local demo
 - **Decision:**
   - **ESP owns** sensors, the 2.8" display, and physical buttons (both ESP32 boards stay in the ESP/firmware lane — no Pi UI).
   - **Pi owns** audio for alarms and voice I/O (USB mic + speaker), plus MQTT central controller, Gemini/Fish clients, and cloud writes.
   - **MongoDB Atlas** is hosted in the cloud over the internet (not on-box).
-  - **Railway** hosts our software services; account setup pending from software lead.
+  - **Railway** hosts our software services (project linked; see entry above).
   - **Camera dropped for first iteration** (storage cost, weak health signal for MVP). Revisit later.
   - **Sprites:** generate one reference sprite for one plant first; after all MVP plant types exist in Mongo, use that sprite as the style reference to produce one per type and attach each to its plant-type document for setup to pull.
   - **Local demo first:** fixture JSON telemetry (dracaena), scaled on-screen display mock, swipeable health + history pages, and fake buttons under the mock that later map to real hardware.
