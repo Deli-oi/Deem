@@ -1,0 +1,4 @@
+# Deem Pi central controller dependencies
+paho-mqtt>=2.0,<3.0
+PyYAML>=6.0
+requests>=2.31
