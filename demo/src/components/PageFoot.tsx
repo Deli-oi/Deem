@@ -2,8 +2,19 @@ import type { ReactNode } from 'react'
 
 const PAGES = 3
 
-/** Bottom strip of every live page. The right side is left clear for the on-screen buttons. */
-export function PageFoot({ index, hint, children }: { index: number; hint: string; children?: ReactNode }) {
+/** Bottom strip of every live page: page dots, swipe hint, and an optional hint for a physical key. */
+export function PageFoot({
+  index,
+  hint,
+  keyHint,
+  children,
+}: {
+  index: number
+  hint: string
+  /** Points at a physical key below the screen (it is not a button on the screen). */
+  keyHint?: string
+  children?: ReactNode
+}) {
   return (
     <div className="page-foot">
       {children}
@@ -14,6 +25,7 @@ export function PageFoot({ index, hint, children }: { index: number; hint: strin
           ))}
         </span>
         <span className="act-hint">{hint}</span>
+        {keyHint && <span className="key-hint">{keyHint}</span>}
       </div>
     </div>
   )

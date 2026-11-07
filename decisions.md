@@ -11,7 +11,14 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
-### 2026-11-07: On-screen buttons, hourly chart, sample_now
+### 2026-11-07: MIC and TEST are physical keys; Fish Audio voice via a server
+- **Decision:** MIC (hold to talk) and TEST are mechanical-keyboard keys, not on the screen. No typing: setup and questions are voice only through Fish Audio speech-to-text. The Fish Audio key lives on a small server (`demo/server`, env `FISH_AUDIO_API_KEY`); the browser only talks to `/api/transcribe`. A `?kiosk` mode fits the real 240x320 panel.
+- **Why:** The device has no keyboard or text entry, and the API key must not ship in browser code.
+- **Open:** Which device drives the 2.8" TFT (Pi vs ESP32) and its exact model; see `docs/display_kiosk.md`.
+
+---
+
+### 2026-11-07: Hourly chart and sample_now (the on-screen buttons part was replaced by the entry above)
 - **Decision:**
   - All controls move onto the 2.8" screen: confirm/retry, a MIC button (Fish Audio voice) on the right, and a TEST button (take a test input) stacked above it. No hardware button row.
   - The health page shows the most recent test. The swipe-right chart is the average health per hour (was per day).

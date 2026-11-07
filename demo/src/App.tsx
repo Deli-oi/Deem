@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { ScreenButtons } from './components/ScreenButtons'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
 import { InputsScreen } from './components/screens/InputsScreen'
 import { SetupFlow } from './components/screens/SetupFlow'
 import { backend } from './backend'
-import type { SensorState } from './components/screens/SetupFlow'
+import { hardwareKeyFor } from './lib/keys'
+import { voiceMessage } from './lib/voice'
+import type { Listening } from './lib/voice'
+import { voice } from './voice'
+import type { SensorState, VoiceState } from './components/screens/SetupFlow'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
 import './styles/global.css'
 
@@ -15,14 +18,17 @@ const SENSOR_NAMES = ['Soil', 'AQI', 'Temp/RH']
 const PAGES: ScreenPage[] = ['health', 'inputs', 'history']
 /** Horizontal travel (px) that counts as a swipe. */
 const SWIPE_PX = 36
-/** How long the mic "listens" before the stand-in transcript is used (Fish Audio replaces this). */
-const LISTEN_MS = 900
+/** A voice recording is cut off after this long even if the MIC key is still held. */
+const MAX_LISTEN_MS = 8000
+/** Shorter than this is a tap, not speech: ignore it. */
+const MIN_LISTEN_MS = 400
 
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>('boot')
   const [busy, setBusy] = useState(false)
-  const [listening, setListening] = useState(false)
-  const [utterance, setUtterance] = useState('dracaena')
+  const [voiceState, setVoiceState] = useState<VoiceState>('idle')
+  const [heard, setHeard] = useState<string | null>(null)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
   const [match, setMatch] = useState<PlantMatch | null>(null)
   const [plant, setPlant] = useState<PlantType | null>(null)
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null)
@@ -32,10 +38,19 @@ export default function App() {
   const [sensorError, setSensorError] = useState<string | null>(null)
   const [linkOnline, setLinkOnline] = useState(true)
   const [answer, setAnswer] = useState<AskAnswer | null>(null)
-  const [asking, setAsking] = useState(false)
-  const [question, setQuestion] = useState('why is it drooping?')
   const [notice, setNotice] = useState<string | null>(null)
   const swipeStartX = useRef<number | null>(null)
+
+  // Key handlers are registered once; they read the latest state through these refs.
+  const phaseRef = useRef(phase)
+  const voiceRef = useRef(voiceState)
+  const busyRef = useRef(busy)
+  const listenRef = useRef<Listening | null>(null)
+  const holdingRef = useRef(false)
+  const startedAtRef = useRef(0)
+  phaseRef.current = phase
+  voiceRef.current = voiceState
+  busyRef.current = busy
 
   useEffect(() => {
     const t = window.setTimeout(() => setPhase('setup_prompt'), 500)
@@ -44,11 +59,20 @@ export default function App() {
 
   async function submitUtterance(text: string) {
     setBusy(true)
-    setAnswer(null)
     try {
       const result = await backend.matchPlant(text)
       setMatch(result)
       setPhase('setup_match')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function askQuestion(question: string) {
+    if (!plant) return
+    setBusy(true)
+    try {
+      setAnswer(await backend.ask(plant.plant_type_id, question, telemetry ?? undefined))
     } finally {
       setBusy(false)
     }
@@ -99,36 +123,58 @@ export default function App() {
     })
   }, [phase, plant])
 
-  // MIC: voice input for Fish Audio. Setup = say the plant; live = ask a question.
-  async function onMic() {
-    if (phase === 'setup_prompt') {
-      if (!utterance.trim() || listening) return
-      setListening(true)
-      await delay(LISTEN_MS) // stand-in for the Fish Audio transcript
-      setListening(false)
-      await submitUtterance(utterance.trim())
-    } else if (phase === 'live') {
-      setAsking(true)
-      setAnswer(null)
-    }
-  }
-
-  async function sendAsk() {
-    if (!plant || !question.trim()) return
-    setBusy(true)
+  // ---- MIC key: hold to talk, release to send. Setup = say the plant; live = ask a question.
+  async function micDown() {
+    const p = phaseRef.current
+    if ((p !== 'setup_prompt' && p !== 'live') || voiceRef.current !== 'idle' || busyRef.current) return
+    holdingRef.current = true
+    setVoiceError(null)
+    setAnswer(null)
     try {
-      const res = await backend.ask(plant.plant_type_id, question.trim(), telemetry ?? undefined)
-      setAnswer(res)
-      setAsking(false)
-    } finally {
-      setBusy(false)
+      const active = await voice.listen(MAX_LISTEN_MS, () => void micUp())
+      listenRef.current = active
+      startedAtRef.current = performance.now()
+      setVoiceState('recording')
+      if (!holdingRef.current) await micUp() // key was released while the mic was starting
+    } catch (err) {
+      holdingRef.current = false
+      setVoiceError(voiceMessage(err))
     }
   }
 
-  // TEST: take a test input now. The health page then shows this most recent test.
-  async function onTest() {
-    if (phase !== 'live' || !plant) return
+  async function micUp() {
+    holdingRef.current = false
+    const active = listenRef.current
+    if (!active) return
+    listenRef.current = null
+    if (performance.now() - startedAtRef.current < MIN_LISTEN_MS) {
+      active.cancel()
+      setVoiceState('idle')
+      setVoiceError('Hold the MIC key and speak.')
+      return
+    }
+    setVoiceState('transcribing')
+    try {
+      const text = await active.finish()
+      if (!text) {
+        setVoiceError("Didn't catch that. Try again.")
+        return
+      }
+      setHeard(text)
+      if (phaseRef.current === 'setup_prompt') await submitUtterance(text)
+      else if (phaseRef.current === 'live') await askQuestion(text)
+    } catch (err) {
+      setVoiceError(voiceMessage(err))
+    } finally {
+      setVoiceState('idle')
+    }
+  }
+
+  // ---- TEST key: take a test input now. The health page then shows this most recent test.
+  async function testKey() {
+    if (phaseRef.current !== 'live' || !plant || busyRef.current || voiceRef.current !== 'idle') return
     setBusy(true)
+    setAnswer(null)
     setNotice('testing...')
     try {
       const before = telemetry
@@ -151,12 +197,40 @@ export default function App() {
     setAnswer(null)
   }
 
-  // Swipe: drag (mouse) or swipe (finger) left/right on the screen. Arrow keys work too.
+  // Latest handlers for the window listeners below.
+  const handlers = useRef({ micDown, micUp, testKey, go })
+  handlers.current = { micDown, micUp, testKey, go }
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.repeat) return
+      const key = hardwareKeyFor(e.code)
+      if (key === 'mic') {
+        e.preventDefault()
+        void handlers.current.micDown()
+      } else if (key === 'test') {
+        e.preventDefault()
+        void handlers.current.testKey()
+      } else if (phaseRef.current === 'live' && e.code === 'ArrowRight') handlers.current.go(1)
+      else if (phaseRef.current === 'live' && e.code === 'ArrowLeft') handlers.current.go(-1)
+    }
+    const up = (e: KeyboardEvent) => {
+      if (hardwareKeyFor(e.code) === 'mic') void handlers.current.micUp()
+    }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => {
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+    }
+  }, [])
+
+  // Swipe on the touch screen: finger (or mouse drag) left/right.
   function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest('button, input')) return
+    if ((e.target as HTMLElement).closest('button')) return
     swipeStartX.current = e.clientX
     try {
-      e.currentTarget.setPointerCapture(e.pointerId) // keep the drag even if the cursor leaves the screen
+      e.currentTarget.setPointerCapture(e.pointerId) // keep the drag even if the finger leaves the screen
     } catch {
       // pointer already gone: the swipe still works from down/up positions
     }
@@ -165,23 +239,12 @@ export default function App() {
   function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
     const start = swipeStartX.current
     swipeStartX.current = null
-    if (start == null || phase !== 'live' || asking) return
+    if (start == null || phase !== 'live') return
     const dx = e.clientX - start
     if (Math.abs(dx) >= SWIPE_PX) go(dx < 0 ? 1 : -1)
   }
 
-  useEffect(() => {
-    if (phase !== 'live' || asking) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof Element && e.target.closest('input')) return
-      if (e.key === 'ArrowRight') go(1)
-      if (e.key === 'ArrowLeft') go(-1)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [phase, asking])
-
-  const showButtons = (phase === 'setup_prompt' || phase === 'live') && !asking
+  const sheetText = answer ? answer.answer : notice
 
   return (
     <div className="app-stage">
@@ -209,14 +272,16 @@ export default function App() {
                 sensors={sensors}
                 sensorError={sensorError}
                 busy={busy}
-                utterance={utterance}
-                onUtteranceChange={setUtterance}
-                onSubmitUtterance={submitUtterance}
+                voiceState={voiceState}
+                heard={heard}
+                voiceError={voiceError}
                 onConfirmMatch={() => {
                   if (match) void runSensorCheck(match.plant)
                 }}
                 onRetry={() => {
                   setMatch(null)
+                  setHeard(null)
+                  setVoiceError(null)
                   setPhase('setup_prompt')
                 }}
                 onRecheck={() => {
@@ -228,61 +293,34 @@ export default function App() {
             {phase === 'live' && plant && telemetry && (
               <>
                 {!linkOnline && <div className="link-banner">device offline</div>}
+                {voiceState !== 'idle' && (
+                  <div className={`voice-note ${voiceState}`}>
+                    <span className="voice-dot" />
+                    {voiceState === 'recording' ? 'LISTENING' : 'HEARING'}
+                  </div>
+                )}
                 <div className="screen-track" data-page={page}>
                   <HealthScreen plant={plant} telemetry={telemetry} />
                   <InputsScreen plant={plant} telemetry={telemetry} />
                   <HistoryScreen plant={plant} points={history} />
                 </div>
-                {(answer || notice) && !asking && (
+                {(sheetText || voiceError) && voiceState === 'idle' && (
                   <button
                     type="button"
                     className="ask-sheet"
                     onClick={() => {
                       setAnswer(null)
                       setNotice(null)
+                      setVoiceError(null)
                     }}
                   >
-                    <div className="ask-sheet-label">{answer ? 'ASK' : 'TEST'}</div>
-                    <div>{answer?.answer ?? notice}</div>
+                    <div className="ask-sheet-label">{answer ? 'ASK' : voiceError ? 'MIC' : 'TEST'}</div>
+                    {answer && <div className="ask-q">"{answer.question}"</div>}
+                    <div>{voiceError ?? sheetText}</div>
                     <div className="ask-sheet-dismiss">tap to close</div>
                   </button>
                 )}
-                {asking && (
-                  <form
-                    className="ask-form"
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      void sendAsk()
-                    }}
-                  >
-                    <div className="act-title">Ask</div>
-                    <input
-                      className="setup-input"
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      aria-label="Question"
-                    />
-                    <div className="touch-actions dual">
-                      <button type="button" className="touch-btn" onClick={() => setAsking(false)}>
-                        BACK
-                      </button>
-                      <button type="submit" className="touch-btn primary" disabled={busy}>
-                        {busy ? '...' : 'SEND'}
-                      </button>
-                    </div>
-                  </form>
-                )}
               </>
-            )}
-
-            {showButtons && (
-              <ScreenButtons
-                showTest={phase === 'live'}
-                disabled={busy || listening}
-                listening={listening}
-                onTest={() => void onTest()}
-                onMic={() => void onMic()}
-              />
             )}
           </div>
         </div>

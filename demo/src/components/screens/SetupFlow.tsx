@@ -5,18 +5,31 @@ type Phase = 'prompt' | 'match' | 'sensor_check'
 
 export type SensorState = { name: string; state: 'pending' | 'ok' | 'fail' }
 
+export type VoiceState = 'idle' | 'recording' | 'transcribing'
+
 type Props = {
   phase: Phase
   match: PlantMatch | null
   sensors: SensorState[]
   sensorError: string | null
+  /** Matching the heard plant name against the database. */
   busy: boolean
-  utterance: string
-  onUtteranceChange: (text: string) => void
-  onSubmitUtterance: (text: string) => void
+  voiceState: VoiceState
+  /** What the device heard (shown so a mis-hearing is obvious). */
+  heard: string | null
+  voiceError: string | null
   onConfirmMatch: () => void
   onRetry: () => void
   onRecheck: () => void
+}
+
+function promptStatus({ voiceState, busy, heard, voiceError }: Pick<Props, 'voiceState' | 'busy' | 'heard' | 'voiceError'>) {
+  if (voiceError) return voiceError
+  if (voiceState === 'recording') return 'Listening...'
+  if (voiceState === 'transcribing') return 'Hearing you...'
+  if (busy) return 'Matching...'
+  if (heard) return `Heard: "${heard}"`
+  return 'Waiting for MIC'
 }
 
 export function SetupFlow({
@@ -25,40 +38,23 @@ export function SetupFlow({
   sensors,
   sensorError,
   busy,
-  utterance,
-  onUtteranceChange,
-  onSubmitUtterance,
+  voiceState,
+  heard,
+  voiceError,
   onConfirmMatch,
   onRetry,
   onRecheck,
 }: Props) {
-  const text = utterance
-
   if (phase === 'prompt') {
     return (
       <div className="setup-screen">
         <div className="act-title">Setup</div>
-        <p className="setup-copy">Say the plant, or type it.</p>
-        <input
-          className="setup-input"
-          value={text}
-          onChange={(e) => onUtteranceChange(e.target.value)}
-          placeholder="plant name"
-          aria-label="Plant name"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && text.trim()) onSubmitUtterance(text.trim())
-          }}
-        />
-        <div className="touch-actions reserve-right">
-          <button
-            type="button"
-            className="touch-btn primary"
-            disabled={busy || !text.trim()}
-            onClick={() => onSubmitUtterance(text.trim())}
-          >
-            {busy ? '...' : 'MATCH'}
-          </button>
+        <p className="setup-copy">Hold the MIC key and say your plant.</p>
+        <div className={`voice-status ${voiceError ? 'error' : voiceState}`} role="status">
+          <span className="voice-dot" />
+          <span>{promptStatus({ voiceState, busy, heard, voiceError })}</span>
         </div>
+        <p className="setup-copy hint">Try "golden pothos" or "dracaena".</p>
       </div>
     )
   }
@@ -67,6 +63,7 @@ export function SetupFlow({
     return (
       <ConfirmMatch
         match={match}
+        heard={heard}
         onRetry={onRetry}
         onConfirmMatch={onConfirmMatch}
       />
@@ -77,7 +74,7 @@ export function SetupFlow({
     return (
       <div className="setup-screen">
         <div className="act-title">No match</div>
-        <p className="setup-copy">Try another houseplant.</p>
+        <p className="setup-copy">{heard ? `Heard "${heard}". ` : ''}Try another houseplant.</p>
         <div className="touch-actions">
           <button type="button" className="touch-btn primary" onClick={onRetry}>
             RETRY
@@ -120,10 +117,12 @@ export function SetupFlow({
 
 function ConfirmMatch({
   match,
+  heard,
   onRetry,
   onConfirmMatch,
 }: {
   match: PlantMatch
+  heard: string | null
   onRetry: () => void
   onConfirmMatch: () => void
 }) {
@@ -136,6 +135,7 @@ function ConfirmMatch({
   return (
     <div className="setup-screen">
       <div className="act-title">Confirm?</div>
+      {heard && <p className="setup-copy hint">Heard: "{heard}"</p>}
       <div className="match-card">
         <strong>{prettyName(match.plant)}</strong>
         <div className="sci">{match.plant.scientific_name}</div>
