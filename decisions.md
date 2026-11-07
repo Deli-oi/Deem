@@ -14,7 +14,8 @@ A log of key project decisions. Add newest entries at the top.
 ### 2026-11-07: MIC and TEST are physical keys; Fish Audio voice via a server
 - **Decision:** MIC (hold to talk) and TEST are mechanical-keyboard keys, not on the screen. No typing: setup and questions are voice only through Fish Audio speech-to-text. The Fish Audio key lives on a small server (`demo/server`, env `FISH_AUDIO_API_KEY`); the browser only talks to `/api/transcribe`. A `?kiosk` mode fits the real 240x320 panel.
 - **Why:** The device has no keyboard or text entry, and the API key must not ship in browser code.
-- **Open:** Which device drives the 2.8" TFT (Pi vs ESP32) and its exact model; see `docs/display_kiosk.md`.
+- **Resolved:** The 2.8" TFT is on the Pi 5 (so the web app is the screen UI). Connor is making his Pi screen integration match what the web app expects (`docs/display_kiosk.md`).
+- **Open:** The TFT's exact model/product link (from Zion).
 
 ---
 

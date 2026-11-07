@@ -2,11 +2,25 @@
 
 Status: **not verified on real hardware.** The app side is ready; the display side needs two answers (below).
 
-## 1. Blocking questions
+## 1. Open questions
 
-1. **Which device is the TFT wired to: the Pi 5 or an ESP32?**
-   The repo disagrees. `docs/architecture.md` says the ESP32 drives its local OLED/TFT. `docs/mqtt_contract.md` lists the 2.8" TFT as a Pi-side device. A web app can only run on the Pi (an ESP32 cannot run a browser). If the TFT is on an ESP32, the screen UI has to be rewritten in firmware (e.g. LVGL) and this web app only serves as the design reference.
-2. **What is the exact module?** `hardware_info.md` only says "2.8" SPI Serial TFT Display" and lists it as a touch screen. We need the product name/link, the display controller (very likely ILI9341, 240x320) and the touch controller (very likely XPT2046). The driver setup depends on it.
+1. ~~Which device is the TFT wired to?~~ **Resolved (2026-11-07): the TFT is on the Pi 5.** So the web app is the screen UI. (`docs/architecture.md` still says the ESP32 drives "its local OLED/TFT"; that now only applies to the small OLED in the `e2/` firmware, not the 2.8" TFT.)
+2. **What is the exact module?** `hardware_info.md` only says "2.8" SPI Serial TFT Display" and lists it as a touch screen. We are waiting on the product link from Zion. We need the display controller (very likely ILI9341, 240x320) and the touch controller (very likely XPT2046). The driver setup depends on it.
+
+## What Connor's Pi screen integration must match
+
+Connor owns getting the page onto the panel. The web app expects:
+
+| Item | Requirement |
+|------|-------------|
+| URL | `http://localhost:3000/?kiosk` (`npm start` in `demo/`; `?kiosk` makes the page the screen) |
+| Resolution | **240x320, portrait.** The UI is a 300x400 (3:4) canvas scaled to the viewport (0.8x). Landscape 320x240 would shrink it to 0.6x. |
+| Browser | Chromium in kiosk mode, microphone allowed for `localhost` |
+| Touch | Pointer events from the panel's touch driver. Used only for the confirm/retry buttons and left/right swipes. |
+| Keys | A keyboard (the mechanical keys) delivering key events to the browser: `KeyM` = MIC (hold), `KeyT` = TEST. Remap in `demo/src/lib/keys.ts`. |
+| Audio | USB mic as the browser's default input (voice); USB speaker as default output |
+| Network | `/api/transcribe` is served by the same `npm start` process. The Pi needs internet to reach Fish Audio. Env var `FISH_AUDIO_API_KEY` set for that process. |
+| Live data | Build with `VITE_BACKEND=mqtt` and `VITE_MQTT_URL=ws://localhost:9001`, `VITE_DEVICE_ID=esp32-pot-01` (see `demo/README.md`) |
 
 ## 2. What the app already does
 
