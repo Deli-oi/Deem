@@ -66,17 +66,21 @@ input {
 
 .screen-track {
   display: flex;
-  width: 200%;
+  width: 300%;
   height: 100%;
   transition: transform 280ms steps(6, end);
 }
 
+.screen-track[data-page='inputs'] {
+  transform: translateX(-33.333%);
+}
+
 .screen-track[data-page='history'] {
-  transform: translateX(-50%);
+  transform: translateX(-66.666%);
 }
 
 .screen-page {
-  width: 50%;
+  width: 33.333%;
   height: 100%;
   padding: 10px 10px 8px;
   display: flex;
@@ -223,6 +227,32 @@ input {
   font-size: 7px;
   color: #636366;
   text-align: right;
+}
+
+.input-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  overflow: auto;
+}
+
+.input-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+}
+
+.input-list li span:last-child {
+  font-family: var(--font-num);
+  font-size: 18px;
+  color: var(--temp);
 }
 
 .history-chart {

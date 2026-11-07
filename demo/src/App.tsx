@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FakeButtons } from './components/FakeButtons'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
+import { InputsScreen } from './components/screens/InputsScreen'
 import { SetupFlow } from './components/screens/SetupFlow'
 import { backend } from './mock/backend'
 import type { AskAnswer, DailyHealth, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
@@ -115,7 +116,10 @@ export default function App() {
     const dx = e.clientX - swipeStartX.current
     swipeStartX.current = null
     if (Math.abs(dx) < 36) return
-    setPage(dx < 0 ? 'history' : 'health')
+    const order: ScreenPage[] = ['health', 'inputs', 'history']
+    const index = order.indexOf(page)
+    const next = dx < 0 ? Math.min(order.length - 1, index + 1) : Math.max(0, index - 1)
+    setPage(order[next])
     setAnswer(null)
   }
 
@@ -152,6 +156,7 @@ export default function App() {
               <>
                 <div className="screen-track" data-page={page}>
                   <HealthScreen plant={plant} telemetry={telemetry} />
+                  <InputsScreen plant={plant} telemetry={telemetry} />
                   <HistoryScreen plant={plant} days={history} />
                 </div>
                 {(answer || notice) && !asking && (
