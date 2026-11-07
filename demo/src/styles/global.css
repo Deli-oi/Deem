@@ -164,8 +164,19 @@ input {
 .sprite {
   width: 42px;
   height: 42px;
-  image-rendering: pixelated;
   border-radius: 8px;
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 2px rgba(155, 224, 138, 0.35);
+}
+
+.sprite--img {
+  object-fit: cover;
+  image-rendering: pixelated;
+  background: #101a15;
+  animation: bob 2.8s ease-in-out infinite;
+}
+
+.sprite--fallback {
   background:
     linear-gradient(135deg, rgba(155, 224, 138, 0.25), transparent),
     repeating-linear-gradient(
@@ -173,13 +184,11 @@ input {
       #1d3328 0 4px,
       #244033 4px 8px
     );
-  box-shadow: inset 0 0 0 2px rgba(155, 224, 138, 0.35);
   position: relative;
   overflow: hidden;
-  flex: 0 0 auto;
 }
 
-.sprite::after {
+.sprite--fallback::after {
   content: '';
   position: absolute;
   inset: 8px 10px 6px;
