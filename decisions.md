@@ -11,6 +11,19 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Ownership split, hosting, camera deferral, sprites, local demo
+- **Decision:**
+  - **ESP owns** sensors, the 2.8" display, and physical buttons (both ESP32 boards stay in the ESP/firmware lane — no Pi UI).
+  - **Pi owns** audio for alarms and voice I/O (USB mic + speaker), plus MQTT central controller, Gemini/Fish clients, and cloud writes.
+  - **MongoDB Atlas** is hosted in the cloud over the internet (not on-box).
+  - **Railway** hosts our software services; account setup pending from software lead.
+  - **Camera dropped for first iteration** (storage cost, weak health signal for MVP). Revisit later.
+  - **Sprites:** generate one reference sprite for one plant first; after all MVP plant types exist in Mongo, use that sprite as the style reference to produce one per type and attach each to its plant-type document for setup to pull.
+  - **Local demo first:** fixture JSON telemetry (dracaena), scaled on-screen display mock, swipeable health + history pages, and fake buttons under the mock that later map to real hardware.
+  - **Collect-now:** ESP button triggers an immediate local sample + telemetry publish; a Pi→ESP `sample_now` MQTT action is optional/not required for MVP.
+- **Why:** Matches Zion’s hardware ownership; keeps Pi focused on voice/AI/cloud; reduces MVP scope; unblocks software without waiting on the camera or finished TFT firmware.
+- **Alternatives considered:** Pi-driven TFT UI (rejected — Zion: ESP owns display/buttons). Camera-on-every-sample (deferred).
+
 ### 2026-11-07: Product scope and software design (software lead)
 - **Decision:**
   - MVP is a single-plant display device with physical buttons (touch only for swiping between screens). The master greenhouse dashboard is the production product and appears only as a mock at the end of the live demo.
