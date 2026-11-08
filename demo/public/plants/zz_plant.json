@@ -1,0 +1,122 @@
+{
+  "plant_type_id": "zz_plant",
+  "common_names": [
+    "zz plant",
+    "zanzibar gem"
+  ],
+  "scientific_name": "Zamioculcas zamiifolia",
+  "synonyms": [],
+  "demo_candidate": false,
+  "source": {
+    "primary": "mifloradb",
+    "pid": "zamioculcas zamiifolia",
+    "display_pid": "Zamioculcas zamiifolia",
+    "alias_in_source": "zamioculcas zamiifolia",
+    "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+    "url": "https://github.com/khronimo/MiFloraDB",
+    "notes": null
+  },
+  "thresholds": {
+    "temp_c": {
+      "min": 10,
+      "max": 32
+    },
+    "rh_pct": {
+      "min": 30,
+      "max": 80
+    },
+    "soil_moisture": {
+      "min": 15,
+      "max": 60
+    },
+    "light_lux": {
+      "min": 600,
+      "max": 20000
+    },
+    "soil_ec": {
+      "min": 350,
+      "max": 2000
+    },
+    "light_mmol": {
+      "min": 1400,
+      "max": 3400
+    }
+  },
+  "care": {
+    "soil": "Peat or soil with specific nutrients",
+    "sunlight": "Likes half shade, may take 3-4h moderate sunlight",
+    "watering": "Resistant to drought, water thoroughly after soil surface dries, avoid saturated water",
+    "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly",
+    "pruning": "Remove aged tissues, yellowing and diseased leaves timely",
+    "blooming": "Foliage plants, sometimes flowers, spathe flowers",
+    "size": "Diameter â¥ 20 cm, height â¥ 30 cm",
+    "category": "Araceae, Zamioculcas",
+    "origin": "Africa"
+  },
+  "solutions": [
+    {
+      "problem": "soil_too_dry",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": "<",
+        "value": 15
+      },
+      "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+    },
+    {
+      "problem": "soil_too_wet",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": ">",
+        "value": 60
+      },
+      "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+    },
+    {
+      "problem": "temp_too_low",
+      "trigger": {
+        "metric": "temp_c",
+        "op": "<",
+        "value": 10
+      },
+      "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+    },
+    {
+      "problem": "temp_too_high",
+      "trigger": {
+        "metric": "temp_c",
+        "op": ">",
+        "value": 32
+      },
+      "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+    },
+    {
+      "problem": "humidity_too_low",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": "<",
+        "value": 30
+      },
+      "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+    },
+    {
+      "problem": "humidity_too_high",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": ">",
+        "value": 80
+      },
+      "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+    }
+  ],
+  "common_problems": [
+    "overwatering / root rot",
+    "underwatering",
+    "insufficient light",
+    "temperature stress",
+    "too much direct sun / leaf scorch"
+  ],
+  "image_url_source": "http://pkb.resource.huahuacaocao.com/emFtaW9jdWxjYXMgemFtaWlmb2xpYS5qcGc=?imageView2/1/w/%d/h/%d",
+  "sprite_ref": "/sprites/zz_plant.png",
+  "embedding_text": "Zamioculcas zamiifolia (zz plant, zanzibar gem). Soil: Peat or soil with specific nutrients. Sunlight: Likes half shade, may take 3-4h moderate sunlight. Watering: Resistant to drought, water thoroughly after soil surface dries, avoid saturated water. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly. Pruning: Remove aged tissues, yellowing and diseased leaves timely. Ideal temperature 10-32 C. Ideal humidity 30-80%. Ideal soil moisture 15-60. Ideal light 600-20000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+}

@@ -1,5 +1,26 @@
-.pio
-.vscode/.browse.c_cpp.db*
-.vscode/c_cpp_properties.json
-.vscode/launch.json
-.vscode/ipch
+# Node / demo
+demo/node_modules/
+demo/dist/
+node_modules/
+dist/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+pi/.venv/
+pi/deem_buffer.sqlite3
+pi/config.yaml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# ESP32 firmware (PlatformIO)
+.pio/
+hackathon2026/.pio/
+# WiFi name/password and other secrets for the board: copy hackathon2026/src/secrets.example.h to secrets.h
+hackathon2026/src/secrets.h
