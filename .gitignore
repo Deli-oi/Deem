@@ -21,6 +21,8 @@ pi/config.yaml
 
 # ESP32 firmware (PlatformIO)
 .pio/
+e2/.pio/
 hackathon2026/.pio/
-# WiFi name/password and other secrets for the board: copy hackathon2026/src/secrets.example.h to secrets.h
+# WiFi name/password and other secrets for the board: copy secrets.example.h to secrets.h
+e2/src/secrets.h
 hackathon2026/src/secrets.h
