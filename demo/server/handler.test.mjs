@@ -102,6 +102,12 @@ describe('static files', () => {
     expect(await (await fetch(`${base}/some/route`)).text()).toContain('deem')
   })
 
+  it('returns 404 for a missing file instead of the app HTML', async () => {
+    const res = await fetch(`${base}/sprites/missing.png`)
+    expect(res.status).toBe(404)
+    expect(res.headers.get('content-type')).not.toContain('text/html')
+  })
+
   it('blocks path traversal', async () => {
     const res = await fetch(`${base}/..%2f..%2fetc%2fpasswd`)
     expect([200, 403, 404]).toContain(res.status)
