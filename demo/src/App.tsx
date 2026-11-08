@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { FailureScreen } from './components/screens/FailureScreen'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
 import { InputsScreen } from './components/screens/InputsScreen'
@@ -336,7 +337,11 @@ export default function App() {
                   </div>
                 )}
                 <div className="screen-track" data-page={page}>
-                  <HealthScreen plant={plant} telemetry={telemetry} alerts={alerts} />
+                  {alerts.length > 0 ? (
+                    <FailureScreen plant={plant} telemetry={telemetry} alerts={alerts} />
+                  ) : (
+                    <HealthScreen plant={plant} telemetry={telemetry} alerts={alerts} />
+                  )}
                   <InputsScreen plant={plant} telemetry={telemetry} />
                   <HistoryScreen plant={plant} points={history} />
                 </div>

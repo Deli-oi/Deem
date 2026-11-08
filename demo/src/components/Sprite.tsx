@@ -30,3 +30,20 @@ export function Sprite({ plantTypeId = 'plant', spriteRef, title }: Props) {
     />
   )
 }
+
+/**
+ * The wilting, slightly gray version of a plant, shown big when something needs fixing.
+ * Falls back to the healthy sprite, grayed with CSS, if a wilted image is missing.
+ */
+export function WiltedSprite({ plantTypeId = 'plant', title }: { plantTypeId?: string; title?: string }) {
+  const [failed, setFailed] = useState(false)
+  return (
+    <img
+      className={failed ? 'wilted-sprite wilted-sprite--fallback' : 'wilted-sprite'}
+      src={failed ? `/sprites/${plantTypeId}.png` : `/sprites/wilted/${plantTypeId}.png`}
+      alt=""
+      title={title ?? plantTypeId}
+      onError={() => setFailed(true)}
+    />
+  )
+}
