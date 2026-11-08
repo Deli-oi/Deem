@@ -27,16 +27,16 @@ describe('evaluateAlerts', () => {
 
   it('alerts when soil is too dry or too wet', () => {
     const dry = evaluateAlerts(plant, { ...healthy, soil_moisture: 9 }, new Set())
-    expect(dry).toEqual([{ metric: 'soil_moisture', direction: 'low', value: 9, limit: 15, label: 'Soil too dry' }])
+    expect(dry).toEqual([{ metric: 'soil_moisture', direction: 'low', value: 9, limit: 15, label: 'Soil critically dry' }])
     const wet = evaluateAlerts(plant, { ...healthy, soil_moisture: 78 }, new Set())
-    expect(wet[0].label).toBe('Soil too wet')
+    expect(wet[0].label).toBe('Soil critically wet')
   })
 
   it('alerts on temperature and humidity', () => {
-    expect(evaluateAlerts(plant, { ...healthy, temp_c: 8.5 }, new Set())[0].label).toBe('Too cold')
-    expect(evaluateAlerts(plant, { ...healthy, temp_c: 40 }, new Set())[0].label).toBe('Too hot')
-    expect(evaluateAlerts(plant, { ...healthy, rh_pct: 20 }, new Set())[0].label).toBe('Air too dry')
-    expect(evaluateAlerts(plant, { ...healthy, rh_pct: 90 }, new Set())[0].label).toBe('Air too humid')
+    expect(evaluateAlerts(plant, { ...healthy, temp_c: 8.5 }, new Set())[0].label).toBe('Critically cold')
+    expect(evaluateAlerts(plant, { ...healthy, temp_c: 40 }, new Set())[0].label).toBe('Critically hot')
+    expect(evaluateAlerts(plant, { ...healthy, rh_pct: 20 }, new Set())[0].label).toBe('Air critically dry')
+    expect(evaluateAlerts(plant, { ...healthy, rh_pct: 90 }, new Set())[0].label).toBe('Air critically humid')
   })
 
   it('treats the healthy bounds as in range', () => {
@@ -58,7 +58,7 @@ describe('evaluateAlerts', () => {
     const metrics = { temp_c: 5, rh_pct: 99, soil_moisture: 1, soil_ec: 50 }
     expect(evaluateAlerts(plant, metrics, new Set()).length).toBe(4)
     const left = evaluateAlerts(plant, metrics, corrected)
-    expect(left.map((a) => a.label)).toEqual(['Soil needs food'])
+    expect(left.map((a) => a.label)).toEqual(['Soil minerals critically low'])
   })
 })
 
@@ -66,9 +66,9 @@ describe('blanket air-quality alerts (same for every plant)', () => {
   const none = new Set<string>()
 
   it('alerts on stuffy air and on dust', () => {
-    expect(evaluateAlerts(plant, { ...healthy, co2_ppm: 1650 }, none)[0]).toMatchObject({ metric: 'co2_ppm', direction: 'high', limit: 1500, label: 'Stuffy air (CO2)' })
-    expect(evaluateAlerts(plant, { ...healthy, pm2_5: 40 }, none)[0].label).toBe('Dusty or smoky air')
-    expect(evaluateAlerts(plant, { ...healthy, pm10_0: 200 }, none)[0].label).toBe('Dusty air')
+    expect(evaluateAlerts(plant, { ...healthy, co2_ppm: 1650 }, none)[0]).toMatchObject({ metric: 'co2_ppm', direction: 'high', limit: 1500, label: 'CO2 critically high' })
+    expect(evaluateAlerts(plant, { ...healthy, pm2_5: 40 }, none)[0].label).toBe('Fine dust critically high')
+    expect(evaluateAlerts(plant, { ...healthy, pm10_0: 200 }, none)[0].label).toBe('Dust critically high')
   })
 
   it('stays quiet at or below the limit, so a busy room does not set it off', () => {

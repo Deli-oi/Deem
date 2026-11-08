@@ -41,7 +41,7 @@ describe('greenhouse dashboard', () => {
     const modal = container.querySelector('.gh-modal') as HTMLElement
     expect(modal.querySelector('.failure-page')).toBeTruthy()
     expect(modal.querySelector('.wilted-sprite')?.getAttribute('src')).toBe('/sprites/wilted/snake_plant.png')
-    expect(within(modal).getAllByText(/Soil needs food/i).length).toBeGreaterThan(0)
+    expect(within(modal).getAllByText(/Soil minerals critically low/i).length).toBeGreaterThan(0)
   })
 
   it('shows the normal health page for a healthy plant', () => {
