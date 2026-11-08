@@ -5,21 +5,23 @@ greenhouses. Responsibilities are split across two tiers:
 
 ```
   ┌─────────────────────┐        MQTT         ┌──────────────────────┐   HTTPS   ┌─────────────┐
-  │   ESP32 device(s)   │  ───────────────▶   │   Raspberry Pi 5     │  ──────▶  │ Web endpoint│
+  │   ESP32 (one pot)   │  ───────────────▶   │   Raspberry Pi 5     │  ──────▶  │ Web endpoint│
   │  "the physicals"    │   telemetry         │ "central controller" │  relay    │   (TBD)     │
-  │                     │   ◀───────────────  │                      │  ◀──────  │             │
-  │ sensors + relays    │     commands        │ ingest · buffer ·    │  commands │ dashboard / │
-  │                     │                     │ relay · API calls    │           │ cloud API   │
+  │                     │   ◀───────────────  │  + 2.8" TFT kiosk    │  ◀──────  │             │
+  │ sensors + relay     │     commands        │ ingest · buffer ·    │  commands │ dashboard / │
+  │                     │                     │ UI · camera · voice  │           │ cloud API   │
   └─────────────────────┘                     └──────────────────────┘           └─────────────┘
 ```
 
 ## Roles
 
 ### ESP32 (edge / "the physicals")
-Owned by the firmware teammate. Each ESP32:
+Owned by the firmware teammate. **MVP uses one ESP32** for the single demo pot
+(second DevKit is spare). That board:
 - Reads sensors (SEN63C air quality, DHT11 temp/RH, Stemma soil moisture, …).
-- Drives actuators via the 5V relay module (fans, pumps, lights, …).
-- Drives its local OLED/TFT display.
+- Drives actuators via the 5V relay module (pump, …).
+- **Does not** drive the product 2.8" screen (Pi owns that). Any OLED in `e2/` is
+  leftover from the old AP dashboard and is not the user-facing UI.
 - **Publishes** telemetry to the Pi over MQTT and **subscribes** for commands.
 
 > Note: the current `e2/` firmware runs as its own WiFi **access point** with an
@@ -27,17 +29,18 @@ Owned by the firmware teammate. Each ESP32:
 > becomes a WiFi **client** that joins the Pi's network and talks MQTT. See
 > `docs/esp32_integration.md`.
 
-### Raspberry Pi 5 (central controller)
+### Raspberry Pi 5 (central controller + display)
 Owned by the Pi teammate. The Pi:
-- Runs the **Mosquitto** MQTT broker (the message bus for all devices).
+- Runs the **Mosquitto** MQTT broker (the message bus for devices).
 - Runs the **`deem_controller`** Python service, which:
-  1. Ingests telemetry from every ESP32.
+  1. Ingests telemetry from the ESP32.
   2. Buffers readings durably (SQLite) so nothing is lost if the network or the
      web endpoint is down.
   3. Relays normalized readings to a web endpoint (pluggable; not yet defined).
-  4. Sends commands back down to devices (relay control, config, etc.).
-- Later: hosts the camera, local dashboard/touchscreen UI, and higher-level
-  automation logic.
+  4. Sends commands back down to the device (relay control, config, etc.).
+- **Owns the 2.8" SPI TFT touchscreen** and runs the device UI as a Chromium
+  kiosk (`demo/` with `?kiosk`). See `docs/display_kiosk.md`.
+- Hosts the camera, USB mic/speaker, and higher-level automation / AI pipeline.
 
 ### Web endpoint (TBD)
 The cloud/remote destination for data and the source of remote commands. Not yet
@@ -46,10 +49,10 @@ so the rest of the system doesn't block on this decision. Swapping it in should
 mostly be a `config.yaml` change.
 
 ## Why MQTT
-- Decouples devices from the controller — add/remove ESP32s without code changes.
+- Decouples the edge board from the controller (same contract scales to more pots later; MVP is one ESP32).
 - Lightweight, well-supported on ESP32 (e.g. PubSubClient).
 - Built-in **Last Will & Testament** gives instant offline detection.
-- Topic wildcards let the Pi listen to all devices with one subscription.
+- Topic wildcards let the Pi listen to devices with one subscription.
 
 ## Data flow (happy path)
 1. ESP32 samples sensors every N seconds.

@@ -1,12 +1,11 @@
 # Putting the web app on the 2.8" display
 
-Status: **not verified on real hardware.** The app side is ready; the display side needs two answers (below).
+Status: **Pi owns the panel** (decided). App side is ready; **not verified on real hardware** yet. Remaining blocker is the exact module (below).
 
-## 1. Blocking questions
+## 1. Ownership (settled) and remaining blocker
 
-1. **Which device is the TFT wired to: the Pi 5 or an ESP32?**
-   The repo disagrees. `docs/architecture.md` says the ESP32 drives its local OLED/TFT. `docs/mqtt_contract.md` lists the 2.8" TFT as a Pi-side device. A web app can only run on the Pi (an ESP32 cannot run a browser). If the TFT is on an ESP32, the screen UI has to be rewritten in firmware (e.g. LVGL) and this web app only serves as the design reference.
-2. **What is the exact module?** `hardware_info.md` only says "2.8" SPI Serial TFT Display" and lists it as a touch screen. We need the product name/link, the display controller (very likely ILI9341, 240x320) and the touch controller (very likely XPT2046). The driver setup depends on it.
+- **Settled:** The 2.8" SPI TFT is wired to the **Raspberry Pi 5**. Chromium kiosk runs `demo/` with `?kiosk`. The ESP32 does not drive this screen.
+- **Still open — exact module?** `hardware_info.md` only says "2.8" SPI Serial TFT Display" and lists it as a touch screen. We need the product name/link, the display controller (very likely ILI9341, 240x320) and the touch controller (very likely XPT2046). The driver setup depends on it.
 
 ## 2. What the app already does
 
