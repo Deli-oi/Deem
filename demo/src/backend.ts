@@ -1,6 +1,7 @@
 import type { DeemBackend } from './lib/backendTypes'
 import { MockBackend } from './mock/backend'
 import { connectWebSocket, MqttBackend } from './mock/mqttBackend'
+import { RemoteKnowledge } from './lib/remoteKnowledge'
 
 /**
  * Pick the backend from env (Vite `VITE_*` vars, see demo/.env.example):
@@ -16,7 +17,9 @@ function createBackend(): DeemBackend {
   const url = import.meta.env.VITE_MQTT_URL ?? 'ws://localhost:9001'
   const deviceId = import.meta.env.VITE_DEVICE_ID ?? 'esp32-pot-01'
   const clientId = `deem-ui-${Math.random().toString(16).slice(2, 10)}`
-  return new MqttBackend({ deviceId, link: connectWebSocket(url, clientId), knowledge: mock })
+  // Plants (Tiger database), matching and answers (Gemini) come from the hosted server; the mock is the offline fallback.
+  const apiBase = import.meta.env.VITE_API_BASE ?? ''
+  return new MqttBackend({ deviceId, link: connectWebSocket(url, clientId), knowledge: new RemoteKnowledge({ base: apiBase, fallback: mock }) })
 }
 
 export const backend: DeemBackend = createBackend()
