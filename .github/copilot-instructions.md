@@ -18,7 +18,7 @@ Read this before changing anything. It is the current agreed state of the projec
 - One ESP32 per pot, `DEVICE_ID` `esp32-pot-01`.
 - Publish JSON to `deem/<device_id>/telemetry` (retained, QoS 0) every **600 s**. Metrics: `co2_ppm, temp_c, rh_pct, pm1_0, pm2_5, pm4_0, pm10_0, soil_moisture (%), soil_temp_c`. Leave a metric out when it was not measured, never send stale or fake values.
 - Publish `deem/<device_id>/status` (retained, with a Last Will `offline`), including `sensors: {dht, air, soil}` so the app's setup screen can check each sensor in your init order (DHT11, then SEN63C, then Stemma soil).
-- The **DHT11 is the source of truth for temperature and humidity.**
+- **Temperature and humidity: the DHT11 when its reading is within its spec (0-50 C, 20-90 %RH, both), otherwise the SEN63C's, otherwise leave them out.** Impossible values are never published: CO2 outside 1-10000 ppm, dust outside 0-1000 ug/m3 (6553.5 is the sensor's "no data"), and a DHT11 pair like 57 C / 95 %. The app, the ingest service and Gemini drop impossible values too (`docs/mqtt_contract.md`, "Valid ranges").
 - **No commands, no pump, no `sample_now`, no cmd/ack topics.** The ESP only publishes.
 - Thresholds live in the app, not the firmware. Send raw readings.
 - No camera in the MVP.

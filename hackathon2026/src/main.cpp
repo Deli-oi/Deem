@@ -19,22 +19,45 @@ static bool airEverRead = false, soilEverRead = false;
 static unsigned long airReadAt = 0, soilReadAt = 0;
 static inline bool fresh(bool ever, unsigned long at) { return ever && (millis() - at) < FRESH_MS; }
 
-/* SEN63C reports 0xFFFF (65535) for CO2 while it is still warming up; real air is ~400-5000 ppm. */
+/* SEN63C reports 0xFFFF (65535) or 32767 for CO2 while it is still warming up; real air is ~400-5000 ppm. */
 static inline bool co2_plausible(int co2) { return co2 > 0 && co2 <= 10000; }
 
+static inline bool in_range(float v, float lo, float hi) { return std::isfinite(v) && v >= lo && v <= hi; }
+
+/* Dust: the SEN63C reports 6553.5 (0xFFFF / 10) for "no data"; its real range is 0-1000 ug/m3. */
+static inline bool pm_plausible(float v) { return in_range(v, 0.0f, 1000.0f); }
+
+/* A DHT11 only measures 0-50 C and 20-90 %RH. A mis-wired or failing one still returns "valid" numbers
+ * (we saw 57 C / 95 %), so a reading outside its own spec is not a reading. Temperature and humidity
+ * come from one read: if either is impossible, neither is trusted. */
+static inline bool dht_plausible(float t, float h) { return in_range(t, 0.0f, 50.0f) && in_range(h, 20.0f, 90.0f); }
+
+/* The SEN63C also measures temperature and humidity (used when the DHT11 gives nothing usable). */
+static inline bool air_th_plausible(float t, float h) { return in_range(t, -10.0f, 50.0f) && in_range(h, 0.0f, 100.0f); }
+
 void read_sensors(Sample &sample) {
-  if (dht.isAvailable()) {
+  /* Temperature and humidity: the DHT11 when its reading is within spec, otherwise the SEN63C's, otherwise
+   * nothing (the app shows "--" rather than a wrong number). */
+  const char *thSource = "none";
+  if (dht.isAvailable() && dht_plausible(dht.getTemperature(), dht.getHumidity())) {
     sample.m[M_TEMP_C] = dht.getTemperature();
     sample.m[M_RH_PCT] = dht.getHumidity();
+    thSource = "DHT11";
   }
 
   if (fresh(airEverRead, airReadAt)) {
     if (co2_plausible(air.getCO2())) sample.m[M_CO2_PPM] = static_cast<float>(air.getCO2());
-    sample.m[M_PM1_0] = air.getPM1();
-    sample.m[M_PM2_5] = air.getPM25();
-    sample.m[M_PM4_0] = air.getPM4();
-    sample.m[M_PM10_0] = air.getPM10();
+    if (pm_plausible(air.getPM1())) sample.m[M_PM1_0] = air.getPM1();
+    if (pm_plausible(air.getPM25())) sample.m[M_PM2_5] = air.getPM25();
+    if (pm_plausible(air.getPM4())) sample.m[M_PM4_0] = air.getPM4();
+    if (pm_plausible(air.getPM10())) sample.m[M_PM10_0] = air.getPM10();
+    if (thSource[0] == 'n' && air_th_plausible(air.getTemperature(), air.getHumidity())) {
+      sample.m[M_TEMP_C] = air.getTemperature();
+      sample.m[M_RH_PCT] = air.getHumidity();
+      thSource = "SEN63C";
+    }
   }
+  Serial.printf("temp/RH source: %s\n", thSource);
 
   if (fresh(soilEverRead, soilReadAt)) {
     sample.m[M_SOIL_MOISTURE] = static_cast<float>(soil.getMoisturePercent());

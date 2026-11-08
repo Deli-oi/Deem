@@ -108,8 +108,12 @@ same per-pot telemetry message above. (Hardware source of truth: `hardware_info.
 The table is in the firmware's startup order (DHT11, then SEN63C, then soil), which is also the order the screen's setup check shows them.
 
 Notes:
-- **`temp_c` / `rh_pct` come from the DHT11.** The SEN63C also measures them, but the firmware
-  does not publish those values: the firmware is the ground truth (decision 2026-11-08).
+- **`temp_c` / `rh_pct` come from the DHT11 when its reading is within its own spec** (0-50 C, 20-90 %RH, both
+  together). If the DHT11 gives nothing usable (failed read, or an impossible value such as 57 C / 95 %), the
+  firmware publishes the **SEN63C's** temperature and humidity instead; if both are unusable the two metrics are
+  left out. The message does not say which sensor supplied them; the firmware logs `temp/RH source: ...` on Serial
+  (decision 2026-11-08, replacing "DHT11 only"). The SEN63C sits by its fan and electronics, so it can read a
+  degree or two warm.
 - `soil_moisture` is a **percent** (0–100), converted on the device from the probe's raw reading
   (`DRY_RAW` / `WET_RAW` in `SoilSens.h`, which must be calibrated against the real pot).
 - The **5V relay module** and a **water pump** are **not used in the MVP**: no relay is driven and
