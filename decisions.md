@@ -131,3 +131,7 @@ A log of key project decisions. Add newest entries at the top.
 - **Decision:** Use `main` as the default branch, with `https://github.com/Deli-oi/Deem` as `origin`.
 - **Why:** Keep the project versioned and backed up outside Dropbox sync.
 - **Alternatives considered:** None.
+
+### 2026-11-08: Voice is an on-screen toggle button; no TEST, no physical keys
+- **Decision:** Connor said a physical button is not feasible for the hackathon. MIC is now a button at the bottom of every screen: tap to turn the mic on, tap again to turn it off and send. Each screen is compressed to fit it. TEST is removed. The production device will use a physical button for the mic.
+- **Supersedes:** "MIC and TEST are physical keys" (2026-11-07).

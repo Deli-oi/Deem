@@ -23,8 +23,6 @@ export interface DeemBackend {
    */
   checkSensors(onProgress: (progress: SensorProgress[]) => void): Promise<SensorProgress[]>
   getLatestTelemetry(plantTypeId: string): Promise<Telemetry>
-  /** TEST: the newest reading the device sent (there is no sample-now). */
-  collectNow(plantTypeId: string): Promise<Telemetry>
   /** Live updates (new telemetry, link up/down). Returns an unsubscribe function. */
   subscribe(listener: (event: BackendEvent) => void): () => void
 
