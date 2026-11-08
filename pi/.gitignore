@@ -1,0 +1,11 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local config & secrets
+config.yaml
+.env
+
+# Runtime buffer
+*.sqlite3

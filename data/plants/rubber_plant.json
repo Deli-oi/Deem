@@ -1,0 +1,126 @@
+{
+  "plant_type_id": "rubber_plant",
+  "common_names": [
+    "rubber plant",
+    "rubber tree"
+  ],
+  "scientific_name": "Ficus elastica",
+  "synonyms": [],
+  "demo_candidate": false,
+  "source": {
+    "primary": "mifloradb",
+    "pid": "ficus elastica",
+    "display_pid": "Ficus elastica",
+    "alias_in_source": "ficus elastica",
+    "dataset": "khronimo/MiFloraDB PlantDB_5335_U0.csv",
+    "url": "https://github.com/khronimo/MiFloraDB",
+    "notes": null
+  },
+  "thresholds": {
+    "temp_c": {
+      "min": 10,
+      "max": 35
+    },
+    "rh_pct": {
+      "min": 30,
+      "max": 85
+    },
+    "soil_moisture": {
+      "min": 15,
+      "max": 60
+    },
+    "light_lux": {
+      "min": 1000,
+      "max": 30000
+    },
+    "soil_ec": {
+      "min": 350,
+      "max": 2000
+    },
+    "light_mmol": {
+      "min": 1400,
+      "max": 3500
+    }
+  },
+  "care": {
+    "soil": "Peat or soil with specific nutrients",
+    "sunlight": "Like half shade, avoid strong direct light in summer, in winter may take 3-4h sunlight",
+    "watering": "Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer",
+    "fertilization": "Dilute fertilizers following instructions, apply 1-2 times monthly in spring and autumn",
+    "pruning": "Remove dead, yellowish and disease leaves timely",
+    "blooming": "Foliage plants, sometimes flowers in May-June, white flowers",
+    "size": "Diameter â¥ 10 cm, height â¥ 10 cm",
+    "category": "Moraceae, Ficus",
+    "origin": "Brazil"
+  },
+  "solutions": [
+    {
+      "problem": "soil_too_dry",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": "<",
+        "value": 15
+      },
+      "advice": "Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long."
+    },
+    {
+      "problem": "soil_too_wet",
+      "trigger": {
+        "metric": "soil_moisture",
+        "op": ">",
+        "value": 60
+      },
+      "advice": "Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely."
+    },
+    {
+      "problem": "temp_too_low",
+      "trigger": {
+        "metric": "temp_c",
+        "op": "<",
+        "value": 10
+      },
+      "advice": "Move the plant away from cold drafts and windows. Keep within its preferred temperature range."
+    },
+    {
+      "problem": "temp_too_high",
+      "trigger": {
+        "metric": "temp_c",
+        "op": ">",
+        "value": 35
+      },
+      "advice": "Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow."
+    },
+    {
+      "problem": "humidity_too_low",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": "<",
+        "value": 30
+      },
+      "advice": "Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable."
+    },
+    {
+      "problem": "humidity_too_high",
+      "trigger": {
+        "metric": "rh_pct",
+        "op": ">",
+        "value": 85
+      },
+      "advice": "Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots."
+    },
+    {
+      "problem": "overwatering_risk",
+      "advice": "Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer"
+    }
+  ],
+  "common_problems": [
+    "overwatering / root rot",
+    "underwatering",
+    "insufficient light",
+    "temperature stress",
+    "too much direct sun / leaf scorch"
+  ],
+  "image_url_source": "http://pkb.resource.huahuacaocao.com/ZmljdXMgZWxhc3RpY2EuanBn?imageView2/1/w/%d/h/%d",
+  "sprite_ref": "/sprites/rubber_plant.png",
+  "embedding_text": "Ficus elastica (rubber plant, rubber tree). Soil: Peat or soil with specific nutrients. Sunlight: Like half shade, avoid strong direct light in summer, in winter may take 3-4h sunlight. Watering: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer. Fertilization: Dilute fertilizers following instructions, apply 1-2 times monthly in spring and autumn. Pruning: Remove dead, yellowish and disease leaves timely. Ideal temperature 10-35 C. Ideal humidity 30-85%. Ideal soil moisture 15-60. Ideal light 1000-30000 lux. Common problems: overwatering / root rot; underwatering; insufficient light; temperature stress; too much direct sun / leaf scorch. Solutions: soil_too_dry: Water thoroughly until water drains, then empty the saucer. Avoid letting the root ball stay bone-dry for long. soil_too_wet: Hold off watering and improve drainage. Soggy soil risks root rot; check that the pot drains freely. temp_too_low: Move the plant away from cold drafts and windows. Keep within its preferred temperature range. temp_too_high: Reduce heat stress: move out of hot direct sun or away from heaters; increase airflow. humidity_too_low: Raise humidity with a tray of pebbles and water, grouping plants, or a humidifier. Avoid soaking fuzzy leaves if applicable. humidity_too_high: Increase airflow and avoid misting. Persistent high humidity can encourage fungal spots. overwatering_risk: Follow species watering guidance: Likes wet environments, water thoroughly when soil is dry, spray frequently to the air or leaves to keep moist in summer"
+}

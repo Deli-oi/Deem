@@ -1,0 +1,35 @@
+# Deem central controller configuration.
+# Copy to config.yaml and edit. Values like ${DEEM_SINK_TOKEN} are expanded
+# from environment variables at load time (keep secrets out of this file).
+
+log_level: INFO
+
+mqtt:
+  host: localhost          # Mosquitto runs on the Pi itself
+  port: 1883
+  username: null           # set if you enable auth on the broker
+  password: null
+  base_topic: deem         # all topics live under this prefix
+  client_id: deem-controller
+  keepalive: 60
+
+buffer:
+  # Readings are persisted here so nothing is lost if the web endpoint is
+  # down or the process restarts.
+  db_path: ./deem_buffer.sqlite3
+  max_rows: 100000         # oldest rows are dropped past this cap
+
+sink:
+  # Where normalized readings get relayed. The real web endpoint is TBD,
+  # so start with type: log (prints batches) and switch to http later.
+  type: log                # log | http
+  url: https://example.com/ingest       # TODO: real endpoint
+  method: POST
+  headers:
+    Content-Type: application/json
+    # Authorization: Bearer ${DEEM_SINK_TOKEN}
+  batch_size: 50
+  flush_interval_s: 5       # how often the relay worker drains the buffer
+  timeout_s: 10
+  max_retries: 8            # per-record; after this it moves to the dead table
+  backoff_base_s: 2.0       # exponential backoff between retries
