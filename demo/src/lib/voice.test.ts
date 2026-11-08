@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import { hardwareKeyFor, KEYS } from './keys'
 import { cleanTranscript, FakeVoice, transcribeAudio, VoiceError, voiceMessage } from './voice'
 
 describe('cleanTranscript', () => {
@@ -56,13 +55,5 @@ describe('FakeVoice', () => {
     expect(await say()).toBe('dracaena')
     expect(await say()).toBe('why is it drooping')
     expect(await say()).toBe('dracaena')
-  })
-})
-
-describe('hardware keys', () => {
-  it('maps the MIC and TEST key codes', () => {
-    expect(hardwareKeyFor(KEYS.mic)).toBe('mic')
-    expect(hardwareKeyFor(KEYS.test)).toBe('test')
-    expect(hardwareKeyFor('KeyZ')).toBeNull()
   })
 })

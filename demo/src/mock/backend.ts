@@ -38,11 +38,23 @@ export const FIXTURE_CYCLE: Telemetry[] = [
   dustyPm10 as Telemetry,
 ]
 
-/** Fixture-driven stand-in. Used for local UI work when no ESP32 is attached. */
+/** The ids of the readings the mock can show (healthy plus the nine failures), for `?scenario=<id>`. */
+export const SCENARIO_IDS = FIXTURE_CYCLE.map((f) => f.id as string)
+
+/**
+ * Fixture-driven stand-in. Used for local UI work when no ESP32 is attached.
+ * `scenario` picks which reading it shows (default `healthy`): open the app with `?scenario=dry_soil`
+ * to see that failure. See SCENARIO_IDS.
+ */
 export class MockBackend implements DeemBackend {
   private plants: PlantType[] = []
   private fixtureIndex = 0
   private loaded = false
+
+  constructor(opts: { scenario?: string | null } = {}) {
+    const i = FIXTURE_CYCLE.findIndex((f) => f.id === opts.scenario)
+    if (i !== -1) this.fixtureIndex = i
+  }
 
   private async ensurePlants() {
     if (this.loaded) return
@@ -96,25 +108,6 @@ export class MockBackend implements DeemBackend {
     const plant = this.plantOrThrow(plantTypeId)
     const raw = FIXTURE_CYCLE[this.fixtureIndex % FIXTURE_CYCLE.length]
     return withHealth({ ...raw, ts: Math.floor(Date.now() / 1000) }, plant)
-  }
-
-  /** TEST in the mock walks the fixtures (healthy, dry soil, high CO2, ...) so the demo shows variety. */
-  async collectNow(plantTypeId: string): Promise<Telemetry> {
-    return this.advanceFixture(plantTypeId)
-  }
-
-  async advanceFixture(plantTypeId: string): Promise<Telemetry> {
-    this.fixtureIndex = (this.fixtureIndex + 1) % FIXTURE_CYCLE.length
-    return this.getLatestTelemetry(plantTypeId)
-  }
-
-  async setFixture(plantTypeId: string, index: number): Promise<Telemetry> {
-    this.fixtureIndex = ((index % FIXTURE_CYCLE.length) + FIXTURE_CYCLE.length) % FIXTURE_CYCLE.length
-    return this.getLatestTelemetry(plantTypeId)
-  }
-
-  getFixtureIndex(): number {
-    return this.fixtureIndex
   }
 
   async getHistory(plantTypeId: string): Promise<HealthPoint[]> {
@@ -187,11 +180,6 @@ export class MockBackend implements DeemBackend {
       }`,
       based_on,
     }
-  }
-
-  listFixtureLabels(plantTypeId: string): string[] {
-    void plantTypeId
-    return FIXTURE_CYCLE.map((f) => f.label ?? f.id ?? 'fixture')
   }
 }
 

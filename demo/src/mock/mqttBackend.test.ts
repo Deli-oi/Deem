@@ -107,14 +107,6 @@ describe('MqttBackend', () => {
     expect(events.filter((e) => e.type === 'link').map((e) => e.type === 'link' && e.online)).toEqual([false])
   })
 
-  it('TEST (collectNow) returns the newest reading and asks the device for nothing', async () => {
-    const { f, backend } = setup()
-    f.connect()
-    f.message(TEL, { ...good, ts: 100 })
-    f.message(TEL, { ...good, ts: 200 })
-    expect((await backend.collectNow('dracaena')).ts).toBe(200)
-  })
-
   it('waits for a first reading, and gives up with a clear error', async () => {
     vi.useFakeTimers()
     const { f, backend } = setup()

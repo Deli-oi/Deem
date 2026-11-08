@@ -25,11 +25,11 @@ type Props = {
 
 function promptStatus({ voiceState, busy, heard, voiceError }: Pick<Props, 'voiceState' | 'busy' | 'heard' | 'voiceError'>) {
   if (voiceError) return voiceError
-  if (voiceState === 'recording') return 'Listening...'
+  if (voiceState === 'recording') return 'Listening... tap the mic when done'
   if (voiceState === 'transcribing') return 'Hearing you...'
   if (busy) return 'Matching...'
   if (heard) return `Heard: "${heard}"`
-  return 'Waiting for MIC'
+  return 'Tap the mic to start'
 }
 
 export function SetupFlow({
@@ -49,7 +49,7 @@ export function SetupFlow({
     return (
       <div className="setup-screen">
         <div className="act-title">Setup</div>
-        <p className="setup-copy">Hold the MIC key and say your plant.</p>
+        <p className="setup-copy">Tap the mic and say your plant.</p>
         <div className={`voice-status ${voiceError ? 'error' : voiceState}`} role="status">
           <span className="voice-dot" />
           <span>{promptStatus({ voiceState, busy, heard, voiceError })}</span>
