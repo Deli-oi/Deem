@@ -8,7 +8,7 @@ function normalize(s: string) {
     .trim()
 }
 
-/** Local stand-in for Gemini vector match. Swap for Atlas/Gemini later. */
+/** Local stand-in for Gemini vector match. Swap for Gemini + the Tiger database later. */
 export function matchPlantLocal(utterance: string, plants: PlantType[]): PlantMatch | null {
   const q = normalize(utterance)
   if (!q || plants.length === 0) return null

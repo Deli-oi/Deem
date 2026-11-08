@@ -90,3 +90,6 @@ From the software-lead product pass, still in force unless a later bullet above 
 
 ## 2026-11-08: Mic is an on-screen toggle button
 - Physical buttons are not feasible (Connor). Tap the on-screen MIC once to start, again to stop and send. Screens are compressed to fit it. TEST is gone. Production will use a physical button.
+
+## 2026-11-08: Tiger database, no camera
+- Using the Tiger database (secret already in Railway) instead of MongoDB Atlas. Camera is out of the MVP.

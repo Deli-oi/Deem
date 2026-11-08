@@ -43,7 +43,7 @@ type Options = {
   /** One ESP32 per pot: the device_id IS the pot (esp32-pot-01). */
   deviceId: string
   link: MqttLink
-  /** Plant knowledge, matching and Q&A come from here until Atlas/Gemini are wired in. */
+  /** Plant knowledge, matching and Q&A come from here until Gemini and the Tiger database are wired in. */
   knowledge: Pick<DeemBackend, 'listPlants' | 'matchPlant' | 'ask'>
   history?: HourlyHealthStore
 }
