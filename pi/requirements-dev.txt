@@ -1,3 +1,0 @@
-# Dev/test dependencies for the Deem Pi controller
--r requirements.txt
-pytest>=7.0
