@@ -5,13 +5,17 @@ import type { SensorProgress } from '../lib/telemetry'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, Telemetry } from '../lib/types'
 
-/** How often the newest stored reading is fetched. The pot itself only reports every 30 s to 10 min. */
-const POLL_MS = 10_000
+/** How often the stored readings are fetched. The pot itself only reports every 30 s to 10 min. */
+const POLL_MS = 30_000
 const FETCH_TIMEOUT_MS = 8_000
+/** How far back to look for the last complete reading. */
+const HISTORY_HOURS = 6
+const ALL_METRICS = ['co2_ppm', 'temp_c', 'rh_pct', 'pm1_0', 'pm2_5', 'pm4_0', 'pm10_0', 'soil_moisture', 'soil_temp_c'] as const
+const isComplete = (t: Telemetry) => ALL_METRICS.every((k) => typeof (t.metrics as Record<string, unknown>)[k] === 'number')
 
 type Options = {
   deviceId: string
-  /** The ingest service URL (its public, read-only GET /api/devices). */
+  /** The ingest service URL (its public, read-only GET /api/readings). */
   base: string
   knowledge: Pick<DeemBackend, 'listPlants' | 'matchPlant' | 'ask'>
   fetchImpl?: typeof fetch
@@ -20,8 +24,9 @@ type Options = {
 }
 
 /**
- * For the hosted page: shows the newest reading stored in the cloud database, for people who are not
- * next to the pot. It cannot reach the Pi's MQTT broker, so it asks the ingest service instead.
+ * For the hosted page: shows the last COMPLETE reading stored in the cloud database (all nine metrics; a
+ * newer one with a sensor missing is skipped), for people who are not next to the pot. It cannot reach
+ * the Pi's MQTT broker, so it asks the ingest service instead.
  * Read-only: it never starts or stops data collection (only the Pi's screen does that), and it shows the
  * last stored reading even when collection is paused (the reading keeps its own timestamp).
  */
@@ -53,17 +58,29 @@ export class CloudBackend implements DeemBackend {
     try {
       const ctl = new AbortController()
       const t = setTimeout(() => ctl.abort(), FETCH_TIMEOUT_MS)
-      const res = await this.fetchImpl(`${this.base}/api/devices`, { signal: ctl.signal }).finally(() => clearTimeout(t))
+      const url = `${this.base}/api/readings?device_id=${encodeURIComponent(this.deviceId)}&hours=${HISTORY_HOURS}&limit=2000`
+      const res = await this.fetchImpl(url, { signal: ctl.signal }).finally(() => clearTimeout(t))
       if (!res.ok) throw new Error(`ingest ${res.status}`)
-      const body = (await res.json()) as { devices?: Array<{ device_id?: string; ts?: string; fw?: string; metrics?: unknown }> }
-      const row = body.devices?.find((d) => d.device_id === this.deviceId)
-      if (!row || !row.ts || !row.metrics) throw new Error('no reading yet')
-      const sec = Math.floor(Date.parse(row.ts) / 1000)
-      // same parsing and range checks as the live screen
-      const raw = parseTelemetryMessage(
-        topics.telemetry(this.deviceId),
-        JSON.stringify({ device_id: this.deviceId, ts: sec, fw: row.fw, metrics: row.metrics }),
-      )
+      const body = (await res.json()) as { readings?: Array<{ ts?: string; fw?: string; metrics?: unknown }> }
+      // oldest first from the server: walk back from the newest to the last COMPLETE reading (all nine metrics,
+      // after the same parsing and range checks as the live screen). If there is none, show the newest one.
+      const rows = (body.readings ?? []).filter((r) => r.ts && r.metrics)
+      if (rows.length === 0) throw new Error('no reading yet')
+      const parse = (row: (typeof rows)[number]) =>
+        parseTelemetryMessage(
+          topics.telemetry(this.deviceId),
+          JSON.stringify({ device_id: this.deviceId, ts: Math.floor(Date.parse(row.ts as string) / 1000), fw: row.fw, metrics: row.metrics }),
+        )
+      let raw: Telemetry | null = null
+      for (let i = rows.length - 1; i >= 0 && !raw; i--) {
+        try {
+          const candidate = parse(rows[i])
+          if (isComplete(candidate)) raw = candidate
+        } catch {
+          // skip a bad row
+        }
+      }
+      raw ??= parse(rows[rows.length - 1])
       const telemetry = this.plant ? withHealth(raw, this.plant) : raw
       const isNew = !this.latest || this.latest.ts !== telemetry.ts
       this.latest = telemetry
