@@ -64,8 +64,9 @@ public:
     bool isAvailable() const { return available_; }
 
 private:
-    // Measured: bone-dry 530, dry ~570, healthy/slightly overwatered 915-935, too wet ~980.
-    static const int DRY_RAW = 530;
+    // Measured: bone-dry ~530, dry ~570, healthy/slightly overwatered 915-935, too wet ~980.
+    // Use 550 as the critical-dry (0%) endpoint.
+    static const int DRY_RAW = 550;
     static const int WET_RAW = 980;
 
     Adafruit_seesaw ss_;
