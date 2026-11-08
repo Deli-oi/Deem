@@ -1,6 +1,7 @@
 import type { DeemBackend } from './lib/backendTypes'
 import { MockBackend } from './mock/backend'
 import { connectWebSocket, MqttBackend } from './mock/mqttBackend'
+import { CloudBackend } from './mock/cloudBackend'
 import { RemoteKnowledge } from './lib/remoteKnowledge'
 
 /**
@@ -8,10 +9,20 @@ import { RemoteKnowledge } from './lib/remoteKnowledge'
  *   VITE_BACKEND=mqtt      read the real ESP32 over MQTT (default is the fixture mock)
  *   VITE_MQTT_URL          Mosquitto WebSocket URL, e.g. ws://deem-pi.local:9001
  *   VITE_DEVICE_ID         the pot's device_id, e.g. esp32-pot-01
+ *   VITE_BACKEND=cloud     (hosted page) show the newest reading stored in the cloud; needs VITE_INGEST_URL
  * In the mock, `?scenario=<id>` shows a specific reading, e.g. ?scenario=dry_soil (see SCENARIO_IDS).
  */
 function createBackend(): DeemBackend {
   const mock = new MockBackend({ scenario: new URLSearchParams(window.location.search).get('scenario') })
+  if (import.meta.env.VITE_BACKEND === 'cloud') {
+    // the hosted page: the newest reading stored in the cloud database (read-only; never starts collection)
+    const base = ((import.meta.env.VITE_INGEST_URL as string | undefined) ?? '').trim()
+    if (base) {
+      const deviceId = import.meta.env.VITE_DEVICE_ID ?? 'esp32-pot-01'
+      const apiBase = import.meta.env.VITE_API_BASE ?? ''
+      return new CloudBackend({ deviceId, base, knowledge: new RemoteKnowledge({ base: apiBase, fallback: mock }) })
+    }
+  }
   if (import.meta.env.VITE_BACKEND !== 'mqtt') return mock
 
   const url = import.meta.env.VITE_MQTT_URL ?? 'ws://localhost:9001'
