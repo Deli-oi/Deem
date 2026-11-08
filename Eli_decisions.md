@@ -2,6 +2,12 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
+## 2026-11-08: Match Zion's firmware
+
+- No sample-now and no pump. TEST shows the latest reading and how old it is.
+- Sampling every 10 minutes. Temperature and humidity come from the DHT11 (Zion is the ground truth). Thresholds stay in the app.
+- The setup loading screen follows the firmware's real startup (Temp/RH, then AQI, then Soil) and truly waits for each sensor.
+
 ## 2026-11-08: Failures say "critically"
 
 - Every failure label uses the word **critical**: "Soil critically dry", "Critically cold", and so on.

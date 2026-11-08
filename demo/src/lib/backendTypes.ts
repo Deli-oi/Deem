@@ -1,4 +1,4 @@
-import type { SensorCheck } from './telemetry'
+import type { SensorProgress } from './telemetry'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, Telemetry } from './types'
 
 export type BackendEvent =
@@ -17,10 +17,13 @@ export interface DeemBackend {
 
   /** Called once setup is confirmed. Telemetry is scored against this plant. */
   selectPlant(plant: PlantType): void
-  /** Verify each sensor is reporting. Rejects if the device never shows up. */
-  checkSensors(): Promise<SensorCheck[]>
+  /**
+   * Wait for every sensor to be ready, calling `onProgress` as each one comes up (or fails).
+   * Resolves once none are pending. Rejects if the device never comes online.
+   */
+  checkSensors(onProgress: (progress: SensorProgress[]) => void): Promise<SensorProgress[]>
   getLatestTelemetry(plantTypeId: string): Promise<Telemetry>
-  /** The ESP owns the Collect button; this returns the newest reading. */
+  /** TEST: the newest reading the device sent (there is no sample-now). */
   collectNow(plantTypeId: string): Promise<Telemetry>
   /** Live updates (new telemetry, link up/down). Returns an unsubscribe function. */
   subscribe(listener: (event: BackendEvent) => void): () => void
@@ -29,6 +32,4 @@ export interface DeemBackend {
   getHistory(plantTypeId: string): Promise<HealthPoint[]>
   ask(plantTypeId: string, question: string, telemetry?: Telemetry): Promise<AskAnswer>
 
-  /** Pump relay on/off. Resolves when the device acks, rejects on nack or timeout. */
-  setRelay(on: boolean): Promise<void>
 }

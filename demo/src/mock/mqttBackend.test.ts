@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HourlyHealthStore } from '../lib/historyStore'
 import type { BackendEvent } from '../lib/backendTypes'
+import type { SensorProgress } from '../lib/telemetry'
 import type { PlantType } from '../lib/types'
 import { MqttBackend } from './mqttBackend'
 import type { MqttLink } from './mqttBackend'
@@ -11,19 +12,16 @@ function fakeLink() {
   let onConnect: () => void = () => {}
   let onDisconnect: () => void = () => {}
   let onMessage: (t: string, p: Uint8Array) => void = () => {}
-  const published: Array<{ topic: string; payload: string }> = []
   const subscribed: string[] = []
   const link: MqttLink = {
     onConnect: (cb) => (onConnect = cb),
     onDisconnect: (cb) => (onDisconnect = cb),
     onMessage: (cb) => (onMessage = cb),
     subscribe: (list) => subscribed.push(...list),
-    publish: (topic, payload) => published.push({ topic, payload }),
     end: () => {},
   }
   return {
     link,
-    published,
     subscribed,
     connect: () => onConnect(),
     disconnect: () => onDisconnect(),
@@ -61,17 +59,19 @@ function setup() {
   return { f, backend, events }
 }
 
+const TEL = 'deem/esp32-pot-01/telemetry'
+const STATUS = 'deem/esp32-pot-01/status'
 const good = { device_id: 'esp32-pot-01', ts: 0, metrics: { co2_ppm: 600, temp_c: 22, rh_pct: 45, soil_moisture: 40 } }
+const online = { state: 'online', fw: '0.1.0' }
+
+afterEach(() => vi.useRealTimers())
 
 describe('MqttBackend', () => {
-  it('subscribes to this pot only, once connected', () => {
+  it('listens to this pot only, and only to telemetry and status (it sends no commands)', () => {
     const { f } = setup()
     f.connect()
-    expect(f.subscribed).toEqual([
-      'deem/esp32-pot-01/telemetry',
-      'deem/esp32-pot-01/status',
-      'deem/esp32-pot-01/cmd/ack',
-    ])
+    expect(f.subscribed).toEqual(['deem/esp32-pot-01/telemetry', 'deem/esp32-pot-01/status'])
+    expect('publish' in f.link).toBe(false)
   })
 
   it('emits scored telemetry and ignores other pots and bad packets', async () => {
@@ -79,10 +79,10 @@ describe('MqttBackend', () => {
     f.connect()
     backend.selectPlant(plant)
     f.message('deem/esp32-pot-02/telemetry', good)
-    f.message('deem/esp32-pot-01/telemetry', { metrics: 'broken' })
+    f.message(TEL, { metrics: 'broken' })
     expect(events.filter((e) => e.type === 'telemetry')).toHaveLength(0)
 
-    f.message('deem/esp32-pot-01/telemetry', good)
+    f.message(TEL, good)
     const t = events.find((e) => e.type === 'telemetry')
     expect(t?.type === 'telemetry' && t.telemetry.health_score).toBeGreaterThan(80)
     expect((await backend.getHistory('dracaena')).length).toBe(1)
@@ -91,79 +91,106 @@ describe('MqttBackend', () => {
   it('reports the link down on Last Will and when the broker drops', () => {
     const { f, events } = setup()
     f.connect()
-    f.message('deem/esp32-pot-01/status', { state: 'online' })
-    f.message('deem/esp32-pot-01/status', { state: 'offline' })
-    f.message('deem/esp32-pot-01/status', { state: 'online' })
+    f.message(STATUS, online)
+    f.message(STATUS, { state: 'offline' })
+    f.message(STATUS, online)
     f.disconnect()
     const links = events.filter((e) => e.type === 'link').map((e) => e.type === 'link' && e.online)
     // connected but device not seen yet -> online -> Last Will -> back -> broker drops
     expect(links).toEqual([false, true, false, true, false])
   })
 
-  it('checks sensors from the first telemetry message', async () => {
-    const { f, backend } = setup()
+  it('a stored reading alone does not mean the device is up: only its status does', () => {
+    const { f, events } = setup()
     f.connect()
-    const pending = backend.checkSensors()
-    f.message('deem/esp32-pot-01/telemetry', { metrics: { co2_ppm: 600, temp_c: 22, rh_pct: 45 } })
-    const checks = await pending
-    expect(checks.find((c) => c.name === 'Soil')?.ok).toBe(false)
-    expect(checks.find((c) => c.name === 'AQI')?.ok).toBe(true)
+    f.message(TEL, good)
+    expect(events.filter((e) => e.type === 'link').map((e) => e.type === 'link' && e.online)).toEqual([false])
   })
 
-  it('sends set_relay and resolves on a matching ack', async () => {
+  it('TEST (collectNow) returns the newest reading and asks the device for nothing', async () => {
     const { f, backend } = setup()
     f.connect()
-    const done = backend.setRelay(true)
-    const sent = JSON.parse(f.published[0].payload)
-    expect(f.published[0].topic).toBe('deem/esp32-pot-01/cmd')
-    expect(sent.action).toBe('set_relay')
-    expect(sent.params).toEqual({ channel: 1, state: 'on' })
-    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: true })
-    await expect(done).resolves.toBeUndefined()
+    f.message(TEL, { ...good, ts: 100 })
+    f.message(TEL, { ...good, ts: 200 })
+    expect((await backend.collectNow('dracaena')).ts).toBe(200)
   })
 
-  it('rejects when the device nacks', async () => {
+  it('waits for a first reading, and gives up with a clear error', async () => {
+    vi.useFakeTimers()
     const { f, backend } = setup()
     f.connect()
-    const done = backend.setRelay(true)
-    const sent = JSON.parse(f.published[0].payload)
-    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: false, detail: 'bad channel' })
-    await expect(done).rejects.toThrow('bad channel')
+    const pending = backend.getLatestTelemetry('dracaena')
+    const assertion = expect(pending).rejects.toThrow('No data from esp32-pot-01')
+    await vi.advanceTimersByTimeAsync(31_000)
+    await assertion
   })
+})
 
-  it('TEST sends sample_now and returns the fresh reading the ESP publishes', async () => {
+describe('setup sensor check', () => {
+  const states = (p: SensorProgress[]) => p.map((x) => x.state)
+
+  it('waits for the device to be online before it believes any reading', async () => {
     const { f, backend } = setup()
     f.connect()
-    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 100 })
-    const pending = backend.collectNow('dracaena')
-    await Promise.resolve()
-    await Promise.resolve()
-    const sent = JSON.parse(f.published[0].payload)
-    expect(sent.action).toBe('sample_now')
-    expect(sent.params).toEqual({})
-    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: true })
-    await Promise.resolve()
-    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 200, metrics: { ...good.metrics, temp_c: 25 } })
-    const t = await pending
-    expect(t.ts).toBe(200)
-    expect(t.metrics.temp_c).toBe(25)
+    f.message(TEL, good) // a stored reading is there, but the device has not said it is up
+    const seen: SensorProgress[][] = []
+    const done = backend.checkSensors((p) => seen.push(p))
+    expect(states(seen[seen.length - 1])).toEqual(['pending', 'pending', 'pending'])
+    f.message(STATUS, online)
+    const result = await done
+    expect(states(result)).toEqual(['ok', 'ok', 'ok'])
   })
 
-  it('TEST falls back to the newest reading when the firmware refuses sample_now', async () => {
+  it('turns each sensor to ok as its readings arrive, in the firmware init order', async () => {
     const { f, backend } = setup()
     f.connect()
-    f.message('deem/esp32-pot-01/telemetry', { ...good, ts: 100 })
-    const pending = backend.collectNow('dracaena')
-    await Promise.resolve()
-    await Promise.resolve()
-    const sent = JSON.parse(f.published[0].payload)
-    f.message('deem/esp32-pot-01/cmd/ack', { cmd_id: sent.cmd_id, ok: false, detail: 'unsupported' })
-    const t = await pending
-    expect(t.ts).toBe(100)
+    f.message(STATUS, online)
+    const seen: string[][] = []
+    const done = backend.checkSensors((p) => seen.push(states(p)))
+    expect(seen[seen.length - 1]).toEqual(['pending', 'pending', 'pending'])
+
+    f.message(TEL, { ...good, metrics: { temp_c: 22, rh_pct: 45 } }) // only the DHT11 so far
+    expect(seen[seen.length - 1]).toEqual(['ok', 'pending', 'pending'])
+
+    f.message(TEL, { ...good, metrics: { temp_c: 22, rh_pct: 45, co2_ppm: 610 } }) // air sensor warmed up
+    expect(seen[seen.length - 1]).toEqual(['ok', 'ok', 'pending'])
+
+    f.message(TEL, good) // soil too
+    expect(states(await done)).toEqual(['ok', 'ok', 'ok'])
   })
 
-  it('refuses commands while disconnected', async () => {
-    const { backend } = setup()
-    await expect(backend.setRelay(true)).rejects.toThrow()
+  it('fails a sensor immediately when the device reports that its init failed', async () => {
+    const { f, backend } = setup()
+    f.connect()
+    f.message(STATUS, { ...online, sensors: { dht: true, air: false, soil: true } })
+    f.message(TEL, { ...good, metrics: { temp_c: 22, rh_pct: 45, soil_moisture: 40 } })
+    const result = await backend.checkSensors(() => {})
+    expect(states(result)).toEqual(['ok', 'fail', 'ok'])
+  })
+
+  it('after a minute, fails whatever has still not produced readings', async () => {
+    vi.useFakeTimers()
+    const { f, backend } = setup()
+    f.connect()
+    f.message(STATUS, online)
+    f.message(TEL, { ...good, metrics: { temp_c: 22, rh_pct: 45 } })
+    const done = backend.checkSensors(() => {})
+    await vi.advanceTimersByTimeAsync(59_000)
+    let settled = false
+    void done.then(() => (settled = true))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(settled).toBe(false) // still patient at 59 s
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(states(await done)).toEqual(['ok', 'fail', 'fail'])
+  })
+
+  it('rejects if the device never comes online', async () => {
+    vi.useFakeTimers()
+    const { f, backend } = setup()
+    f.connect()
+    const done = backend.checkSensors(() => {})
+    const assertion = expect(done).rejects.toThrow('offline')
+    await vi.advanceTimersByTimeAsync(61_000)
+    await assertion
   })
 })

@@ -107,17 +107,17 @@ What the UI does against the contract:
 - Subscribes to `deem/<id>/telemetry`, `deem/<id>/status` and `deem/<id>/cmd/ack`.
 - Every telemetry message updates the screens live. Missing metrics show `--`. Unknown numeric keys still show on the Inputs page. Malformed packets are dropped.
 - `ts: 0` is fine (no clock on the ESP32): arrival time is used.
-- Setup's sensor check passes when the first telemetry message contains each sensor's metrics (Soil: `soil_moisture`, AQI: `co2_ppm`, Temp/RH: `temp_c` + `rh_pct`). It fails if the device never reports.
+- **Setup's sensor check follows the device's real startup.** The rows are in the firmware's init order: Temp/RH (DHT11), AQI (SEN63C), Soil (Stemma). It first waits for the device to say it is online (its retained `status`), then each row turns to a check as that sensor's readings arrive (Temp/RH: `temp_c` + `rh_pct`, AQI: `co2_ppm`, Soil: `soil_moisture`). If the device reports its sensors' startup results in `status.sensors` (`{"dht":true,"air":false,"soil":true}`), a sensor whose startup failed turns to an X at once. It waits up to a minute for a slow sensor (the air sensor needs a few seconds of warm-up), then fails whatever is still silent. If the device never comes online, setup says so.
 - "device offline" shows when the broker drops or the device's Last Will (`status: offline`) arrives.
-- The backend can switch the pump with `set_relay { channel: 1 }` (acked, always followed by `off`). There is no Water button on the screen; it is for the automatic watering logic.
-- **TEST** (physical key) sends `sample_now` (added to the contract as an additive action) and shows the fresh telemetry the ESP publishes. If the firmware doesn't support it (no ack, or `ok:false`), the screen shows the newest reading and says "no new reading".
+- **No commands, no pump.** The app only listens (readings and status). There is no sample-now and no watering in the MVP.
+- **TEST** (physical key) shows the most recent reading the device sent, with how old it is (e.g. "latest reading · 4 min ago"). The device samples every 10 minutes on its own. (In the browser mock, TEST still steps through the failure scenarios.)
 - History: one point per hour, the average of that hour's health scores. The last 24 hours are kept in `localStorage`.
 
 Things for the firmware to confirm:
 
-- `soil_moisture`: the UI treats 0-100 as percent and anything higher as raw, converted with `SOIL_RAW_DRY=200` / `SOIL_RAW_WET=2000` in `src/lib/telemetry.ts`. Tune against the real Stemma sensor, or send percent.
-- The pump relay is `channel: 1` (`PUMP_CHANNEL` in `src/mock/mqttBackend.ts`).
-- Publish retained `status` `{"state":"online"}` after connecting, with `{"state":"offline"}` as the Last Will.
+- `soil_moisture`: the firmware sends a **percent** (0-100), calibrated on the device with `DRY_RAW` / `WET_RAW` in `SoilSens.h`. Those need calibrating against the real pot. (The UI also converts raw values above 100 with `SOIL_RAW_DRY` / `SOIL_RAW_WET` in `src/lib/telemetry.ts`, but the firmware does not send raw.)
+- `temp_c` / `rh_pct` come from the DHT11; the firmware is the source of truth.
+- Telemetry should be **retained** and sent every 10 minutes, and `status` should carry `sensors`. See `docs/firmware_changes_for_zion.md`.
 
 ## Swap the knowledge backend later
 
