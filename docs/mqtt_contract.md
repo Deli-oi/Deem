@@ -33,13 +33,22 @@ Recommended scheme: `esp32-pot-<nn>` (zero-padded pot number).
 
 | Topic | Direction | QoS | Retain | Purpose |
 |-------|-----------|-----|--------|---------|
-| `deem/<device_id>/telemetry` | ESP32 → Pi | 1 | no  | periodic sensor readings |
-| `deem/<device_id>/status`    | ESP32 → Pi | 1 | yes | online/offline (LWT) |
-| `deem/<device_id>/cmd`       | Pi → ESP32 | 1 | no  | command to the device |
-| `deem/<device_id>/cmd/ack`   | ESP32 → Pi | 1 | no  | command acknowledgement |
+| `deem/<device_id>/telemetry` | ESP32 → Pi | 0 | **yes** (latest sample) | sensor readings, one every 10 minutes |
+| `deem/<device_id>/status`    | ESP32 → Pi | 1 | yes | online/offline (LWT) + which sensors started |
+| `deem/<device_id>/cmd`       | Pi → ESP32 | 1 | no  | *not used in the MVP* |
+| `deem/<device_id>/cmd/ack`   | ESP32 → Pi | 1 | no  | *not used in the MVP* |
 
 > The Pi subscribes with wildcards: `deem/+/telemetry` and `deem/+/status`.
-> Each ESP32 subscribes to its own `deem/<device_id>/cmd`.
+>
+> **Telemetry is retained** so that anything that connects later (the screen app, a rebooted Pi)
+> gets the latest sample immediately instead of waiting up to 10 minutes for the next one.
+>
+> **Telemetry QoS is 0.** The firmware's PubSubClient library can only publish at QoS 0. That is
+> fine on a LAN: the firmware already queues samples and retries while WiFi or the broker is
+> down, so a reading is only lost if the connection fails in the instant it is sent.
+>
+> **Sampling** is every 10 minutes (`SAMPLE_INTERVAL_S` 600). **Thresholds are not on the device**:
+> the firmware reports raw readings only, and the app decides what is out of range.
 
 ## Payloads
 
@@ -92,16 +101,19 @@ same per-pot telemetry message above. (Hardware source of truth: `hardware_info.
 
 | # | Sensor | Interface | Metrics it produces | Units |
 |---|--------|-----------|---------------------|-------|
-| 1 | **Sensirion SEN63C** (air quality) | I²C | `co2_ppm`, `temp_c`, `rh_pct`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0` | ppm, °C, % RH, µg/m³ |
-| 2 | **DHT11** (temp / humidity) | 1-wire digital | `temp_c`, `rh_pct` | °C, % RH |
-| 3 | **Adafruit Stemma I²C Soil Sensor** | I²C | `soil_moisture`, `soil_temp_c` | raw (0–1023) or %, °C |
+| 1 | **DHT11** (temp / humidity) | 1-wire digital (pin 4) | `temp_c`, `rh_pct` | °C, % RH |
+| 2 | **Sensirion SEN63C** (air quality) | I²C (0x6B) | `co2_ppm`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0` | ppm, µg/m³ |
+| 3 | **Adafruit Stemma I²C Soil Sensor** | I²C (0x36) | `soil_moisture`, `soil_temp_c` | % (calibrated on the device), °C |
+
+The table is in the firmware's startup order (DHT11, then SEN63C, then soil), which is also the order the screen's setup check shows them.
 
 Notes:
-- `temp_c` / `rh_pct` are available from both the SEN63C and the DHT11. Pick one
-  as the pot's canonical source (SEN63C preferred) and keep the key consistent;
-  if you want to report both, suffix the redundant one (e.g. `temp_c_dht`).
-- The **5V relay module** on each pot's ESP32 is an *actuator*, not a sensor — it
-  is driven by `set_relay` commands (see below), so it produces no telemetry.
+- **`temp_c` / `rh_pct` come from the DHT11.** The SEN63C also measures them, but the firmware
+  does not publish those values: the firmware is the ground truth (decision 2026-11-08).
+- `soil_moisture` is a **percent** (0–100), converted on the device from the probe's raw reading
+  (`DRY_RAW` / `WET_RAW` in `SoilSens.h`, which must be calibrated against the real pot).
+- The **5V relay module** and a **water pump** are **not used in the MVP**: no relay is driven and
+  there is no automatic watering.
 - Pi-side devices (**Raspberry Pi Camera 3**, USB mic/speaker, **2.8" SPI TFT
   touchscreen**) are **not** pot sensors and do not publish to this contract; they
   live on the Pi. The Pi **owns** the product display (Chromium kiosk); the ESP32
@@ -112,11 +124,20 @@ Set this as the MQTT **Last Will** when connecting so the broker publishes
 `offline` automatically if the device drops. Publish `online` yourself right
 after connecting.
 ```json
-{ "state": "online", "fw": "0.1.0" }
+{ "state": "online", "fw": "0.1.0", "sensors": { "dht": true, "air": true, "soil": true } }
 ```
 `state` is `"online"` or `"offline"`.
 
+`sensors` is **optional** and says whether each sensor's startup (`begin()`) succeeded:
+`dht` (DHT11), `air` (SEN63C), `soil` (Stemma). The screen's setup check uses it to show a failed
+sensor right away instead of waiting. Without it, the screen waits for that sensor's readings to
+show up in telemetry and gives up after a minute. Publish it (retained, with `online`) after the
+sensors have been started, and again if a sensor drops out.
+
 ### 3. Command  (`deem/<device_id>/cmd`)
+> **Not used in the MVP.** There is no sample-now, no pump, and the firmware handles no commands
+> (it answers every one with `ok: false`). The screen sends none. This section is kept for later.
+
 ```json
 {
   "cmd_id": "9f1c...",
@@ -139,7 +160,6 @@ Initial action vocabulary (extend as needed, keep this table updated):
 |--------|--------|---------|
 | `set_relay` | `{ "channel": <int>, "state": "on"\|"off" }` | Switch a relay channel. |
 | `set_interval` | `{ "seconds": <int> }` | Change telemetry publish interval. |
-| `sample_now` | `{}` | Take a reading immediately and publish it as normal telemetry (does not wait for the interval). Ack, then publish. Used by the physical TEST key. |
 | `identify` | `{}` | Blink an LED (or similar) on the ESP32 to find the board. Product UI lives on the Pi. |
 | `reboot` | `{}` | Soft-reboot the ESP32. |
 

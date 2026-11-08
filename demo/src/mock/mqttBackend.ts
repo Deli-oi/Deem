@@ -1,24 +1,19 @@
 import mqtt from 'mqtt'
 import { withHealth } from '../lib/healthScore'
 import { HourlyHealthStore } from '../lib/historyStore'
-import {
-  buildCommand,
-  parseAckMessage,
-  parseStatusMessage,
-  parseTelemetryMessage,
-  relayCommand,
-  sensorChecks,
-  topics,
-} from '../lib/telemetry'
-import type { Command, CommandAck, SensorCheck } from '../lib/telemetry'
+import { parseStatusMessage, parseTelemetryMessage, sensorProgress, topics } from '../lib/telemetry'
+import type { DeviceStatus, SensorProgress } from '../lib/telemetry'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, Telemetry } from '../lib/types'
 
-/** Relay channel wired to the water pump (contract: set_relay { channel }). */
-export const PUMP_CHANNEL = 1
-const ACK_TIMEOUT_MS = 5000
-const FIRST_TELEMETRY_TIMEOUT_MS = 15000
-const SAMPLE_TIMEOUT_MS = 8000
+/**
+ * How long setup waits for every sensor to come up. The device initializes a sensor in about a
+ * second, but the air sensor needs a few seconds of warm-up before it gives valid readings, and
+ * a late WiFi/MQTT connect adds more, so be patient before calling a sensor dead.
+ */
+const SENSOR_READY_TIMEOUT_MS = 60_000
+/** How long to wait for a first reading (the device keeps its latest sample on the broker). */
+const FIRST_TELEMETRY_TIMEOUT_MS = 30_000
 
 /** The small slice of an MQTT client we use. Lets tests inject a fake. */
 export interface MqttLink {
@@ -26,7 +21,6 @@ export interface MqttLink {
   onDisconnect(cb: () => void): void
   onMessage(cb: (topic: string, payload: Uint8Array) => void): void
   subscribe(topicList: string[]): void
-  publish(topic: string, payload: string): void
   end(): void
 }
 
@@ -41,7 +35,6 @@ export function connectWebSocket(url: string, clientId: string): MqttLink {
     },
     onMessage: (cb) => client.on('message', (topic, payload) => cb(topic, payload)),
     subscribe: (list) => client.subscribe(list, { qos: 1 }),
-    publish: (topic, payload) => client.publish(topic, payload, { qos: 1 }),
     end: () => client.end(true),
   }
 }
@@ -55,6 +48,11 @@ type Options = {
   history?: HourlyHealthStore
 }
 
+/**
+ * Reads the real ESP32 over MQTT. Read-only: the device sends readings and its status, and the
+ * app never sends it commands (no sample-now, no pump). Thresholds live in the app, not on the
+ * device, so the firmware only reports raw readings.
+ */
 export class MqttBackend implements DeemBackend {
   private readonly deviceId: string
   private readonly link: MqttLink
@@ -63,12 +61,13 @@ export class MqttBackend implements DeemBackend {
 
   private plant: PlantType | null = null
   private latest: Telemetry | null = null
+  private sensorFlags: DeviceStatus['sensors']
   private connected = false
+  /** Only the device's own status says whether it is up (a retained reading can be old). */
   private deviceOnline = false
   private lastLink: boolean | null = null
   private listeners = new Set<(e: BackendEvent) => void>()
-  private acks = new Map<string, (ack: CommandAck) => void>()
-  private cmdCounter = 0
+  private watchers = new Set<() => void>()
 
   constructor(opts: Options) {
     this.deviceId = opts.deviceId
@@ -78,16 +77,14 @@ export class MqttBackend implements DeemBackend {
 
     this.link.onConnect(() => {
       this.connected = true
-      this.link.subscribe([
-        topics.telemetry(this.deviceId),
-        topics.status(this.deviceId),
-        topics.ack(this.deviceId),
-      ])
+      this.link.subscribe([topics.telemetry(this.deviceId), topics.status(this.deviceId)])
       this.emitLink()
+      this.notify()
     })
     this.link.onDisconnect(() => {
       this.connected = false
       this.emitLink()
+      this.notify()
     })
     this.link.onMessage((topic, payload) => this.handle(topic, payload))
   }
@@ -97,19 +94,17 @@ export class MqttBackend implements DeemBackend {
     try {
       if (topic === topics.telemetry(this.deviceId)) {
         const raw = parseTelemetryMessage(topic, payload)
-        this.deviceOnline = true
         const telemetry = this.plant ? withHealth(raw, this.plant) : raw
         this.latest = telemetry
         if (telemetry.health_score != null) this.store.add(telemetry.ts, telemetry.health_score)
         this.emit({ type: 'telemetry', telemetry })
-        this.emitLink()
       } else if (topic === topics.status(this.deviceId)) {
-        this.deviceOnline = parseStatusMessage(topic, payload).state === 'online'
+        const status = parseStatusMessage(topic, payload)
+        this.deviceOnline = status.state === 'online'
+        if (status.sensors) this.sensorFlags = status.sensors
         this.emitLink()
-      } else if (topic === topics.ack(this.deviceId)) {
-        const ack = parseAckMessage(payload)
-        this.acks.get(ack.cmd_id)?.(ack)
       }
+      this.notify()
     } catch {
       // ignore
     }
@@ -117,6 +112,10 @@ export class MqttBackend implements DeemBackend {
 
   private emit(event: BackendEvent) {
     for (const l of this.listeners) l(event)
+  }
+
+  private notify() {
+    for (const w of [...this.watchers]) w()
   }
 
   private emitLink() {
@@ -152,9 +151,39 @@ export class MqttBackend implements DeemBackend {
     })
   }
 
-  async checkSensors(): Promise<SensorCheck[]> {
-    const t = await this.waitForTelemetry(FIRST_TELEMETRY_TIMEOUT_MS)
-    return sensorChecks(t.metrics)
+  /**
+   * Waits for the device to be online, then for each sensor to be ready, reporting progress as
+   * it happens. A sensor is ready when its readings arrive; it has failed if the device says its
+   * begin() failed, or it still has not produced readings after SENSOR_READY_TIMEOUT_MS.
+   * Rejects if the device never comes online.
+   */
+  checkSensors(onProgress: (progress: SensorProgress[]) => void): Promise<SensorProgress[]> {
+    return new Promise((resolve, reject) => {
+      let expired = false
+      const evaluate = () => {
+        if (!this.deviceOnline) {
+          // Not up yet: every sensor is still pending (a stored reading may be from before a reboot).
+          const waiting = sensorProgress(undefined, undefined, false)
+          onProgress(waiting)
+          if (expired) done(() => reject(new Error(`${this.deviceId} is offline`)))
+          return
+        }
+        const progress = sensorProgress(this.latest?.metrics, this.sensorFlags, expired)
+        onProgress(progress)
+        if (progress.every((p) => p.state !== 'pending')) done(() => resolve(progress))
+      }
+      const timer = window.setTimeout(() => {
+        expired = true
+        evaluate()
+      }, SENSOR_READY_TIMEOUT_MS)
+      const done = (finish: () => void) => {
+        window.clearTimeout(timer)
+        this.watchers.delete(evaluate)
+        finish()
+      }
+      this.watchers.add(evaluate)
+      evaluate()
+    })
   }
 
   async getLatestTelemetry(plantTypeId: string): Promise<Telemetry> {
@@ -162,26 +191,9 @@ export class MqttBackend implements DeemBackend {
     return this.waitForTelemetry(FIRST_TELEMETRY_TIMEOUT_MS)
   }
 
-  /**
-   * TEST on the screen: ask the ESP for a fresh reading with `sample_now`, then wait for the
-   * telemetry it publishes. Firmware that doesn't know `sample_now` (no ack, or ok:false)
-   * leaves us with the newest reading, which the UI reports as "no new reading".
-   */
+  /** There is no sample-now: TEST shows the newest reading the device sent. */
   async collectNow(plantTypeId: string): Promise<Telemetry> {
-    void plantTypeId
-    const fallback = await this.waitForTelemetry(FIRST_TELEMETRY_TIMEOUT_MS)
-    try {
-      const fresh = this.nextTelemetry(SAMPLE_TIMEOUT_MS)
-      const ack = await this.sendCommand(buildCommand('sample_now', {}, this.nextCmdId()))
-      if (!ack.ok) {
-        void fresh.catch(() => {})
-        return fallback
-      }
-      return await fresh
-    } catch {
-      // Firmware without sample_now (no ack) or no fresh reading in time: show the newest one.
-      return this.latest ?? fallback
-    }
+    return this.getLatestTelemetry(plantTypeId)
   }
 
   async getHistory(plantTypeId: string): Promise<HealthPoint[]> {
@@ -199,49 +211,6 @@ export class MqttBackend implements DeemBackend {
 
   ask(plantTypeId: string, question: string, telemetry?: Telemetry): Promise<AskAnswer> {
     return this.knowledge.ask(plantTypeId, question, telemetry ?? this.latest ?? undefined)
-  }
-
-  private nextCmdId(): string {
-    return `ui-${Date.now()}-${++this.cmdCounter}`
-  }
-
-  private nextTelemetry(timeoutMs: number): Promise<Telemetry> {
-    return new Promise((resolve, reject) => {
-      const timer = window.setTimeout(() => {
-        off()
-        reject(new Error('No new reading'))
-      }, timeoutMs)
-      const off = this.subscribe((e) => {
-        if (e.type !== 'telemetry') return
-        window.clearTimeout(timer)
-        off()
-        resolve(e.telemetry)
-      })
-    })
-  }
-
-  /** Publish a command and resolve with the device's ack (rejects after ACK_TIMEOUT_MS). */
-  private async sendCommand(command: Command): Promise<CommandAck> {
-    if (!this.connected) throw new Error('Not connected to the broker')
-    const cmdId = command.cmd_id
-    const ack = new Promise<CommandAck>((resolve, reject) => {
-      const timer = window.setTimeout(() => {
-        this.acks.delete(cmdId)
-        reject(new Error('No ack from device'))
-      }, ACK_TIMEOUT_MS)
-      this.acks.set(cmdId, (a) => {
-        window.clearTimeout(timer)
-        this.acks.delete(cmdId)
-        resolve(a)
-      })
-    })
-    this.link.publish(topics.cmd(this.deviceId), JSON.stringify(command))
-    return ack
-  }
-
-  async setRelay(on: boolean): Promise<void> {
-    const result = await this.sendCommand(relayCommand(PUMP_CHANNEL, on, this.nextCmdId()))
-    if (!result.ok) throw new Error(result.detail ?? 'Device refused the command')
   }
 
   dispose() {

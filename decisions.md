@@ -19,6 +19,20 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-08: Align the app with Zion's firmware (no commands, no pump, DHT11, real sensor check)
+- **Decision:**
+  - **No `sample_now` and no pump** in the MVP. The firmware handles no commands and the app sends none. TEST shows the most recent reading and how old it is.
+  - **Sampling every 10 minutes** (the firmware's 30 s was for testing; Zion is changing it).
+  - **Temperature and humidity come from the DHT11.** The firmware is the source of truth; the SEN63C's own temp/RH are not published (supersedes "SEN63C preferred" in the contract).
+  - **Thresholds are handled by the app**, not the firmware (agreed with Zion). The firmware sends raw readings.
+  - **Setup's loading screen follows the firmware's real startup**: Temp/RH (DHT11), AQI (SEN63C), Soil (Stemma), in that order. It waits for the device to be online, then for each sensor's readings, and fails a sensor that never comes up or that reports its startup failed. Up to a minute of patience for the air sensor's warm-up.
+  - **Telemetry QoS 0 is fine** (see the contract note). Telemetry should be **retained** so the screen gets the latest reading at once.
+- **Why:** With one reading every 10 minutes, the screen cannot wait for the next sample at startup, so the device should keep its latest sample on the broker and report which sensors started.
+- **Needs from Zion:** retained telemetry, 600 s interval, and `sensors` in the status message (`docs/firmware_changes_for_zion.md`).
+- **Supersedes:** the `sample_now` addition (2026-11-07) and the pump/relay parts of earlier entries.
+
+---
+
 ### 2026-11-08: Dashboard goes cozy (Stardew Valley style)
 - **Decision:** The greenhouse dashboard was too industrial/brutalist. It now has a light, warm parchment background (less green, more nature), a wooden top bar, paper-style cards with soft shadows, leaf/sun/berry accents, and a redrawn map: wooden planter boxes, stone floor, boardwalks, rain barrels, fairy lights, flowers and bushes outside, a workbench, a plant shelf, seed sacks and a sleeping cat, with two butterflies drifting over it. Layout and behavior are unchanged.
 - **Why:** A friendlier, cuter look suits the product and the pitch.

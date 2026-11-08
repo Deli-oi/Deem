@@ -3,10 +3,9 @@
  * so the same code is unit-tested and used by the live MQTT backend.
  *
  * Topics:
- *   deem/<device_id>/telemetry  ESP32 -> Pi  (QoS 1)
- *   deem/<device_id>/status     ESP32 -> Pi  (QoS 1, retained; also the Last Will)
- *   deem/<device_id>/cmd        Pi -> ESP32  (QoS 1)
- *   deem/<device_id>/cmd/ack    ESP32 -> Pi  (QoS 1)
+ *   deem/<device_id>/telemetry  ESP32 -> Pi  (latest sample, retained)
+ *   deem/<device_id>/status     ESP32 -> Pi  (retained; also the Last Will)
+ *   deem/<device_id>/cmd, /cmd/ack exist in the contract but the MVP sends no commands.
  */
 import { parseTelemetryMetrics } from './mqttContract'
 import type { MetricMap } from './mqttContract'
@@ -17,8 +16,6 @@ export const TOPIC_PREFIX = 'deem'
 export const topics = {
   telemetry: (deviceId: string) => `${TOPIC_PREFIX}/${deviceId}/telemetry`,
   status: (deviceId: string) => `${TOPIC_PREFIX}/${deviceId}/status`,
-  cmd: (deviceId: string) => `${TOPIC_PREFIX}/${deviceId}/cmd`,
-  ack: (deviceId: string) => `${TOPIC_PREFIX}/${deviceId}/cmd/ack`,
 }
 
 /**
@@ -90,54 +87,70 @@ export function parseTelemetryMessage(
   }
 }
 
-export type DeviceStatus = { device_id: string; state: 'online' | 'offline'; fw?: string }
+/** The three sensor groups, in the order the firmware initializes them (setup() in main.cpp). */
+export type SensorId = 'dht' | 'air' | 'soil'
+
+export type DeviceStatus = {
+  device_id: string
+  state: 'online' | 'offline'
+  fw?: string
+  /** Result of each sensor's begin() on the device, if it reports them (optional contract field). */
+  sensors?: Partial<Record<SensorId, boolean>>
+}
+
+function parseSensorFlags(value: unknown): DeviceStatus['sensors'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const out: Partial<Record<SensorId, boolean>> = {}
+  for (const id of ['dht', 'air', 'soil'] as const) {
+    const v = (value as Record<string, unknown>)[id]
+    if (typeof v === 'boolean') out[id] = v
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
 
 export function parseStatusMessage(topic: string, payload: string | Uint8Array): DeviceStatus {
   const device_id = deviceIdFromTopic(topic)
   if (!device_id || !topic.endsWith('/status')) throw new Error(`not a status topic: ${topic}`)
   const body = parseObject(payload)
   if (body.state !== 'online' && body.state !== 'offline') throw new Error('status.state must be online|offline')
-  return { device_id, state: body.state, fw: typeof body.fw === 'string' ? body.fw : undefined }
+  return {
+    device_id,
+    state: body.state,
+    fw: typeof body.fw === 'string' ? body.fw : undefined,
+    sensors: parseSensorFlags(body.sensors),
+  }
 }
 
-export type CommandAck = { cmd_id: string; ok: boolean; detail?: string }
-
-export function parseAckMessage(payload: string | Uint8Array): CommandAck {
-  const body = parseObject(payload)
-  if (typeof body.cmd_id !== 'string' || typeof body.ok !== 'boolean') throw new Error('bad ack')
-  return { cmd_id: body.cmd_id, ok: body.ok, detail: typeof body.detail === 'string' ? body.detail : undefined }
-}
-
-export type CommandAction = 'set_relay' | 'set_interval' | 'identify' | 'reboot' | 'sample_now'
-
-export type Command = {
-  cmd_id: string
-  ts: number
-  action: CommandAction
-  params: Record<string, unknown>
-}
-
-export function buildCommand(
-  action: CommandAction,
-  params: Record<string, unknown>,
-  cmdId: string,
-  nowSeconds: number = Date.now() / 1000,
-): Command {
-  return { cmd_id: cmdId, ts: Math.floor(nowSeconds), action, params }
-}
-
-export const relayCommand = (channel: number, on: boolean, cmdId: string, now?: number) =>
-  buildCommand('set_relay', { channel, state: on ? 'on' : 'off' }, cmdId, now)
-
-/** What each setup-check row needs to see in the telemetry `metrics`. */
-export const SENSOR_CHECKS = [
-  { name: 'Soil', needs: ['soil_moisture'] },
-  { name: 'AQI', needs: ['co2_ppm'] },
-  { name: 'Temp/RH', needs: ['temp_c', 'rh_pct'] },
+/**
+ * The setup check rows, in the firmware's init order (main.cpp setup()): DHTSensor.begin() (DHT11,
+ * pin 4), AirSens.begin() (SEN63C: reset, start, warm-up) and SoilSens.begin() (Stemma, 0x36).
+ * `needs` are the metrics that prove the sensor is producing readings.
+ */
+export const SENSORS = [
+  { id: 'dht', name: 'Temp/RH', needs: ['temp_c', 'rh_pct'] },
+  { id: 'air', name: 'AQI', needs: ['co2_ppm'] },
+  { id: 'soil', name: 'Soil', needs: ['soil_moisture'] },
 ] as const
 
-export type SensorCheck = { name: string; ok: boolean }
+export type SensorState = 'pending' | 'ok' | 'fail'
 
-export function sensorChecks(metrics: MetricMap): SensorCheck[] {
-  return SENSOR_CHECKS.map((c) => ({ name: c.name, ok: c.needs.every((k) => typeof metrics[k] === 'number') }))
+export type SensorProgress = { id: SensorId; name: string; state: SensorState }
+
+/**
+ * Where each sensor stands:
+ *  - ok:      its readings are in the latest telemetry
+ *  - fail:    its begin() failed on the device (status says so), or it never produced readings
+ *             and we have stopped waiting (`expired`)
+ *  - pending: still starting up
+ */
+export function sensorProgress(
+  metrics: MetricMap | undefined,
+  flags: DeviceStatus['sensors'] | undefined,
+  expired: boolean,
+): SensorProgress[] {
+  return SENSORS.map((s) => {
+    const producing = !!metrics && s.needs.every((k) => typeof metrics[k] === 'number')
+    const state: SensorState = producing ? 'ok' : flags?.[s.id] === false || expired ? 'fail' : 'pending'
+    return { id: s.id, name: s.name, state }
+  })
 }
