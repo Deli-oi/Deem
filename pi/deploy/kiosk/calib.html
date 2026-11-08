@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Deem Touch Calibration</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;
+    font-family:system-ui,sans-serif;-webkit-user-select:none;user-select:none;touch-action:none;}
+  .wrap{position:fixed;inset:0;}
+  .msg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    text-align:center;line-height:1.4;}
+  .msg h1{font-size:18px;margin:0 0 6px;letter-spacing:.5px;}
+  .msg p{font-size:12px;margin:2px 0;opacity:.85;}
+  .t{position:absolute;width:44px;height:44px;transform:translate(-50%,-50%);}
+  .t::before{content:"";position:absolute;inset:0;border-radius:50%;
+    border:3px solid #ff3b30;box-shadow:0 0 0 2px #000;}
+  .t::after{content:"";position:absolute;top:50%;left:50%;width:6px;height:6px;
+    margin:-3px 0 0 -3px;background:#ff3b30;border-radius:50%;}
+  .n{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:20px;font-weight:700;color:#fff;}
+  /* centers at 10% / 90% to match the calibration targets */
+  #t1{left:10%;top:10%} #t2{left:90%;top:10%} #t3{left:90%;top:90%} #t4{left:10%;top:90%}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="msg">
+      <h1>TOUCH CALIBRATION</h1>
+      <p>Tap each red target</p>
+      <p><b>in order: 1 &rarr; 2 &rarr; 3 &rarr; 4</b></p>
+      <p>hold each for a moment</p>
+    </div>
+    <div class="t" id="t1"><span class="n">1</span></div>
+    <div class="t" id="t2"><span class="n">2</span></div>
+    <div class="t" id="t3"><span class="n">3</span></div>
+    <div class="t" id="t4"><span class="n">4</span></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * Deem touchscreen overlay for the XPT2046 / ADS7846 resistive controller on
+ * the 2.8" ILI9341 SPI TFT. The stock `ads7846` overlay sets no debounce
+ * properties (jittery touches); this one adds driver-level debouncing.
+ *
+ * Wiring on this Pi:
+ *   touch CS  (TCS)  -> CE1 / GPIO7
+ *   MOSI (TDIN)      -> GPIO10   MISO (TDO) -> GPIO9   SCK -> GPIO11   (shared SPI)
+ *   PENIRQ (T_IRQ)   -> GPIO17   <-- REQUIRED; the driver only samples on this IRQ
+ *
+ * Build and install:
+ *   sudo dtc -@ -I dts -O dtb -o /boot/firmware/overlays/deem-touch.dtbo \
+ *       pi/deploy/kiosk/deem-touch-overlay.dts
+ *   # then add to /boot/firmware/config.txt (after the fbtft line):
+ *   dtoverlay=deem-touch
+ */
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    /* make sure spi0 is on */
+    fragment@0 {
+        target = <&spi0>;
+        __overlay__ { status = "okay"; };
+    };
+
+    /* free CE1 from spidev so the touch controller can own it */
+    fragment@1 {
+        target = <&spidev1>;
+        __overlay__ { status = "disabled"; };
+    };
+
+    /* PENIRQ pin: GPIO17, input, pull-up */
+    fragment@2 {
+        target = <&gpio>;
+        __overlay__ {
+            deem_ads7846_pins: deem_ads7846_pins {
+                brcm,pins = <17>;
+                brcm,function = <0>;   /* input */
+                brcm,pull = <2>;       /* pull-up */
+            };
+        };
+    };
+
+    /* XPT2046 / ADS7846 touch controller on CE1 */
+    fragment@3 {
+        target = <&spi0>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+
+            deem_ads7846: ads7846@1 {
+                compatible = "ti,ads7846";
+                reg = <1>;                        /* CE1 (GPIO7) */
+                pinctrl-names = "default";
+                pinctrl-0 = <&deem_ads7846_pins>;
+                spi-max-frequency = <2000000>;
+                interrupt-parent = <&gpio>;
+                interrupts = <17 2>;              /* GPIO17, falling edge */
+                pendown-gpio = <&gpio 17 1>;      /* active low */
+
+                ti,x-plate-ohms = /bits/ 16 <100>;
+                ti,pressure-max  = /bits/ 16 <255>;
+
+                /* ---- debounce / noise filtering (the key part) ---- */
+                ti,debounce-tol      = <40>;   /* ignore jitter within +/-40 ADC counts */
+                ti,debounce-rep      = <3>;    /* need 3 consecutive in-tolerance reads */
+                ti,debounce-max      = <10>;   /* resample up to 10x to settle a point */
+                ti,settle-delay-usec = <150>;  /* let the panel settle before sampling */
+                ti,penirq-recheck-delay-usecs = <10>;
+            };
+        };
+    };
+};
