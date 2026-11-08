@@ -14,13 +14,16 @@ with an onboard web dashboard. For the central-controller model we flip it:
 | Serves HTML at `192.168.4.1` | Publishes JSON telemetry over MQTT |
 | No way to receive commands | Subscribes for commands (relay control, etc.) |
 
-The sensor-reading and OLED code stays — only the "how it talks to the outside
-world" layer changes. You can keep the local OLED showing temp/RH exactly as it
-does now.
+The sensor-reading code stays — only the "how it talks to the outside world"
+layer changes. The product **2.8" TFT lives on the Pi** (Chromium kiosk); any
+SSD1306 OLED on the ESP32 is optional debug only, not the user-facing UI.
+
+**MVP scope:** one ESP32 for the one demo pot (`esp32-pot-01`). A second DevKit
+on hand is spare / unused.
 
 ## Network assumption
-The Pi and ESP32s share a LAN. Simplest for a greenhouse: run the ESP32s as
-clients of a WiFi network the Pi is also on (home router, or a hotspot on the
+The Pi and the ESP32 share a LAN. Simplest for a greenhouse: run the ESP32 as a
+client of a WiFi network the Pi is also on (home router, or a hotspot on the
 Pi). The Pi's Mosquitto broker is reachable at the Pi's LAN IP, port `1883`.
 
 Set these in firmware (or a `secrets.h`):
@@ -29,7 +32,7 @@ Set these in firmware (or a `secrets.h`):
 #define WIFI_PASS     "your-wifi-pass"
 #define MQTT_HOST     "192.168.1.50"   // the Pi's LAN IP
 #define MQTT_PORT     1883
-#define DEVICE_ID     "esp32-aqi-01"   // unique per board
+#define DEVICE_ID     "esp32-pot-01"   // unique per pot (MVP: one board)
 ```
 
 ## Library

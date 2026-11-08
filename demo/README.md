@@ -52,7 +52,7 @@ FISH_AUDIO_API_KEY=... npm start      # serves dist/ and /api/transcribe on :300
 
 ## Kiosk mode (the real 2.8" panel)
 
-Open `/?kiosk` to make the page the screen itself (no bezel, 240x320 fits exactly). Details and the open hardware questions: `docs/display_kiosk.md`.
+Open `/?kiosk` to make the page the screen itself (no bezel, 240x320 fits exactly). The Pi owns this panel; remaining hardware detail (exact module) is in `docs/display_kiosk.md`.
 
 ## Data
 

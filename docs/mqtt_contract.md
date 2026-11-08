@@ -102,9 +102,10 @@ Notes:
   if you want to report both, suffix the redundant one (e.g. `temp_c_dht`).
 - The **5V relay module** on each pot's ESP32 is an *actuator*, not a sensor — it
   is driven by `set_relay` commands (see below), so it produces no telemetry.
-- Pi-side devices (**Raspberry Pi Camera 3**, USB mic/speaker, 2.8" SPI TFT
-  touchscreen) are **not** pot sensors and do not publish to this contract; they
-  live on the central controller.
+- Pi-side devices (**Raspberry Pi Camera 3**, USB mic/speaker, **2.8" SPI TFT
+  touchscreen**) are **not** pot sensors and do not publish to this contract; they
+  live on the Pi. The Pi **owns** the product display (Chromium kiosk); the ESP32
+  does not drive it.
 
 ### 2. Status / Last Will  (`deem/<device_id>/status`, retained)
 Set this as the MQTT **Last Will** when connecting so the broker publishes
@@ -139,7 +140,7 @@ Initial action vocabulary (extend as needed, keep this table updated):
 | `set_relay` | `{ "channel": <int>, "state": "on"\|"off" }` | Switch a relay channel. |
 | `set_interval` | `{ "seconds": <int> }` | Change telemetry publish interval. |
 | `sample_now` | `{}` | Take a reading immediately and publish it as normal telemetry (does not wait for the interval). Ack, then publish. Used by the physical TEST key. |
-| `identify` | `{}` | Blink LED / show on display to find the device. |
+| `identify` | `{}` | Blink an LED (or similar) on the ESP32 to find the board. Product UI lives on the Pi. |
 | `reboot` | `{}` | Soft-reboot the ESP32. |
 
 ### 4. Command ack  (`deem/<device_id>/cmd/ack`)

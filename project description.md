@@ -132,38 +132,38 @@ From `hardware_info.md` (updated by Zion):
 
 | Component | Part |
 |-----------|------|
-| Microcontrollers (x2) | ESP32 DevKit V1 |
-| Central computer | Raspberry Pi 5 (8 GB RAM, 256 GB SSD) |
+| Microcontroller (x1 in use) | ESP32 DevKit V1 — sensors + relay for the one MVP pot (second DevKit is spare) |
+| Central computer | Raspberry Pi 5 (8 GB RAM, 256 GB SSD) — owns the 2.8" screen, camera, mic/speaker, UI + AI |
 | Air quality sensor | Sensirion SEN63C |
 | Temp / humidity sensor | DHT11 |
 | Soil moisture sensor | Stemma I2C Soil Sensor |
 | Camera | Raspberry Pi Camera 3 |
-| Display | 2.8" SPI serial TFT touch screen |
+| Display | 2.8" SPI serial TFT touch screen (**wired to the Pi**, Chromium kiosk) |
 | Relay | 5V relay module |
 | Microphone | USB mic |
 | Speaker | USB speaker |
 
 Still missing from the list: the water pump.
 
-Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C over I2C and serves a live dashboard from a WiFi access point. It also drives an SSD1306 128x64 OLED. The Adafruit seesaw library (for the soil sensor) is already listed as a dependency but isn't used in code yet.
+Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C over I2C and serves a live dashboard from a WiFi access point. It also drives an SSD1306 128x64 OLED (legacy AP dashboard only — not the product UI). The Adafruit seesaw library (for the soil sensor) is already listed as a dependency but isn't used in code yet.
 
 ## Data architecture (from the team's `docs/`)
 
 The hardware team defined how sensor data moves. Our software sits on top of it. Full details are in `docs/architecture.md` and `docs/mqtt_contract.md`.
 
 ```
-ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_controller)
-                                              |
-                                              +-> SQLite buffer -> web endpoint (JSON, Connor is building it)
-                                              +-> our software: Gemini, Fish Audio, MongoDB Atlas, display
+ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_controller + 2.8" kiosk UI)
+                                                      |
+                                                      +-> SQLite buffer -> web endpoint (JSON, Connor is building it)
+                                                      +-> Gemini, Fish Audio, MongoDB Atlas, camera, voice
 ```
 
-- **ESP32s** read the sensors and drive the relay. They publish JSON readings to `deem/<device_id>/telemetry` and receive commands on `deem/<device_id>/cmd`.
-- **The Pi** runs the Mosquitto broker and the `pi/deem_controller` Python service. It validates readings, buffers them in SQLite, and relays them to a pluggable web endpoint.
+- **One ESP32** reads the sensors and drives the relay for the demo pot. It publishes JSON readings to `deem/<device_id>/telemetry` and receives commands on `deem/<device_id>/cmd`.
+- **The Pi** runs the Mosquitto broker, the `pi/deem_controller` Python service, and the **2.8" product display** (Chromium kiosk). It validates readings, buffers them in SQLite, and relays them to a pluggable web endpoint.
 - **Web endpoint:** The data endpoints use JSON, and Connor is working on that. Our job is to collect input from all sensors in that JSON format, then do everything else in this document.
 - **Reading format:** A flat `metrics` object with keys such as `co2_ppm`, `temp_c`, `rh_pct`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0`, `soil_moisture` and `soil_temp_c`.
 - **Commands:** `set_relay`, `set_interval`, `identify` and `reboot`. The pump runs through `set_relay`.
-- **Current firmware change:** The `e2/` firmware currently runs a WiFi access point with its own web page. The architecture docs retire that. The ESP32s become WiFi clients that publish over MQTT.
+- **Current firmware change:** The `e2/` firmware currently runs as a WiFi access point with its own web page. The architecture docs retire that. The ESP32 becomes a WiFi client that publishes over MQTT.
 
 ### What this means for our features
 
@@ -188,6 +188,7 @@ ESP32s (sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_control
 ## Key decisions
 
 - MIC and TEST are physical keyboard keys (not on the screen). Confirm/retry are on-screen touch buttons, and touch is also used for swiping. No typing: voice only.
+- MVP uses **one ESP32** for the pot. The **Pi owns the 2.8" TFT** and runs the kiosk UI.
 - Sensors log one data point every 10 minutes. The physical TEST key takes and displays a test input on demand, for the live demo. The health page shows the most recent test.
 - The MVP is a single-plant display device. The master dashboard is the production product and only appears as a mock in the demo.
 - Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in MongoDB Atlas.
@@ -225,12 +226,10 @@ With better hardware and more time:
 ## Open questions
 
 - The water pump isn't listed in `hardware_info.md` yet.
-- The display's exact model number isn't listed, only its size and interface.
+- The display's exact model number isn't listed, only its size and interface (Pi owns the panel; driver setup still needs the chip/product link).
 - The DHT11 and SEN63C both map to `temp_c` and `rh_pct` in the contract, so one overwrites the other. Decide which one is the source of truth, or give them separate keys.
-- Who drives the 2.8" display and the physical buttons: an ESP32, or the Pi? The architecture docs have the ESP32 driving its local display, but our design runs the health card and the AI on the Pi side.
 - The TEST button sends a new `sample_now` command (added to `docs/mqtt_contract.md`). The firmware needs to implement it.
 - The `e2/` firmware still runs as a WiFi access point. When does it move to MQTT client mode?
-- Which job does each of the two ESP32s have? Only one is covered by existing code (`e2/`).
 - How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
 - Which dracaena or panda plant is the live demo plant? (Decide later.)
 - What happens if the user rejects the matched plant at the confirm step? (Probably retry the voice input.)
