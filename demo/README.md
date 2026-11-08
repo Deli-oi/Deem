@@ -2,7 +2,7 @@
 
 Scaled mock of the ESP display + hardware buttons, backed by a **swappable mock
 backend**. Replace `src/mock/backend.ts`’s exported `backend` with a Railway /
-Mongo / Gemini implementation later — the UI talks only to the `DeemBackend`
+Tiger database / Gemini implementation later — the UI talks only to the `DeemBackend`
 interface.
 
 ## Run (visual test)
@@ -120,6 +120,6 @@ Things for the firmware to confirm:
 
 ## Swap the knowledge backend later
 
-Plant matching, Q&A and sprites still come from the mock (`MockBackend`). Atlas / Gemini replace that
+Plant matching, Q&A and sprites still come from the mock (`MockBackend`). Tiger database / Gemini replace that
 by implementing `listPlants`, `matchPlant` and `ask` and passing it as `knowledge` in `src/backend.ts`.
 Telemetry, status, commands and history are already real in live mode.

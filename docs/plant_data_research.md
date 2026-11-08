@@ -1,6 +1,6 @@
 # Plant health / care data research (MVP)
 
-Goal: seed MongoDB Atlas with plant-type knowledge so Gemini can match
+Goal: seed the Tiger database with plant-type knowledge so Gemini can match
 setup speech, score health against ranges, and suggest fixes. MVP coverage:
 **dracaena**, **panda plant** (`Kalanchoe tomentosa`), plus **~10 common
 household plants**.
@@ -22,7 +22,7 @@ household plants**.
 CSV dump (~5,335 species) of Xiaomi Flower Care ranges (moisture, temp, light, conductivity). Confirmed community use for multiple *Dracaena* spp. License/provenance is a rip of a commercial app — fine for hackathon seed data; prefer Open Plantbook for anything we ship long-term.
 
 **Narrative care supplement (optional): [Perenual Plant API](https://perenual.com/docs/api)**  
-Watering benchmarks, sunlight, soil, pest notes, care guides. Stronger prose, weaker numeric sensor thresholds. Use to enrich Atlas documents after thresholds are loaded.
+Watering benchmarks, sunlight, soil, pest notes, care guides. Stronger prose, weaker numeric sensor thresholds. Use to enrich the plant documents after thresholds are loaded.
 
 **Not recommended as primary**
 
@@ -51,7 +51,7 @@ Watering benchmarks, sunlight, soil, pest notes, care guides. Stronger prose, we
 
 Confirm exact dracaena species with Zion once the physical plant is ID’d. Open Plantbook / MiFlora often have multiple cultivars — store one canonical PID per type for setup matching.
 
-## Target Atlas document shape (per plant type)
+## Target document shape (Tiger database) (per plant type)
 
 Enough for scoring + RAG; refine when we implement seed scripts.
 
@@ -85,7 +85,7 @@ Vectorize `care` + `solutions` (+ short species blurb) for Gemini retrieval. Kee
 ## Access plan
 
 1. Create a free Open Plantbook account → API client id/secret (or token).
-2. Script: search each of the 12 names → pull detail + `include=care` → normalize into the shape above → upsert into Atlas.
+2. Script: search each of the 12 names → pull detail + `include=care` → normalize into the shape above → upsert into the Tiger database.
 3. If a name misses: fall back to MiFloraDB CSV row, then hand-fill care text from Perenual / extension guides for that one species.
 4. Spot-check **dracaena** and **panda plant** first; those unblock the demo fixtures.
 

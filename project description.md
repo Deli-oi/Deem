@@ -36,7 +36,6 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Automatic watering | **Not in the MVP** (no pump, no relay driven) |
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
-| Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (each 10-minute reading). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
 | Data collection | One data point every 10 minutes. The physical **TEST** key shows the most recent reading and how old it is (there is no sample-now). |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
@@ -54,25 +53,25 @@ The display is a 2.8" SPI serial TFT touch screen, slightly larger than an Apple
 ### Voice and AI pipeline
 
 ```
-User speaks -> Fish Audio -> Gemini agent -> MongoDB Atlas (vector search + this plant's data)
+User speaks -> Fish Audio -> Gemini agent -> Tiger database (vector search + this plant's data)
                                  |
 User hears / sees <- Fish Audio <+  data-backed answer
 ```
 
 1. The user makes an observation about the plant by voice, through the mic.
 2. Fish Audio handles speech in and out.
-3. A Gemini model reasons over the question. It uses the most recent sensor data for this plant plus plant-type knowledge pulled from MongoDB Atlas.
+3. A Gemini model reasons over the question. It uses the most recent sensor data for this plant plus plant-type knowledge pulled from Tiger database.
 4. It replies with a data-backed solution, for example lack of sunlight, water or minerals, or something else. It also raises alerts about problems on its own.
 
-### Plant-type knowledge base (MongoDB Atlas)
+### Plant-type knowledge base (Tiger database)
 
 We need to collect existing data on plants commonly grown in greenhouses or by home gardeners.
 
 - **One vector store holds everything per plant type:**
   - care and growth data for that type
   - the retro videogame-style sprite for that type. We generate one sprite for every plant type we collect data on, and link it directly to that type's vector storage. After setup the device uses it automatically.
-- **Build order:** First set up the MongoDB vector storage with all the MVP plant types (below). Then generate the sprites and link each to its plant type.
-- **Per-plant data:** The same Atlas setup holds the live data from each monitored plant. That includes sensor history and the images linked to it.
+- **Build order:** First set up the Tiger database storage with all the MVP plant types (below). Then generate the sprites and link each to its plant type.
+- **Per-plant data:** The same Tiger database holds the live data from each monitored plant (sensor history).
 - **Retrieval:** The Gemini agent pulls from the vector store for the plant it is monitoring, so answers are backed by that plant's own recent data.
 
 ### MVP plant types
@@ -133,11 +132,10 @@ From `hardware_info.md` (updated by Zion):
 | Component | Part |
 |-----------|------|
 | Microcontroller (x1 in use) | ESP32 DevKit V1 — the sensors for the one MVP pot (second DevKit is spare) |
-| Central computer | Raspberry Pi 5 (8 GB RAM, 256 GB SSD) — owns the 2.8" screen, camera, mic/speaker, UI + AI |
+| Central computer | Raspberry Pi 5 (8 GB RAM, 256 GB SSD) — owns the 2.8" screen, mic/speaker, UI + AI |
 | Air quality sensor | Sensirion SEN63C |
 | Temp / humidity sensor | DHT11 |
 | Soil moisture sensor | Stemma I2C Soil Sensor |
-| Camera | Raspberry Pi Camera 3 |
 | Display | 2.8" SPI serial TFT touch screen (**wired to the Pi**, Chromium kiosk) |
 | Relay | 5V relay module (not used in the MVP) |
 | Microphone | USB mic |
@@ -155,7 +153,7 @@ The hardware team defined how sensor data moves. Our software sits on top of it.
 ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem_controller + 2.8" kiosk UI)
                                                       |
                                                       +-> SQLite buffer -> web endpoint (JSON, Connor is building it)
-                                                      +-> Gemini, Fish Audio, MongoDB Atlas, camera, voice
+                                                      +-> Gemini, Fish Audio, Tiger database, voice
 ```
 
 - **One ESP32** reads the sensors for the demo pot (temperature and humidity from the DHT11, air quality from the SEN63C, soil from the Stemma probe). It publishes a JSON reading every 10 minutes to `deem/<device_id>/telemetry` (retained, so the screen gets the latest at once) and its status to `deem/<device_id>/status`. It handles no commands. Thresholds live in the app, not on the device.
@@ -169,7 +167,6 @@ ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem
 
 - **10-minute collection:** Use `set_interval` to set the ESP32 publish rate to 600 seconds. The docs' sample code publishes every 5 seconds.
 - **TEST key:** There is no sample-now, so TEST shows the most recent reading and how old it is.
-- **Camera:** The contract has no camera support. The docs place the camera on the Pi. Our decision: capture a photo at every data collection, store it in MongoDB as one data point of that collection entry.
 - **Setup sensor check:** follows the firmware's real startup order (DHT11, SEN63C, soil) and waits for each sensor to be ready.
 
 ## Team and roles
@@ -182,7 +179,7 @@ ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem
 | Resource | Amount |
 |----------|--------|
 | Gemini API credits | $300 free |
-| MongoDB Atlas spend | $150 (the $50 per person across three people) |
+| Tiger database | Already provisioned on Railway (secret set) |
 | Cursor | Full usage |
 
 ## Key decisions
@@ -191,12 +188,11 @@ ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem
 - MVP uses **one ESP32** for the pot. The **Pi owns the 2.8" TFT** and runs the kiosk UI.
 - Sensors log one data point every 10 minutes. The physical TEST key takes and displays a test input on demand, for the live demo. The health page shows the most recent test.
 - The MVP is a single-plant display device. The master dashboard is the production product and only appears as a mock in the demo.
-- Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in MongoDB Atlas.
+- Voice runs through Fish Audio. Reasoning runs through a Gemini model. Plant data and vectors live in Tiger database.
 - Setup is voice-driven: the user says the plant type, Gemini matches it, and the user confirms.
 - Every plant type in the database has a retro sprite linked to its vector storage, and the sprite appears in the top-left corner after setup.
-- Sprites are generated after the MongoDB vector storage is set up with all MVP plant types.
+- Sprites are generated after the Tiger database storage is set up with all MVP plant types.
 - The overall health score is a placeholder we decide ourselves. It will be replaced by a researched calculation later.
-- The camera captures a photo with every data collection. Each data entry stored in MongoDB for the plant includes the image as one of its data points. There is no computer vision in the MVP.
 - Touch is used for the confirm/retry buttons and for swiping back and forth between screens.
 - When something needs fixing, the screen shows a wilting, slightly gray version of the plant filling most of the screen, with one sentence on what to do (the same wilted image for every failure for now).
 - Readings outside the plant's healthy range, or past blanket air-quality limits (CO2 above 1500 ppm, PM2.5 above 35, PM10 above 150), play an alert sound and show what is wrong. In the MVP every such reading alerts (nothing self-corrects). In the full-greenhouse dashboard, a biosphere controller will fix watering, temperature and humidity, and the device will alert only for what it cannot change, such as soil quality.
@@ -222,7 +218,7 @@ With better hardware and more time:
 1. **Real, one plant:** Show the one plant we have, being monitored on the dashboard. This is the full loop:
    - sensor data collection
    - alerts to the user
-   - Gemini, Fish Audio and MongoDB Atlas vector search coming up with solutions to problems
+   - Gemini, Fish Audio and Tiger database search coming up with solutions to problems
 2. **Mock, large scale (last step):** Show a mock version of the master dashboard at large scale, with the full greenhouse model and many monitors. It is built: a standalone web app in `dashboard/` (its own Railway service, simulated data). A pixel-art greenhouse map where each plant opens the device display, then overall greenhouse health, health by plant type, and every plant. This is only to show scalability. The real, working system is the single-plant monitor above.
 
 ## Open questions

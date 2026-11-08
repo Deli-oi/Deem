@@ -114,7 +114,7 @@ Notes:
   (`DRY_RAW` / `WET_RAW` in `SoilSens.h`, which must be calibrated against the real pot).
 - The **5V relay module** and a **water pump** are **not used in the MVP**: no relay is driven and
   there is no automatic watering.
-- Pi-side devices (**Raspberry Pi Camera 3**, USB mic/speaker, **2.8" SPI TFT
+- Pi-side devices (USB mic/speaker, **2.8" SPI TFT
   touchscreen**) are **not** pot sensors and do not publish to this contract; they
   live on the Pi. The Pi **owns** the product display (Chromium kiosk); the ESP32
   does not drive it.

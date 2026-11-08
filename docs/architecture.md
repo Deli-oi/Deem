@@ -9,7 +9,7 @@ greenhouses. Responsibilities are split across two tiers:
   │  "the physicals"    │   telemetry         │ "central controller" │  relay    │   (TBD)     │
   │                     │   ◀───────────────  │  + 2.8" TFT kiosk    │  ◀──────  │             │
   │ sensors + relay     │     commands        │ ingest · buffer ·    │  commands │ dashboard / │
-  │                     │                     │ UI · camera · voice  │           │ cloud API   │
+  │                     │                     │ UI · voice  │           │ cloud API   │
   └─────────────────────┘                     └──────────────────────┘           └─────────────┘
 ```
 
