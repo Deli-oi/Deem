@@ -38,7 +38,7 @@ lines = [
     "The ranges come from MiFloraDB (Xiaomi Flower Care), i.e. the extremes the plant tolerates, not an ideal range, "
     "so an alert means it needs fixing now.",
     "",
-    "## Readings we measure (alerts work today)",
+    "## Plant readings we measure (alerts work today)",
     "",
     "| Plant | " + " | ".join(m[1] for m in MEASURED) + " |",
     "|---|" + "---|" * len(MEASURED),
@@ -53,8 +53,15 @@ lines += ["", "Alert text: " + "; ".join(f"{m[1].split(' (')[0]}: **{m[2]}** bel
 for p in plants:
     lines.append(f"| {p['common_names'][0]} | " + " | ".join(rng(p, n[0]) for n in NO_SENSOR) + " |")
 lines += ["", "These start alerting automatically as soon as a sensor reports `soil_ec` or `light_lux` in telemetry.", "",
+          "## Air quality (same limits for every plant)", "",
+          "The plant data has no per-species CO2 or dust ranges, so the SEN63C readings use blanket limits "
+          "(`demo/src/lib/airQuality.ts`). They are set high on purpose, so a busy room does not set off the alert constantly.", "",
+          "| Reading | Alerts above | Alert text | Why |", "|---|---|---|---|",
+          "| `co2_ppm` | 1500 ppm | Stuffy air (CO2) | Clearly stale air. Outdoors is ~420, a normal room 600-1000, 1000 is the usual poor-ventilation guideline. |",
+          "| `pm2_5` | 35 ug/m3 | Dusty or smoky air | US EPA 24-hour limit (WHO guideline is stricter, 15). |",
+          "| `pm10_0` | 150 ug/m3 | Dusty air | US EPA 24-hour limit. |", "",
+          "Low values never alert. `pm1_0` and `pm4_0` have no standard, so they never alert. A plant-specific range, if one is ever added, overrides these.", "",
           "## Measured, but no ranges", "",
-          "- `co2_ppm`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0` (SEN63C air quality): not in the plant data and not plant-specific. No alerts yet.",
           "- `soil_temp_c` (Stemma soil sensor): no ranges. No alerts yet.", ""]
 (root / "docs/plant_thresholds.md").write_text("\n".join(lines), encoding="utf-8")
 print("wrote docs/plant_thresholds.md")

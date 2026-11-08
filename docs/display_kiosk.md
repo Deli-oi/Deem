@@ -34,8 +34,10 @@ Fallback if the SPI path fights us: run the UI on an HDMI display (or a small DS
 cd demo
 npm install && npm run build
 FISH_AUDIO_API_KEY=<your key> npm start        # serves the app + /api/transcribe on :3000
-chromium --kiosk --noerrdialogs "http://localhost:3000/?kiosk"
+chromium --kiosk --noerrdialogs --autoplay-policy=no-user-gesture-required "http://localhost:3000/?kiosk"
 ```
+
+The `--autoplay-policy` flag lets the alert sound play without a first key press. Set the USB speaker as the default output and its volume to a level you can hear across the room.
 
 The key stays on the Pi (or in Railway's variables). It is never sent to the browser. Chromium asks for microphone permission once; allow it for `localhost`.
 
