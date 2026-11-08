@@ -9,3 +9,6 @@ config.yaml
 
 # Runtime buffer
 *.sqlite3
+
+# Offline-install wheel cache (prebuilt binaries, not source)
+wheelhouse/
