@@ -35,6 +35,16 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 6. Hold **MIC** on the live screen and ask a question out loud; the answer appears on screen
 7. **Swipe** left/right (finger, mouse drag, or arrow keys): health → inputs → history. History is a line chart of the **average health per hour**
 
+## Alert sound
+
+When a reading is **outside the plant's healthy range** (the thresholds in the plant data: soil moisture, temperature, humidity, and soil nutrients / light if a sensor reports them), the device plays an alert sound (five alternating beeps, synthesized with Web Audio) and the health page shows what is wrong, e.g. "Soil too dry".
+
+- **MVP:** nothing corrects itself, so *every* out-of-range reading alerts. It repeats with each new reading while the problem lasts (every 10 minutes, or on TEST).
+- It never plays while the MIC key is recording (it would be heard as speech); it waits until the mic is idle.
+- **Later (full-greenhouse dashboard):** a biosphere controller fixes what it can (watering, temperature, humidity), and the device alerts only for what it cannot change, e.g. soil quality. Switch that on by listing the controller's metrics in `AUTO_CORRECTED` in `src/lib/alerts.ts`, or build with `VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct"`.
+- Browsers only allow sound after a key press or touch (the first one unlocks it). A kiosk Chromium can skip that with `--autoplay-policy=no-user-gesture-required`.
+- `?silent` in the URL turns the sound off (rehearsing, development). The on-screen alert still shows.
+
 ## Voice (Fish Audio speech-to-text)
 
 Hold MIC → the browser records → `POST /api/transcribe` → `server/` forwards to Fish Audio (`transcribe-1-pro`) → text.

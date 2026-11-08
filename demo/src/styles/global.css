@@ -691,6 +691,7 @@ html.kiosk .screen {
 
 /* On the real 240x320 panel the canvas is scaled 0.8x, so the pixel font's small sizes would
    land under its 8px grid. Keep every label at >= 10px design size (8px on the panel). */
+html.kiosk .alert-bar,
 html.kiosk .act-test span,
 html.kiosk .act-hint,
 html.kiosk .key-hint,
@@ -714,4 +715,24 @@ html.kiosk .chart-label {
 html.kiosk .page-dots i {
   width: 8px;
   height: 8px;
+}
+
+/* Something is outside the healthy range: the device also plays the alert sound. */
+.alert-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 2px solid var(--soil);
+  border-radius: 8px;
+  background: #2a0f16;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.03em;
+  color: #ff6b86;
+}
+
+.alert-bar .voice-dot {
+  background: var(--soil);
+  animation: voice-blink 0.7s steps(2, start) infinite;
 }

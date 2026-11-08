@@ -2,6 +2,12 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
+## 2026-11-07: Alert sound for readings that need fixing
+
+- When something is below (or above) the plant's healthy range and needs to be fixed, the device plays an alert sound, and the health page says what is wrong.
+- MVP: every out-of-range reading alerts, because nothing corrects itself yet (no automatic watering).
+- Later: a biosphere controller for the whole greenhouse fixes watering, temperature and humidity, and the device alerts only for what can't be changed (e.g. soil quality). This is for the full-greenhouse dashboard that shows how it scales.
+
 ## 2026-11-07: MIC and TEST are physical keys; voice is Fish Audio only
 
 - MIC and TEST are **hardware**: mechanical-keyboard keys, never drawn on the screen. Only confirm/retry are on the screen.
