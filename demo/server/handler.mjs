@@ -112,6 +112,9 @@ export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.
     try {
       if ((await stat(file)).isDirectory()) file = join(file, 'index.html')
     } catch {
+      // Only app routes (no file extension) fall back to index.html. A missing file such as
+      // /sprites/x.png must be a real 404, not an HTML page the browser mistakes for the file.
+      if (extname(url.pathname)) return json(res, 404, { error: 'not_found' })
       file = join(distDir, 'index.html') // SPA fallback
     }
     try {
