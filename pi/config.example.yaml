@@ -20,14 +20,16 @@ buffer:
   max_rows: 100000         # oldest rows are dropped past this cap
 
 sink:
-  # Where normalized readings get relayed. The real web endpoint is TBD,
-  # so start with type: log (prints batches) and switch to http later.
-  type: log                # log | http
-  url: https://example.com/ingest       # TODO: real endpoint
+  # Where readings are relayed: the Deem ingest service on Railway, which stores them in the
+  # Tiger database and feeds the dashboard. The URL is public; the token is a secret and comes
+  # from the environment (pi/.env, never committed). Run pi/deploy/setup-sink.sh to set it.
+  # (type: log is still available for local development: it just prints batches.)
+  type: http               # log | http
+  url: https://authentic-perception-production-245b.up.railway.app/ingest
   method: POST
   headers:
     Content-Type: application/json
-    # Authorization: Bearer ${DEEM_SINK_TOKEN}
+    Authorization: Bearer ${DEEM_SINK_TOKEN}   # token from the webapp team
   batch_size: 50
   flush_interval_s: 5       # how often the relay worker drains the buffer
   timeout_s: 10
