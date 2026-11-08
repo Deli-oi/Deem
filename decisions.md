@@ -19,6 +19,14 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Mock full-greenhouse dashboard (scalability demo)
+- **Decision:** A standalone web app in `dashboard/`, deployed as its own Railway service (Root Directory `dashboard`), shows how Deem scales to a whole greenhouse. All data is simulated; it is not connected to the hardware or any database. Most of the screen is a top-down pixel-art floor plan of the greenhouse; each plant is clickable and opens the same mini display the MVP uses, plus that plant's soil quality. Scrolling down shows overall greenhouse health, then health by plant type, then every plant.
+- **Story it tells:** at scale, larger sensors and a biosphere controller keep climate, air and watering in range automatically, so only what it cannot change (soil minerals) alerts a person. Each plant keeps its own soil probe. This is the `AUTO_CORRECTED` idea from the device alerts, switched on.
+- **Reuse:** the mini display, alert rules, plant data and sprites are copied from `demo/` into `dashboard/src/shared` (`npm run sync`) so the folder builds on its own.
+- **Why:** The investor pitch needs to show the product scaling from one plant to a greenhouse without building the real thing yet.
+
+---
+
 ### 2026-11-07: Wilting failure screen
 - **Decision:** While an alert is active, the health page is replaced by a wilting, slightly gray version of the plant filling most of the screen, plus the failure label and one sentence of advice (first sentence of the plant's stored fix, or the shared air-quality fix). One wilted image per plant, used for every failure type. Wilted sprites are generated from the healthy ones (`data/plants/sprites/generate_wilted.py`).
 - **Why:** An at-a-glance, emotional cue that something is wrong, and exactly what to do, for non-technical people.
