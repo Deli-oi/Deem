@@ -96,6 +96,7 @@ npm run dev
 |----------|---------|---------|
 | `VITE_BACKEND` | `mqtt` | Use the real device. Omit for the fixture mock. |
 | `VITE_MQTT_URL` | `ws://deem-pi.local:9001` | Mosquitto **WebSocket** listener on the Pi (added to `pi/deploy/mosquitto.conf`; restart mosquitto after copying it). |
+| `VITE_BACKEND=cloud` | (unset: fake sensors) | Hosted page: shows the newest reading stored in the cloud database (needs `VITE_INGEST_URL`). Read-only; never starts data collection. |
 | `VITE_DEVICE_ID` | `esp32-pot-01` | The pot's `device_id`. One ESP32 per pot. |
 
 What the UI does against the contract:
