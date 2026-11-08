@@ -173,3 +173,18 @@ Initial action vocabulary (extend as needed, keep this table updated):
 This is **v1**. Breaking changes should bump the version in this file's title and
 be called out in `decisions.md`. Additive changes (new metrics, new actions) do
 not require a version bump — just update the tables above.
+
+## Valid ranges (impossible values are dropped)
+
+A sensor that is warming up, unplugged or mis-wired can send numbers that are valid JSON but impossible. Every consumer drops them: the screen shows `--` and never scores or alerts on them, the ingest service never stores them (and cleans old rows when serving), and Gemini never reasons about them. The firmware should not send them either.
+
+| Metric | Valid range | Typical bad value |
+|--------|-------------|-------------------|
+| `co2_ppm` | 1 to 10000 | 0 (not ready), 32767, 65535 |
+| `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0` | 0 to 1000 | 6553.5 ("no data") |
+| `temp_c` | -10 to 50 (DHT11 measures 0 to 50) | 57 from a mis-wired DHT11 |
+| `rh_pct` | 0 to 100 | 95 stuck beside a bad temperature |
+| `soil_moisture` | 0 to 100 | |
+| `soil_temp_c` | -10 to 60 | |
+
+`temp_c` and `rh_pct` come from one sensor read: if either is out of range, both are dropped. Code: `demo/src/lib/sanity.ts` (the app), copies in `demo/server/sanity.mjs` and `ingest/server/sanity.mjs`.

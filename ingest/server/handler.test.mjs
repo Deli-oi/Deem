@@ -109,6 +109,28 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
       assert.equal((await fetch(`${base}/api/readings`)).status, 400)
     })
 
+    it('never stores impossible values (sensor error markers, a mis-wired DHT11)', async () => {
+      const res = await post({
+        readings: [
+          reading({ metrics: { co2_ppm: 32767, pm2_5: 6553.5, temp_c: 57.4, rh_pct: 95, soil_moisture: 9, soil_temp_c: 27.8 } }),
+          reading({ ts: NOW - 5, metrics: { co2_ppm: 32767, temp_c: 57.4, rh_pct: 95 } }), // nothing real left: rejected
+        ],
+      })
+      assert.deepEqual(await res.json(), { received: 2, stored: 1, duplicates: 0, rejected: 1 })
+      const dev = await (await fetch(`${base}/api/devices`)).json()
+      assert.deepEqual(dev.devices[0].metrics, { soil_moisture: 9, soil_temp_c: 27.8 })
+    })
+
+    it('cleans impossible values out of rows stored before the rule existed', async () => {
+      await store.insertMany([
+        { device_id: 'esp32-pot-01', ts: (NOW - 60) * 1000, received_at: (NOW - 60) * 1000, fw: 'old', metrics: { co2_ppm: 32767, pm2_5: 6553.5, temp_c: 57.4, rh_pct: 95, soil_moisture: 9 } },
+      ])
+      const dev = await (await fetch(`${base}/api/devices`)).json()
+      assert.deepEqual(dev.devices[0].metrics, { soil_moisture: 9 })
+      const hist = await (await fetch(`${base}/api/readings?device_id=esp32-pot-01`)).json()
+      assert.deepEqual(hist.readings[0].metrics, { soil_moisture: 9 })
+    })
+
     it('read endpoints are open to browsers (CORS) but cannot be used to write', async () => {
       const res = await fetch(`${base}/api/devices`)
       assert.equal(res.headers.get('access-control-allow-origin'), '*')

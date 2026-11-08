@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { sanitizeMetrics } from './sanity.mjs'
 
 /**
  * Plant knowledge: the 12 plant types live in the Tiger database (table plant_types, seeded from
@@ -189,7 +190,8 @@ export function createKnowledge({ pool = null, seedPath, gemini = {}, fetchImpl 
     try {
       const since = new Date(now() - HISTORY_HOURS * 3_600_000).toISOString()
       const res = await pool.query('SELECT ts, metrics FROM readings WHERE device_id = $1 AND ts >= $2 ORDER BY ts ASC LIMIT 400', [deviceId, since])
-      return res.rows.map((r) => ({ ts: r.ts, metrics: typeof r.metrics === 'string' ? JSON.parse(r.metrics) : r.metrics }))
+      // stored rows may hold impossible values (sensor error markers): never reason about those
+      return res.rows.map((r) => ({ ts: r.ts, metrics: sanitizeMetrics(typeof r.metrics === 'string' ? JSON.parse(r.metrics) : r.metrics ?? {}).metrics }))
     } catch (e) {
       log.error('reading history failed (answering without it):', e.code ?? e.message)
       return []
