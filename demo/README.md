@@ -25,15 +25,14 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 
 ## Demo flow
 
-**MIC** and **TEST** are physical keyboard keys, not buttons on the screen. Defaults: `M` = MIC (hold to talk, release to send), `T` = TEST. Change them in `src/lib/keys.ts`. Confirm/retry are touch buttons on the screen. There is no typing.
+Everything is on the touch screen; there is no typing. The **MIC** is a button at the bottom of the screen: **tap once to turn the mic on, tap again to turn it off and send.** (The production device will use a physical button for this.) Confirm/retry are touch buttons too.
 
-1. Boot → setup prompt: "Hold the MIC key and say your plant."
-2. Hold **MIC**, say the plant, release. The screen shows what it heard, then the match to confirm
+1. Boot → setup prompt: "Tap the mic and say your plant."
+2. Tap **MIC**, say the plant, tap it again. The screen shows what it heard, then the match to confirm
 3. Tap **CONFIRM** → sensor check
-4. Health page: the most recent test, with a **LAST TEST** time. A hint ("solution needed? ↓") points at the MIC key
-5. **TEST** takes a test input now. The mock walks the fixtures (healthy, dry soil, high CO2, ...)
-6. Hold **MIC** on the live screen and ask a question out loud; the answer appears on screen
-7. **Swipe** left/right (finger, mouse drag, or arrow keys): health → inputs → history. History is a line chart of the **average health per hour**
+4. Health page: the most recent test, with a **LAST TEST** time. A hint ("solution needed? ↓") points at the MIC button
+5. Tap **MIC** on the live screen and ask a question out loud; the answer appears on screen
+6. **Swipe** left/right (finger, mouse drag, or arrow keys): health → inputs → history. History is a line chart of the **average health per hour**
 
 ## Alert sound
 
@@ -46,7 +45,7 @@ Every alert is **critical** (the labels say so, e.g. "Soil critically dry"): a p
 - Browsers only allow sound after a key press or touch (the first one unlocks it). A kiosk Chromium can skip that with `--autoplay-policy=no-user-gesture-required`.
 - `?silent` in the URL turns the sound off (rehearsing, development). The on-screen alert still shows.
 
-**Seeing every failure (browser mock):** press the TEST key (**T**) repeatedly to step through them in order, then it wraps back to healthy. Add `?silent` to the URL to mute the alert sound.
+**Seeing every failure (browser mock):** open the page with `?scenario=<id>` (`healthy`, `dry_soil`, `overwatered`, `cold_snap`, `too_hot`, `dry_air`, `humid_air`, `high_co2`, `dusty_pm25`, `dusty_pm10`). Add `?silent` to mute the alert sound.
 
 | TEST press | Screen says | Fixture |
 |---|---|---|
@@ -65,7 +64,7 @@ Fixtures are in `src/mock/fixtures/dracaena/`; each breaks only its own rule. `s
 
 ## Voice (Fish Audio speech-to-text)
 
-Hold MIC → the browser records → `POST /api/transcribe` → `server/` forwards to Fish Audio (`transcribe-1-pro`) → text.
+Tap MIC → the browser records (tap again to stop) → `POST /api/transcribe` → `server/` forwards to Fish Audio (`transcribe-1-pro`) → text.
 The API key lives only on the server.
 
 ```bash
@@ -110,7 +109,7 @@ What the UI does against the contract:
 - **Setup's sensor check follows the device's real startup.** The rows are in the firmware's init order: Temp/RH (DHT11), AQI (SEN63C), Soil (Stemma). It first waits for the device to say it is online (its retained `status`), then each row turns to a check as that sensor's readings arrive (Temp/RH: `temp_c` + `rh_pct`, AQI: `co2_ppm`, Soil: `soil_moisture`). If the device reports its sensors' startup results in `status.sensors` (`{"dht":true,"air":false,"soil":true}`), a sensor whose startup failed turns to an X at once. It waits up to a minute for a slow sensor (the air sensor needs a few seconds of warm-up), then fails whatever is still silent. If the device never comes online, setup says so.
 - "device offline" shows when the broker drops or the device's Last Will (`status: offline`) arrives.
 - **No commands, no pump.** The app only listens (readings and status). There is no sample-now and no watering in the MVP.
-- **TEST** (physical key) shows the most recent reading the device sent, with how old it is (e.g. "latest reading · 4 min ago"). The device samples every 10 minutes on its own. (In the browser mock, TEST still steps through the failure scenarios.)
+- The health page shows how old the latest reading is (e.g. "latest reading · 4 min ago"). The device samples every 10 minutes on its own.
 - History: one point per hour, the average of that hour's health scores. The last 24 hours are kept in `localStorage`.
 
 Things for the firmware to confirm:
