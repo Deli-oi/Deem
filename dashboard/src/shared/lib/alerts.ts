@@ -3,6 +3,10 @@ import { AIR_QUALITY_LIMITS } from './airQuality'
 import type { Metrics, PlantType } from './types'
 
 /**
+ * Every alert is CRITICAL. A plant's range (from the plant data) is the extremes it tolerates, and
+ * the air-quality limits are set high, so a reading outside them is already hurting the plant (or
+ * the room). Nothing alerts for a small drift. That is why every label says "critically".
+ *
  * Alerts: a reading outside the plant's healthy range (the thresholds in the plant data), or
  * past the blanket air-quality limits (`airQuality.ts`: CO2 and dust), needs fixing, so the
  * device shows it and plays an alert sound.
@@ -33,18 +37,18 @@ export type Alert = {
 }
 
 const LABELS: Record<string, { low: string; high: string }> = {
-  soil_moisture: { low: 'Soil too dry', high: 'Soil too wet' },
-  temp_c: { low: 'Too cold', high: 'Too hot' },
-  rh_pct: { low: 'Air too dry', high: 'Air too humid' },
-  soil_ec: { low: 'Soil needs food', high: 'Too much fertilizer' },
-  light_lux: { low: 'Too dark', high: 'Too bright' },
-  co2_ppm: { low: 'CO2 too low', high: 'Stuffy air (CO2)' },
-  pm2_5: { low: 'Dust too low', high: 'Dusty or smoky air' },
-  pm10_0: { low: 'Dust too low', high: 'Dusty air' },
+  soil_moisture: { low: 'Soil critically dry', high: 'Soil critically wet' },
+  temp_c: { low: 'Critically cold', high: 'Critically hot' },
+  rh_pct: { low: 'Air critically dry', high: 'Air critically humid' },
+  soil_ec: { low: 'Soil minerals critically low', high: 'Soil minerals critically high' },
+  light_lux: { low: 'Light critically low', high: 'Light critically high' },
+  co2_ppm: { low: 'CO2 critically low', high: 'CO2 critically high' },
+  pm2_5: { low: 'Dust critically low', high: 'Fine dust critically high' },
+  pm10_0: { low: 'Dust critically low', high: 'Dust critically high' },
 }
 
 function labelFor(metric: string, direction: 'low' | 'high') {
-  return LABELS[metric]?.[direction] ?? `${metric} ${direction}`
+  return LABELS[metric]?.[direction] ?? `${metric} critically ${direction}`
 }
 
 /** Out-of-range readings for this plant, most important first (soil, then temperature, then air). */
