@@ -1,4 +1,4 @@
-# Deem Pi Central Controller
+# Greenhouse AI: Raspberry Pi (controller + kiosk)
 
 Python service that runs on the Raspberry Pi 5. It ingests telemetry from the
 ESP32 devices over MQTT, buffers it durably, and relays normalized readings to a

@@ -1,71 +1,40 @@
-# Deem development workflow
+# Development workflow
 
-We work **on the same GitHub repo** (`Deli-oi/Deem`). No forks.
+We all work in the same GitHub repo (no forks).
 
-## Branch → PR → merge
+## Branch, PR, merge
+1. Branch from `main` with a short name (`feat/...`, `fix/...`, `docs/...`).
+2. Small commits with clear messages. Run `git status` before you commit: never `git add -A` blindly.
+3. `git push -u origin <branch>`, open a PR into `main` saying what changed and how you tested it.
+4. Review, merge, pull `main` before the next piece. Close obsolete PRs rather than stacking parallel copies.
+5. Never push to `main` directly and never force-push. (The one exception was removing a committed WiFi password from history; after that everyone ran `git fetch --all && git reset --hard origin/main`.)
 
-1. Branch from `main`: `cursor/<short-name>-a00d` (Cloud Agent convention) or a named feature branch.
-2. Commit in small, reviewable chunks with clear messages.
-3. `git push -u origin <branch>`.
-4. Open / update a PR into `main` (document what changed and how to test).
-5. Review → merge → pull `main` locally before the next feature.
+## Secrets (the repo is public)
+Never commit a WiFi password, token, API key or connection string; never paste one in a PR, log or chat. They live in gitignored files (`pi/.env`, `hackathon2026/src/secrets.h`, `demo/.env.local`) or in Railway variables. Variable names and who uses them are listed in the root `README.md`.
 
-Close obsolete PRs instead of stacking forks. Prefer updating an existing PR branch over opening parallel duplicates for the same work.
-
-## Local visual UI test (primary)
-
-The device demo lives in `demo/` and uses a **mock backend** (no secrets required).
-
+## Try it without hardware
 ```bash
-cd demo
-npm install
-npm run dev
+cd demo && npm install && npm run dev       # http://127.0.0.1:5173, fake sensors
 ```
-
-Open **http://127.0.0.1:5173/**
-
 Checklist:
+- [ ] Boot shows the setup prompt with the on-screen **mic** button; tap it, say a plant (e.g. "dracaena"), tap again.
+- [ ] Confirm the match; the sensor check walks DHT11, SEN63C, soil in order.
+- [ ] Health page shows the score, a hint to ask by voice, and swiping left/right shows inputs and the hourly history.
+- [ ] `?scenario=dry_soil` (also `overwatered`, `cold_snap`, `too_hot`, `dry_air`, `humid_air`, `high_co2`, `dusty_pm25`, `dusty_pm10`) shows the wilted plant, one sentence of advice and the alert sound (`?silent` mutes it).
+- [ ] `?kiosk` fills a 240x320 screen with no frame.
 
-- [ ] Boot → setup prompt shows **Deem** branding + device chrome
-- [ ] Type / voice a plant (e.g. `dracaena`) → Confirm match
-- [ ] Sensor check → health score + metrics
-- [ ] Swipe screen left/right for history
-- [ ] Collect / fixture chips update readings
-- [ ] Ask (voice button on live screen) returns mock advice
-- [ ] Dracaena sprite visible top-left (style check)
-
+## Tests
 ```bash
-npm test
-npm run build
+cd demo && npm test && npm run build         # UI, server, knowledge, voice
+cd dashboard && npm test
+cd ingest && npm test
+cd pi && .venv/bin/pytest
+wsl sh hackathon2026/host_test/run.sh        # firmware logic against fake sensors, prints ALL PASSED
+python ingest/e2e_pi_sink.py                 # the Pi's real relay -> ingest -> API
 ```
 
-## Railway preview (secondary)
-
-Project: `hackrpi-delts` · Service: `Deem` · Root directory: **`demo`**
-
-**Live URL:** https://deem-production.up.railway.app/
-
-Deploy options:
-
-- GitHub auto-deploy once the service watches the right branch, **or**
-- From repo root (with CLI linked): `railway up --ci --service Deem`  
-  (Keep **Root Directory = `demo`**. Uploading from inside `demo/` while root is also `demo` fails.)
-
-If a deploy fails with “could not determine how to build”, confirm Root Directory is `demo`.
-
-## Secrets (do not paste in chat)
-
-Add via Cursor Secrets / Railway variables when ready:
-
-| Name | Use |
-|------|-----|
-| `RAILWAY_API_TOKEN` | Account token for CLI (`RAILWAY_API_TOKEN`, not `RAILWAY_TOKEN`) |
-| `GEMINI_API_KEY` | Gemini |
-| `FISH_AUDIO_API_KEY` | Fish Audio |
-| `TIGER_DATABASE_URL` | Tiger Data / Postgres connection |
-
-Local mock UI works without these.
+## Railway
+Project `hackrpi-delts`. Services and their Root Directory: `Deem` = `demo`, `ingest` service = `ingest`, `dashboard` = `dashboard`. Services deploy from `main` when connected to GitHub; otherwise `railway up ./<dir> --path-as-root --service <name> --ci` from the repo root. A deploy is only live when `railway deployment list --service <name>` shows SUCCESS: check an endpoint, not just the green tick.
 
 ## Decision log
-
-Record product/architecture calls in `decisions.md` (newest first).
+Record product and architecture calls in `decisions.md` (newest first), and update `docs/mqtt_contract.md` before changing a topic or payload.

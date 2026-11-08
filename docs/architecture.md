@@ -1,77 +1,47 @@
-# Deem System Architecture
+# Greenhouse AI: system architecture
 
-Deem is an affordable, all-in-one plant monitoring + automation platform for
-greenhouses. Responsibilities are split across two tiers:
+An affordable, beginner-friendly plant monitor: a small device for one plant, plus a dashboard that shows how the same idea scales to a greenhouse. The pieces are split across three tiers.
 
 ```
-  ┌─────────────────────┐        MQTT         ┌──────────────────────┐   HTTPS   ┌─────────────┐
-  │   ESP32 (one pot)   │  ───────────────▶   │   Raspberry Pi 5     │  ──────▶  │ Web endpoint│
-  │  "the physicals"    │   telemetry         │ "central controller" │  relay    │   (TBD)     │
-  │                     │   ◀───────────────  │  + 2.8" TFT kiosk    │  ◀──────  │             │
-  │ sensors + relay     │     commands        │ ingest · buffer ·    │  commands │ dashboard / │
-  │                     │                     │ UI · voice  │           │ cloud API   │
-  └─────────────────────┘                     └──────────────────────┘           └─────────────┘
+  ESP32 (one per pot)        Raspberry Pi 5                       Railway (cloud)
+  sensors, publishes   MQTT  Mosquitto + deem-controller    HTTPS  ingest service ──▶ Tiger database
+  every 10 minutes  ─────▶   + 2.8" touchscreen kiosk      ─────▶   Deem server (voice, plants, Gemini)
+                             (reads MQTT directly)                   greenhouse dashboard
 ```
 
 ## Roles
 
-### ESP32 (edge / "the physicals")
-Owned by the firmware teammate. **MVP uses one ESP32** for the single demo pot
-(second DevKit is spare). That board:
-- Reads sensors (SEN63C air quality, DHT11 temp/RH, Stemma soil moisture, …).
-- Drives actuators via the 5V relay module (pump, …).
-- **Does not** drive the product 2.8" screen (Pi owns that). Any OLED in `e2/` is
-  leftover from the old AP dashboard and is not the user-facing UI.
-- **Publishes** telemetry to the Pi over MQTT and **subscribes** for commands.
+### ESP32: the sensors (`hackathon2026/`)
+One ESP32 per pot (MVP: `esp32-pot-01`). It reads the **DHT11** (temperature and humidity: the source of truth for both), the **SEN63C** (CO2, dust) and the **Stemma soil probe** (moisture, soil temperature), and **only publishes**: telemetry every 600 s (retained, QoS 0) plus a retained status message with a Last Will so the Pi knows when it drops. It receives nothing: no commands, no pump, no `sample_now`. It protects the data: a value from a sensor that stopped answering is dropped after 60 s instead of repeated, warm-up CO2 is not sent, and the soil probe reconnects by itself. Credentials live in the gitignored `secrets.h`.
 
-> Note: the current `e2/` firmware runs as its own WiFi **access point** with an
-> onboard web dashboard. For the central-controller model this flips: the ESP32
-> becomes a WiFi **client** that joins the Pi's network and talks MQTT. See
-> `docs/esp32_integration.md`.
+### Raspberry Pi 5: broker, relay, screen (`pi/`)
+- **Mosquitto** carries the messages (port 1883 for the ESP32, 9001 WebSocket for the screen).
+- **`deem_controller`** (Python) ingests the telemetry, buffers it durably in SQLite so nothing is lost when the internet drops, and relays batches over HTTPS to the cloud ingest service with a bearer token. Retries use backoff.
+- **The touchscreen kiosk** (Chromium, `demo/` in `?kiosk` mode on a 240x320 panel) reads the ESP32 over the WebSocket. It works without internet; only the microphone and Gemini need it.
 
-### Raspberry Pi 5 (central controller + display)
-Owned by the Pi teammate. The Pi:
-- Runs the **Mosquitto** MQTT broker (the message bus for devices).
-- Runs the **`deem_controller`** Python service, which:
-  1. Ingests telemetry from the ESP32.
-  2. Buffers readings durably (SQLite) so nothing is lost if the network or the
-     web endpoint is down.
-  3. Relays normalized readings to a web endpoint (pluggable; not yet defined).
-  4. Sends commands back down to the device (relay control, config, etc.).
-- **Owns the 2.8" SPI TFT touchscreen** and runs the device UI as a Chromium
-  kiosk (`demo/` with `?kiosk`). See `docs/display_kiosk.md`.
-- Hosts the camera, USB mic/speaker, and higher-level automation / AI pipeline.
-
-### Web endpoint (TBD)
-The cloud/remote destination for data and the source of remote commands. Not yet
-designed. The controller treats it as a **pluggable sink** (`pi/deem_controller/sink.py`)
-so the rest of the system doesn't block on this decision. Swapping it in should
-mostly be a `config.yaml` change.
+### Cloud (Railway)
+- **ingest** (`ingest/`): `POST /ingest` (Pi, token) writes readings into the Tiger database (retries are safe: duplicates are skipped); `GET /api/devices` and `GET /api/readings` serve them read-only.
+- **Deem server** (`demo/server/`): the device UI page, `/api/transcribe` (Fish Audio speech to text, key kept server-side), and the knowledge routes. Plants live in the Tiger database (`plant_types`, seeded from the 12 MiFloraDB documents). `/api/plants/match` has Gemini pick the plant you named from that closed list; `/api/ask` has Gemini answer a question from the plant's care notes, the latest reading and the last 24 hours of history.
+- **dashboard** (`dashboard/`): the whole-greenhouse view. 45 simulated plants plus the real pot (tagged LIVE) fed from the ingest service.
 
 ## Why MQTT
-- Decouples the edge board from the controller (same contract scales to more pots later; MVP is one ESP32).
-- Lightweight, well-supported on ESP32 (e.g. PubSubClient).
-- Built-in **Last Will & Testament** gives instant offline detection.
-- Topic wildcards let the Pi listen to devices with one subscription.
+It decouples the sensors from the Pi, is well supported on the ESP32, and the Last Will gives instant offline detection. The same contract scales to more pots later.
 
-## Data flow (happy path)
-1. ESP32 samples sensors every N seconds.
-2. ESP32 publishes JSON to `deem/<device_id>/telemetry` (QoS 1).
-3. Pi's controller validates + normalizes it and writes it to the buffer.
-4. The relay worker drains the buffer in batches and POSTs to the web endpoint.
-5. On success, rows are deleted; on failure, they're retried with backoff and
-   eventually dead-lettered.
+## Data flow
+1. The ESP32 samples every 10 minutes and publishes JSON to `deem/<device_id>/telemetry`.
+2. The Pi screen shows it immediately (WebSocket subscription) and scores it against the plant's healthy ranges; out-of-range values raise an alert and a sound.
+3. `deem-controller` buffers the reading and POSTs batches to the ingest service, which stores them in Tiger.
+4. The dashboard and Gemini read from there (history for trends, the latest reading for the LIVE plant).
+5. Voice: mic tap, then audio goes to the Deem server, to Fish Audio, back as text. Matching and answers go to Gemini. If the cloud fails, the screen falls back to a local matcher and canned answers.
 
 ## Where things live
 | Path | Purpose |
 |------|---------|
-| `e2/` | ESP32 firmware (PlatformIO) — teammate |
-| `pi/` | Pi central controller (Python) |
-| `pi/deem_controller/` | the service package |
-| `pi/deploy/` | Mosquitto + systemd deployment files |
-| `docs/mqtt_contract.md` | **the interface both sides code against** |
-| `docs/esp32_integration.md` | firmware-side how-to + example code |
+| `hackathon2026/` | ESP32 firmware (+ `host_test/` simulation) |
+| `pi/` | Pi: Mosquitto config, controller, kiosk and setup scripts |
+| `demo/` | Device UI and the Deem Node server |
+| `ingest/` | Cloud readings service |
+| `dashboard/` | Greenhouse dashboard |
+| `docs/mqtt_contract.md` | **The interface the firmware, Pi and app share.** Change it here first. |
 
-The single most important shared artifact is **`docs/mqtt_contract.md`**. If the
-topic names or JSON shapes change, change them there first and keep both sides in
-sync.
+Thresholds and health scoring live in the app (`demo/src/lib`), not the firmware.
