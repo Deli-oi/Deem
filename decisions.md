@@ -19,6 +19,13 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Alert sound for out-of-range readings
+- **Decision:** A reading outside the plant's healthy range (plant-data thresholds) plays an alert sound and shows what is wrong on the health page. MVP: every out-of-range reading alerts (nothing self-corrects). Later: a biosphere controller handles watering/temperature/humidity and the device alerts only for what it cannot change (e.g. soil quality), via the `AUTO_CORRECTED` list in `demo/src/lib/alerts.ts`.
+- **Why:** Without automation, the person must act on these problems, and a sound gets attention when no one is looking at the screen.
+- **Alternatives considered:** Alerting only on large deviations (rejected: the healthy range already defines what needs fixing). Spoken alerts through Fish Audio text-to-speech (a possible next step).
+
+---
+
 ### 2026-11-07: MIC and TEST are physical keys; Fish Audio voice via a server
 - **Decision:** MIC (hold to talk) and TEST are mechanical-keyboard keys, not on the screen. No typing: setup and questions are voice only through Fish Audio speech-to-text. The Fish Audio key lives on a small server (`demo/server`, env `FISH_AUDIO_API_KEY`); the browser only talks to `/api/transcribe`. A `?kiosk` mode fits the real 240x320 panel.
 - **Why:** The device has no keyboard or text entry, and the API key must not ship in browser code.

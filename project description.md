@@ -198,6 +198,7 @@ ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem
 - The overall health score is a placeholder we decide ourselves. It will be replaced by a researched calculation later.
 - The camera captures a photo with every data collection. Each data entry stored in MongoDB for the plant includes the image as one of its data points. There is no computer vision in the MVP.
 - Touch is used for the confirm/retry buttons and for swiping back and forth between screens.
+- Readings outside the plant's healthy range play an alert sound and show what is wrong. In the MVP every such reading alerts (nothing self-corrects). In the full-greenhouse dashboard, a biosphere controller will fix watering, temperature and humidity, and the device will alert only for what it cannot change, such as soil quality.
 - Each point on the history graph is the average of that hour's overall health scores.
 - A second swipeable screen to the right of the main health page shows average plant health per hour as a plotted graph. It is part of the MVP.
 - All screens share one style: retro, simple and user friendly, so non-technical people can read the data easily.
