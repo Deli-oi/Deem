@@ -1,16 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { CloudBackend } from './cloudBackend'
 import { MockBackend } from './backend'
-import type { BackendEvent } from '../lib/backendTypes'
 
-const ROW = {
-  device_id: 'esp32-pot-01',
-  ts: '2026-11-08T15:22:57.561Z',
-  fw: '0.1.0',
-  metrics: { co2_ppm: 600, temp_c: 24, rh_pct: 40, soil_moisture: 55, soil_temp_c: 25 },
-}
+const FULL = { co2_ppm: 600, temp_c: 24, rh_pct: 40, pm1_0: 2, pm2_5: 3, pm4_0: 4, pm10_0: 5, soil_moisture: 55, soil_temp_c: 25 }
+const row = (ts: string, metrics: object) => ({ ts, fw: '0.1.0', metrics })
+const COMPLETE = row('2026-11-08T15:19:16.000Z', FULL)
+const SOIL_ONLY = row('2026-11-08T15:22:57.000Z', { soil_moisture: 0, soil_temp_c: 25 })
 
-const reply = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response
+const reply = (readings: unknown[], status = 200) => ({ ok: status < 400, status, json: async () => ({ readings }) }) as Response
 
 let made: CloudBackend[] = []
 function make(fetchImpl: typeof fetch) {
@@ -30,43 +27,36 @@ afterEach(() => {
 })
 
 describe('CloudBackend', () => {
-  it('shows the newest stored reading with its own timestamp', async () => {
+  it('shows the last complete reading, skipping newer ones with a sensor missing', async () => {
     const urls: string[] = []
     const b = make((async (url: string) => {
       urls.push(url)
-      return reply({ devices: [ROW] })
+      return reply([COMPLETE, SOIL_ONLY, SOIL_ONLY]) // oldest first, like the server
     }) as unknown as typeof fetch)
     const t = await b.getLatestTelemetry('dracaena')
-    expect(urls[0]).toBe('https://ingest.example/api/devices')
-    expect(t.device_id).toBe('esp32-pot-01')
-    expect(t.ts).toBe(Math.floor(Date.parse(ROW.ts) / 1000))
-    expect(t.metrics.soil_moisture).toBe(55)
+    expect(urls[0]).toContain('https://ingest.example/api/readings?device_id=esp32-pot-01')
+    expect(t.ts).toBe(Math.floor(Date.parse(COMPLETE.ts) / 1000))
+    expect(t.metrics.co2_ppm).toBe(600)
   })
 
-  it('announces the link and the reading to subscribers', async () => {
-    const events: BackendEvent[] = []
-    const b = make((async () => reply({ devices: [ROW] })) as unknown as typeof fetch)
-    b.subscribe((e) => events.push(e))
-    await b.getLatestTelemetry('x')
-    expect(events.some((e) => e.type === 'link' && e.online)).toBe(true)
+  it('shows the newest reading when none is complete', async () => {
+    const b = make((async () => reply([SOIL_ONLY])) as unknown as typeof fetch)
+    const t = await b.getLatestTelemetry('x')
+    expect(t.ts).toBe(Math.floor(Date.parse(SOIL_ONLY.ts) / 1000))
   })
 
-  it('reports each sensor from the stored metrics', async () => {
-    const soilOnly = { ...ROW, metrics: { soil_moisture: 0, soil_temp_c: 25 } }
-    const b = make((async () => reply({ devices: [soilOnly] })) as unknown as typeof fetch)
+  it('reports each sensor from the shown reading', async () => {
+    const b = make((async () => reply([SOIL_ONLY])) as unknown as typeof fetch)
     const progress = await b.checkSensors(() => {})
     expect(progress.map((p) => [p.id, p.state])).toEqual([['dht', 'fail'], ['air', 'fail'], ['soil', 'ok']])
   })
 
-  it('ignores other devices and rejects when there is no reading', async () => {
-    const b = make((async () => reply({ devices: [{ ...ROW, device_id: 'esp32-pot-09' }] })) as unknown as typeof fetch)
-    await expect(b.getLatestTelemetry('x')).rejects.toThrow()
-  })
-
-  it('rejects when the cloud is unreachable', async () => {
-    const b = make((async () => {
+  it('rejects when there is no reading or the cloud is unreachable', async () => {
+    const none = make((async () => reply([])) as unknown as typeof fetch)
+    await expect(none.getLatestTelemetry('x')).rejects.toThrow()
+    const down = make((async () => {
       throw new Error('offline')
     }) as unknown as typeof fetch)
-    await expect(b.getLatestTelemetry('x')).rejects.toThrow()
+    await expect(down.getLatestTelemetry('x')).rejects.toThrow()
   })
 })
