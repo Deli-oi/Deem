@@ -1,9 +1,14 @@
 # A separate Railway service. Set its Root Directory to `ingest`.
-# Variables: TIGER_DATABASE_URL (already set in Railway), DEEM_SINK_TOKEN (shared secret with the Pi).
+# Variables: TIGER_DATABASE_URL, DEEM_SINK_TOKEN (shared secret with the Pi),
+#            ALLOWED_ORIGINS (pages that may start/stop collection, e.g. http://localhost:3000), optional ALLOWED_DEVICES.
+#
+# Built from the Dockerfile on purpose: Railway's automatic builders download their tooling from GitHub releases,
+# and those downloads failed repeatedly on 2026-11-08 (build failed, old code kept running). A plain
+# `FROM node` image avoids that.
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "npm start"
 healthcheckPath = "/healthz"
 restartPolicyType = "ON_FAILURE"
