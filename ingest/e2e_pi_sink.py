@@ -2,8 +2,8 @@
 
 Run from the repo root (needs `pip install -r pi/requirements.txt` and `npm install` in ingest/):
     python ingest/e2e_pi_sink.py
-Starts the service on a free port with in-memory storage, relays two readings the way the
-Pi does, and checks they come back from the public API.
+Starts the service on a free port with in-memory storage, starts a session (as the screen does when
+setup finishes), relays two readings the way the Pi does, and checks they come back from the public API.
 """
 import json
 import os
@@ -38,6 +38,15 @@ def main() -> int:
             print("FAIL: service did not start")
             return 1
 
+        # readings are only stored while a session is running (the screen starts one when setup finishes)
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{PORT}/api/session/start",
+            data=json.dumps({"device_id": "esp32-pot-01", "plant_type_id": "dracaena"}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req) as r:
+            assert json.load(r)["session_id"]
+
         payload = b'{"device_id":"esp32-pot-01","ts":%d,"fw":"0.1.0","metrics":{"temp_c":22.4,"rh_pct":45,"co2_ppm":612,"soil_moisture":38}}'
         now = int(time.time())
         batch = [
@@ -56,7 +65,7 @@ def main() -> int:
             readings = json.load(r)["readings"]
         assert len(readings) == 2, readings
         assert readings[-1]["metrics"]["co2_ppm"] == 612, readings
-        print("PASS: Pi HttpSink -> ingest -> API returned", len(readings), "readings")
+        print("PASS: session started, Pi HttpSink -> ingest -> API returned", len(readings), "readings")
         return 0
     finally:
         server.terminate()

@@ -872,3 +872,33 @@ html.kiosk .page-dots i {
 .mic-bar.transcribing .mic-sub {
   color: #8fcdea;
 }
+
+/* STOP COLLECTING (history page): quiet by default so it does not compete with pages 1 and 2 */
+.stop-btn {
+  appearance: none;
+  display: grid;
+  gap: 1px;
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border: 1px solid #3a3a3c;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  cursor: pointer;
+}
+
+.stop-btn .stop-sub {
+  font-size: 8px;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+.stop-btn.confirm {
+  border-color: var(--soil);
+  background: #3a0f1a;
+  color: var(--ink);
+}

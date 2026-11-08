@@ -189,7 +189,7 @@ export function createKnowledge({ pool = null, seedPath, gemini = {}, fetchImpl 
     if (!pool || !/^[A-Za-z0-9_-]{1,64}$/.test(deviceId ?? '')) return []
     try {
       const since = new Date(now() - HISTORY_HOURS * 3_600_000).toISOString()
-      const res = await pool.query('SELECT ts, metrics FROM readings WHERE device_id = $1 AND ts >= $2 ORDER BY ts ASC LIMIT 400', [deviceId, since])
+      const res = await pool.query('SELECT ts, metrics FROM readings WHERE device_id = $1 AND ts >= $2 AND label IS NULL ORDER BY ts ASC LIMIT 400', [deviceId, since])
       // stored rows may hold impossible values (sensor error markers): never reason about those
       return res.rows.map((r) => ({ ts: r.ts, metrics: sanitizeMetrics(typeof r.metrics === 'string' ? JSON.parse(r.metrics) : r.metrics ?? {}).metrics }))
     } catch (e) {
