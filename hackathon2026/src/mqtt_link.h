@@ -95,7 +95,7 @@ static inline void link_begin() {
   _link_mqtt.setBufferSize(LINK_PACKET_MAX);
   _link_mqtt.setSocketTimeout(MQTT_SOCKET_TIMEOUT_S);
 
-  configTime(0, 0, NTP_SERVER);
+  configTime(0, 0, NTP_SERVER, "pool.ntp.org"); /* Pi first, public pool as fallback */
 }
 
 /*
