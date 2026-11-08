@@ -1,15 +1,18 @@
+import { AIR_QUALITY_LIMITS } from './airQuality'
 import type { Metrics, PlantType } from './types'
 
 /**
- * Alerts: a reading outside the plant's healthy range (the thresholds in the plant data)
- * needs fixing, so the device shows it and plays an alert sound.
+ * Alerts: a reading outside the plant's healthy range (the thresholds in the plant data), or
+ * past the blanket air-quality limits (`airQuality.ts`: CO2 and dust), needs fixing, so the
+ * device shows it and plays an alert sound.
  *
  * MVP: nothing corrects itself, so EVERY out-of-range reading alerts.
  *
  * Later (full-greenhouse dashboard): a biosphere controller fixes what it can (watering,
- * temperature, humidity), and the device only alerts for what it cannot change, e.g. soil
- * quality. To switch that on, list the metrics the controller handles in `AUTO_CORRECTED`
- * (or set VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct"). No other code changes.
+ * temperature, humidity, ventilation), and the device only alerts for what it cannot change,
+ * e.g. soil quality. To switch that on, list the metrics the controller handles in
+ * `AUTO_CORRECTED` (or set VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct,co2_ppm"). No
+ * other code changes.
  */
 export const AUTO_CORRECTED: ReadonlySet<string> = new Set(
   (import.meta.env.VITE_AUTO_CORRECTED ?? '')
@@ -34,6 +37,9 @@ const LABELS: Record<string, { low: string; high: string }> = {
   rh_pct: { low: 'Air too dry', high: 'Air too humid' },
   soil_ec: { low: 'Soil needs food', high: 'Too much fertilizer' },
   light_lux: { low: 'Too dark', high: 'Too bright' },
+  co2_ppm: { low: 'CO2 too low', high: 'Stuffy air (CO2)' },
+  pm2_5: { low: 'Dust too low', high: 'Dusty or smoky air' },
+  pm10_0: { low: 'Dust too low', high: 'Dusty air' },
 }
 
 function labelFor(metric: string, direction: 'low' | 'high') {
@@ -47,7 +53,9 @@ export function evaluateAlerts(
   autoCorrected: ReadonlySet<string> = AUTO_CORRECTED,
 ): Alert[] {
   const alerts: Alert[] = []
-  for (const [metric, range] of Object.entries(plant.thresholds) as Array<[string, { min: number | null; max: number | null } | undefined]>) {
+  // Blanket air-quality limits for every plant; a plant's own threshold for the same metric wins.
+  const limits = { ...AIR_QUALITY_LIMITS, ...plant.thresholds } as Record<string, { min: number | null; max: number | null } | undefined>
+  for (const [metric, range] of Object.entries(limits)) {
     if (!range || autoCorrected.has(metric)) continue
     const value = (metrics as Record<string, number | undefined>)[metric]
     if (typeof value !== 'number') continue // the device does not report this one
@@ -57,7 +65,7 @@ export function evaluateAlerts(
       alerts.push({ metric, direction: 'high', value, limit: range.max, label: labelFor(metric, 'high') })
     }
   }
-  const order = ['soil_moisture', 'soil_ec', 'temp_c', 'rh_pct']
+  const order = ['soil_moisture', 'soil_ec', 'temp_c', 'rh_pct', 'co2_ppm', 'pm2_5', 'pm10_0']
   return alerts.sort((a, b) => rank(order, a.metric) - rank(order, b.metric))
 }
 

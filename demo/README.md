@@ -37,11 +37,11 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 
 ## Alert sound
 
-When a reading is **outside the plant's healthy range** (the thresholds in the plant data: soil moisture, temperature, humidity, and soil nutrients / light if a sensor reports them), the device plays an alert sound (five alternating beeps, synthesized with Web Audio) and the health page shows what is wrong, e.g. "Soil too dry".
+When a reading is **outside the plant's healthy range** (the thresholds in the plant data: soil moisture, temperature, humidity, and soil nutrients / light if a sensor reports them), **or past the blanket air-quality limits** (CO2 above 1500 ppm, PM2.5 above 35, PM10 above 150; the same for every plant, see `src/lib/airQuality.ts`), the device plays an alert sound (five alternating beeps, synthesized with Web Audio) and the health page shows what is wrong, e.g. "Soil too dry".
 
 - **MVP:** nothing corrects itself, so *every* out-of-range reading alerts. It repeats with each new reading while the problem lasts (every 10 minutes, or on TEST).
 - It never plays while the MIC key is recording (it would be heard as speech); it waits until the mic is idle.
-- **Later (full-greenhouse dashboard):** a biosphere controller fixes what it can (watering, temperature, humidity), and the device alerts only for what it cannot change, e.g. soil quality. Switch that on by listing the controller's metrics in `AUTO_CORRECTED` in `src/lib/alerts.ts`, or build with `VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct"`.
+- **Later (full-greenhouse dashboard):** a biosphere controller fixes what it can (watering, temperature, humidity), and the device alerts only for what it cannot change, e.g. soil quality. Switch that on by listing the controller's metrics in `AUTO_CORRECTED` in `src/lib/alerts.ts`, or build with `VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct,co2_ppm"` (a ventilation controller would take over CO2).
 - Browsers only allow sound after a key press or touch (the first one unlocks it). A kiosk Chromium can skip that with `--autoplay-policy=no-user-gesture-required`.
 - `?silent` in the URL turns the sound off (rehearsing, development). The on-screen alert still shows.
 
