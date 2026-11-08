@@ -48,11 +48,17 @@ if [ -z "${BROWSER}" ]; then
   exit 1
 fi
 
+# ?kiosk makes the page fill the 240x320 panel (no device frame).
+# --use-fake-ui-for-media-stream auto-allows the microphone: there is no keyboard to click "Allow"
+# and incognito never remembers it. The kiosk only ever loads our own localhost page.
+# --autoplay-policy lets the alert sound play without a tap first.
 # --app gives a chromeless window; --kiosk makes it full-screen with no exit UI.
 # When Chromium exits, xinit tears down the X server and the service restarts.
 exec "${BROWSER}" \
   --kiosk \
-  --app="${UI_URL}" \
+  --app="${UI_URL}/?kiosk" \
+  --use-fake-ui-for-media-stream \
+  --autoplay-policy=no-user-gesture-required \
   --incognito \
   --noerrdialogs \
   --disable-infobars \
