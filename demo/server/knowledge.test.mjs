@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { newDb } from 'pg-mem'
 import { describe, expect, it, vi } from 'vitest'
 import { createHandler } from './handler.mjs'
-import { AIR_LIMITS, createKnowledge } from './knowledge.mjs'
+import { AIR_LIMITS, createKnowledge, summarizeHistory } from './knowledge.mjs'
 import { AIR_QUALITY_LIMITS } from '../src/lib/airQuality'
 
 const seedPath = fileURLToPath(new URL('../public/plants/seed_all.json', import.meta.url))
@@ -188,5 +188,71 @@ describe('the /api routes', () => {
     expect(last.status).toBe(429)
     expect((await fetch(`${s.base}/api/plants`, { method: 'POST' })).status).toBe(405) // POST to a read route never reaches transcribe
     await s.close()
+  })
+})
+
+describe('history and trends for answers', () => {
+  const NOW = Date.UTC(2026, 10, 8, 12, 0, 0)
+  const hoursAgo = (h) => new Date(NOW - h * 3_600_000).toISOString()
+  const row = (h, soil, co2) => ({ ts: hoursAgo(h), metrics: { soil_moisture: soil, co2_ppm: co2, temp_c: 22 } })
+
+  it('summarizes a drying pot as falling, a flat metric as steady, and says nothing without enough data', () => {
+    const rows = [row(23, 50, 600), row(18, 44, 610), row(12, 35, 590), row(6, 22, 600), row(1, 9, 605)]
+    const lines = summarizeHistory(rows, NOW).join('\n')
+    expect(lines).toContain('5 readings over the last 23 h')
+    expect(lines).toContain('soil moisture %: first 50, latest 9, low 9, high 50, falling')
+    expect(lines).toContain('air temp C: first 22, latest 22, low 22, high 22, steady')
+    expect(lines).toMatch(/CO2 ppm:.*steady/)
+    expect(summarizeHistory([row(2, 40, 600), row(1, 39, 600)], NOW)).toEqual([])
+    expect(summarizeHistory([], NOW)).toEqual([])
+    expect(summarizeHistory(null, NOW)).toEqual([])
+  })
+
+  it('rising is reported as rising', () => {
+    const lines = summarizeHistory([row(20, 10, 500), row(10, 30, 900), row(1, 55, 1700)], NOW).join('\n')
+    expect(lines).toMatch(/soil moisture %:.*rising/)
+    expect(lines).toMatch(/CO2 ppm:.*rising/)
+  })
+
+  async function withReadings(rows) {
+    const p = pool()
+    await p.query('CREATE TABLE readings (device_id text NOT NULL, ts timestamptz NOT NULL, received_at timestamptz, fw text, metrics jsonb NOT NULL)')
+    for (const r of rows) await p.query('INSERT INTO readings (device_id, ts, metrics) VALUES ($1, $2, $3)', [r.device, r.ts, JSON.stringify(r.metrics)])
+    return p
+  }
+
+  it('reads the last 24 h of this pot from Tiger and hands the trend to Gemini', async () => {
+    const p = await withReadings([
+      ...[23, 18, 12, 6, 1].map((h, i) => ({ device: 'esp32-pot-01', ts: hoursAgo(h), metrics: { soil_moisture: [50, 44, 35, 22, 9][i], temp_c: 22 } })),
+      { device: 'esp32-pot-01', ts: hoursAgo(30), metrics: { soil_moisture: 99 } }, // older than a day: left out
+      { device: 'other-pot', ts: hoursAgo(2), metrics: { soil_moisture: 1 } }, // another pot: left out
+    ])
+    const fetchImpl = fakeGemini({ answer: 'It has been drying out.' })
+    const k = createKnowledge({ pool: p, seedPath, gemini: { apiKey: 'key' }, fetchImpl, now: () => NOW, log: silent })
+    const out = await k.ask({ plantTypeId: 'dracaena', question: 'why is it wilting?', metrics: { soil_moisture: 9 } })
+    expect(out.answer).toBe('It has been drying out.')
+    const prompt = JSON.parse(fetchImpl.mock.calls[0][1].body).contents[0].parts[0].text
+    expect(prompt).toContain('History: 5 readings')
+    expect(prompt).toContain('soil moisture %: first 50, latest 9, low 9, high 50, falling')
+    expect(prompt).not.toContain('99')
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body).systemInstruction.parts[0].text).toContain('trend')
+  })
+
+  it('asks about the pot named in the request, rejects odd device ids, and still answers when the history cannot be read', async () => {
+    const p = await withReadings([{ device: 'pot-b', ts: hoursAgo(5), metrics: { soil_moisture: 30 } }, { device: 'pot-b', ts: hoursAgo(3), metrics: { soil_moisture: 31 } }, { device: 'pot-b', ts: hoursAgo(1), metrics: { soil_moisture: 32 } }])
+    const k = createKnowledge({ pool: p, seedPath, gemini: { apiKey: 'key' }, fetchImpl: fakeGemini({ answer: 'ok' }), now: () => NOW, log: silent })
+    expect((await k.history('pot-b')).length).toBe(3)
+    expect(await k.history('esp32-pot-01')).toEqual([])
+    expect(await k.history("x'; DROP TABLE readings;--")).toEqual([])
+    const broken = createKnowledge({ pool: { query: async () => { throw new Error('db down') } }, seedPath, gemini: { apiKey: 'key' }, fetchImpl: fakeGemini({ answer: 'still works' }), log: silent })
+    expect((await broken.ask({ plantTypeId: 'dracaena', question: 'hi' })).answer).toBe('still works')
+  })
+
+  it('tells Gemini the light and mineral ranges exist but are not measured', async () => {
+    const fetchImpl = fakeGemini({ answer: 'ok' })
+    const k = createKnowledge({ seedPath, gemini: { apiKey: 'key' }, fetchImpl, log: silent })
+    await k.ask({ plantTypeId: 'dracaena', question: 'does it get enough light?', metrics: {} })
+    const prompt = JSON.parse(fetchImpl.mock.calls[0][1].body).contents[0].parts[0].text
+    expect(prompt).toMatch(/NOT measured by this device.*light \d+ to \d+ lux.*soil minerals \(EC\) \d+ to \d+/)
   })
 })
