@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto'
+import { sanitizeMetrics } from './sanity.mjs'
 
 // The metric keys of the MQTT contract (docs/mqtt_contract.md, v1). Anything else is ignored.
 export const METRIC_KEYS = [
@@ -21,7 +22,9 @@ export function normalizeReading(rec, nowSec) {
     const v = rec.metrics[k]
     if (typeof v === 'number' && Number.isFinite(v)) metrics[k] = v
   }
-  if (Object.keys(metrics).length === 0) return null
+  // impossible values (sensor error markers, a mis-wired DHT11) never become data
+  const clean = sanitizeMetrics(metrics).metrics
+  if (Object.keys(clean).length === 0) return null
   const received = Number(rec.received_ts) > MIN_EPOCH ? Number(rec.received_ts) : nowSec
   const deviceTs = Number(rec.ts)
   // use the device's own time when its clock was synced, otherwise when the Pi received it
@@ -31,9 +34,12 @@ export function normalizeReading(rec, nowSec) {
     ts: Math.round(ts * 1000),
     received_at: Math.round(received * 1000),
     fw: typeof rec.fw === 'string' ? rec.fw.slice(0, 32) : null,
-    metrics,
+    metrics: clean,
   }
 }
+
+/** Rows stored before the rule existed may hold impossible values: never hand those out. */
+const cleanRow = (row) => ({ ...row, metrics: sanitizeMetrics(row.metrics ?? {}).metrics })
 
 function tokenOk(header, token) {
   if (!token || typeof header !== 'string') return false
@@ -98,7 +104,7 @@ export function createHandler({ store, token, now = () => Date.now() / 1000 }) {
         return send(res, 200, { received: list.length, stored, duplicates: rows.length - stored, rejected: list.length - rows.length })
       }
       if (req.method === 'GET' && url.pathname === '/api/devices') {
-        return send(res, 200, { devices: await store.latest() }, cors)
+        return send(res, 200, { devices: (await store.latest()).map(cleanRow) }, cors)
       }
       if (req.method === 'GET' && url.pathname === '/api/readings') {
         const id = url.searchParams.get('device_id') ?? ''
@@ -106,7 +112,7 @@ export function createHandler({ store, token, now = () => Date.now() / 1000 }) {
         const hours = Math.min(Math.max(Number(url.searchParams.get('hours')) || 24, 1), 24 * 14)
         const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 1000, 1), 5000)
         const since = new Date((now() - hours * 3600) * 1000).toISOString()
-        return send(res, 200, { device_id: id, readings: await store.history(id, since, limit) }, cors)
+        return send(res, 200, { device_id: id, readings: (await store.history(id, since, limit)).map(cleanRow) }, cors)
       }
       return send(res, 404, { error: 'not found' })
     } catch (e) {

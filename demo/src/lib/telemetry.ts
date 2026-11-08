@@ -8,6 +8,7 @@
  *   deem/<device_id>/cmd, /cmd/ack exist in the contract but the MVP sends no commands.
  */
 import { parseTelemetryMetrics } from './mqttContract'
+import { sanitizeMetrics } from './sanity'
 import type { MetricMap } from './mqttContract'
 import type { Telemetry } from './types'
 
@@ -72,10 +73,12 @@ export function parseTelemetryMessage(
   const device_id = topicDevice ?? (typeof body.device_id === 'string' ? body.device_id : null)
   if (!device_id) throw new Error('telemetry has no device_id')
 
-  const metrics: MetricMap = parseTelemetryMetrics(body.metrics)
-  if (typeof metrics.soil_moisture === 'number') {
-    metrics.soil_moisture = normalizeSoil(metrics.soil_moisture)
+  // impossible values (CO2 32767, dust 6553.5, a 57 C room) are dropped: they show as '--' and are never scored
+  const parsed: MetricMap = parseTelemetryMetrics(body.metrics)
+  if (typeof parsed.soil_moisture === 'number') {
+    parsed.soil_moisture = normalizeSoil(parsed.soil_moisture) // raw counts become percent first, then the range check
   }
+  const metrics: MetricMap = sanitizeMetrics(parsed).metrics
 
   const deviceTs = typeof body.ts === 'number' && body.ts > 0 ? body.ts : 0
   return {
