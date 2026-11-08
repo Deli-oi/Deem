@@ -145,3 +145,7 @@ A log of key project decisions. Add newest entries at the top.
 
 ### 2026-11-08: Repo renamed to Greenhouse-AI
 - **Decision:** The GitHub repo `Deli-oi/Deem` is now `Deli-oi/Greenhouse-AI` (GitHub names cannot contain spaces). The old URL redirects, so existing clones keep working; update with `git remote set-url origin https://github.com/Deli-oi/Greenhouse-AI.git`. Interface names that say `deem` (MQTT topic prefix, `deem_controller`, Railway service names, `DEEM_SINK_*` variables) are unchanged on purpose.
+
+### 2026-11-08: SEN63C temperature and humidity back up the DHT11; impossible values dropped
+- **Decision:** The real pot sent 57 C / 95 % from the DHT11 (outside its 0-50 C / 20-90 % spec), CO2 32767 and dust 6553.5 (sensor error markers). The firmware now publishes DHT11 temperature and humidity only when both are within spec, otherwise the SEN63C's, otherwise nothing; CO2 and dust markers are never published. The app, ingest service and Gemini history also drop impossible values (PR #41). Zion approved the firmware change; the board needs a reflash.
+- **Supersedes:** "DHT11 is the source of truth for temperature and humidity" (2026-11-08, earlier). The DHT11 is still preferred when it is sane.
