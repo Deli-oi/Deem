@@ -11,10 +11,18 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: One ESP32; Pi owns the 2.8" screen
+- **Decision:** The MVP uses a single ESP32 (sensors + relay for the one pot). The second DevKit is spare / unused. The Raspberry Pi 5 owns the 2.8" SPI TFT touchscreen and runs the kiosk web UI (`?kiosk`); the ESP32 does not drive the product display (its onboard OLED in `e2/` is legacy-only).
+- **Why:** One plant needs one edge node. The health/AI UI is a browser app and can only run on the Pi; wiring the TFT there keeps the current demo UI as the real device screen.
+- **Open:** Exact TFT/touch module (controller chip, product link); see `docs/display_kiosk.md`.
+- **Detail:** `docs/architecture.md`, `docs/display_kiosk.md`, `hardware_info.md`.
+
+---
+
 ### 2026-11-07: MIC and TEST are physical keys; Fish Audio voice via a server
 - **Decision:** MIC (hold to talk) and TEST are mechanical-keyboard keys, not on the screen. No typing: setup and questions are voice only through Fish Audio speech-to-text. The Fish Audio key lives on a small server (`demo/server`, env `FISH_AUDIO_API_KEY`); the browser only talks to `/api/transcribe`. A `?kiosk` mode fits the real 240x320 panel.
 - **Why:** The device has no keyboard or text entry, and the API key must not ship in browser code.
-- **Open:** Which device drives the 2.8" TFT (Pi vs ESP32) and its exact model; see `docs/display_kiosk.md`.
+- **Open:** Exact 2.8" TFT/touch module; Pi owns the panel (see entry above and `docs/display_kiosk.md`).
 
 ---
 
