@@ -20,14 +20,17 @@ buffer:
   max_rows: 100000         # oldest rows are dropped past this cap
 
 sink:
-  # Where normalized readings get relayed. The real web endpoint is TBD,
-  # so start with type: log (prints batches) and switch to http later.
-  type: log                # log | http
-  url: https://example.com/ingest       # TODO: real endpoint
+  # Where normalized readings get relayed. The controller is wired to POST
+  # batches to the greenhouse web endpoint; the exact URL/token is still being
+  # finalized with the webapp team, so it comes from the environment (${...})
+  # and gets filled in later without touching this file.
+  # (type: log is still available for local development — it just prints batches.)
+  type: http               # log | http
+  url: ${DEEM_SINK_URL}    # set once the webapp team provides the ingest endpoint
   method: POST
   headers:
     Content-Type: application/json
-    # Authorization: Bearer ${DEEM_SINK_TOKEN}
+    Authorization: Bearer ${DEEM_SINK_TOKEN}   # token from the webapp team
   batch_size: 50
   flush_interval_s: 5       # how often the relay worker drains the buffer
   timeout_s: 10

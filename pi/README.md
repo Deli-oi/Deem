@@ -46,8 +46,15 @@ cp config.example.yaml config.yaml      # then edit config.yaml
 ```bash
 .venv/bin/python -m deem_controller --config config.yaml
 ```
-With `sink.type: log` (the default) you'll see each batch of readings printed as
-they arrive — handy while the real web endpoint is still TBD.
+The controller is set up to **POST batches to the web endpoint** (`sink.type:
+http`). The exact ingest URL and auth token are still being finalized with the
+webapp team, so they come from the environment — set `DEEM_SINK_URL` (and
+`DEEM_SINK_TOKEN` if the endpoint needs auth) in the `.env` file (see step 4)
+and nothing else changes. Until the endpoint is live, deliveries fail and
+readings stay safely buffered in SQLite for retry.
+
+> For local development you can still flip `sink.type: log` to just print each
+> batch as it arrives instead of POSTing.
 
 ### 4. Run as a service (optional)
 ```bash
@@ -64,17 +71,17 @@ Everything lives in `config.yaml` (copy from `config.example.yaml`). Key bits:
 - `mqtt.*` — broker host/port/credentials and the `base_topic` (`deem`).
 - `buffer.*` — SQLite path and max retained rows.
 - `sink.*` — where readings go:
-  - `type: log` — print batches (development default).
-  - `type: http` — POST batches to `sink.url`. Set headers/auth there.
-    Secrets can be referenced as `${ENV_VAR}` and are expanded at load time.
+  - `type: http` — POST batches to `sink.url` (the configured default). The URL
+    and any auth header are referenced as `${ENV_VAR}` and expanded at load
+    time, so the webapp team's endpoint/token drop into the environment later
+    without editing committed files.
+  - `type: log` — print batches instead (handy for local development).
 
-When the web endpoint is finalized, switching to it is usually just:
-```yaml
-sink:
-  type: http
-  url: https://the-real-endpoint/ingest
-  headers:
-    Authorization: Bearer ${DEEM_SINK_TOKEN}
+When the webapp team hands over the endpoint, just set the environment vars
+(e.g. in `.env`) — no code or config edits needed:
+```bash
+DEEM_SINK_URL=https://the-real-endpoint/ingest
+DEEM_SINK_TOKEN=...            # only if the endpoint requires auth
 ```
 If the endpoint expects a different JSON shape than `{"readings": [...]}`, edit
 `HttpSink.build_body()` in `deem_controller/sink.py`.
