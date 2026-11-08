@@ -68,6 +68,25 @@ describe('POST /api/transcribe', () => {
     expect(res.status).toBe(413)
   })
 
+  it('lets a listed page (the Pi screen) call it from another origin, with CORS, and still blocks the rest', async () => {
+    const pi = 'http://localhost:3000'
+    const s2 = createServer(createHandler({ distDir, fishKey: 'test-key', fetchImpl, now: () => clock, allowedOrigins: [pi] }))
+    await new Promise((r) => s2.listen(0, '127.0.0.1', r))
+    const url = `http://127.0.0.1:${s2.address().port}/api/transcribe`
+    const pre = await fetch(url, { method: 'OPTIONS', headers: { Origin: pi, 'Access-Control-Request-Method': 'POST' } })
+    expect(pre.status).toBe(204)
+    expect(pre.headers.get('access-control-allow-origin')).toBe(pi)
+    const ok = await fetch(url, { method: 'POST', headers: { Origin: pi, 'Content-Type': 'audio/webm' }, body: Buffer.from('x') })
+    expect(ok.status).toBe(200)
+    expect(ok.headers.get('access-control-allow-origin')).toBe(pi)
+    const bad = await fetch(url, { method: 'POST', headers: { Origin: 'https://evil.example', 'Content-Type': 'audio/webm' }, body: Buffer.from('x') })
+    expect(bad.status).toBe(403)
+    expect(bad.headers.get('access-control-allow-origin')).toBeNull()
+    const badPre = await fetch(url, { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } })
+    expect(badPre.status).toBe(403)
+    await new Promise((r) => s2.close(r))
+  })
+
   it('rejects requests from another origin', async () => {
     const res = await post(Buffer.from('x'), { Origin: 'https://evil.example' })
     expect(res.status).toBe(403)

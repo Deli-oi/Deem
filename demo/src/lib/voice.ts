@@ -58,10 +58,13 @@ function pickMime(): string | undefined {
   return MIME_CANDIDATES.find((m) => MediaRecorder.isTypeSupported(m))
 }
 
-export async function transcribeAudio(blob: Blob, fetchImpl: typeof fetch = fetch): Promise<string> {
+/** The Pi touchscreen serves static files only, so it sets VITE_TRANSCRIBE_URL to the hosted server. */
+const TRANSCRIBE_URL: string = (import.meta.env.VITE_TRANSCRIBE_URL as string | undefined)?.trim() || '/api/transcribe'
+
+export async function transcribeAudio(blob: Blob, fetchImpl: typeof fetch = fetch, url: string = TRANSCRIBE_URL): Promise<string> {
   let res: Response
   try {
-    res = await fetchImpl('/api/transcribe', {
+    res = await fetchImpl(url, {
       method: 'POST',
       headers: { 'Content-Type': blob.type || 'audio/webm' },
       body: blob,

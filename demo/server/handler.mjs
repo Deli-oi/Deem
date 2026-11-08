@@ -56,8 +56,14 @@ function json(res, status, body) {
  * - POST /api/transcribe: audio body -> Fish Audio ASR -> { text }
  * - anything else: static files from `distDir`, falling back to index.html (single-page app)
  */
-export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.now }) {
+export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.now, allowedOrigins = [] }) {
   const hits = new Map()
+  // Other pages (e.g. the Pi touchscreen at http://localhost:3000) may call this server if listed.
+  const allowed = new Set(allowedOrigins)
+  const corsFor = (origin) =>
+    origin && allowed.has(origin)
+      ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
+      : {}
 
   function limited(ip) {
     const t = now()
@@ -72,7 +78,8 @@ export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.
 
     // Only our own page may call this (it spends the Fish Audio key).
     const origin = req.headers.origin
-    if (origin && new URL(origin).host !== req.headers.host) return json(res, 403, { error: 'forbidden' })
+    if (origin && new URL(origin).host !== req.headers.host && !allowed.has(origin)) return json(res, 403, { error: 'forbidden' })
+    for (const [k, v] of Object.entries(corsFor(origin))) res.setHeader(k, v)
 
     const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() ?? req.socket.remoteAddress ?? 'unknown'
     if (limited(ip)) return json(res, 429, { error: 'rate_limited' })
@@ -134,6 +141,12 @@ export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.
     try {
       const path = (req.url ?? '/').split('?')[0]
       if (path === '/api/transcribe') {
+        if (req.method === 'OPTIONS') {
+          const cors = corsFor(req.headers.origin)
+          if (!cors['Access-Control-Allow-Origin']) return json(res, 403, { error: 'forbidden' })
+          res.writeHead(204, { ...cors, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' })
+          return res.end()
+        }
         if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' })
         return await transcribe(req, res)
       }
