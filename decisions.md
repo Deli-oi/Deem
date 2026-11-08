@@ -19,6 +19,14 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-07: Wilting failure screen
+- **Decision:** While an alert is active, the health page is replaced by a wilting, slightly gray version of the plant filling most of the screen, plus the failure label and one sentence of advice (first sentence of the plant's stored fix, or the shared air-quality fix). One wilted image per plant, used for every failure type. Wilted sprites are generated from the healthy ones (`data/plants/sprites/generate_wilted.py`).
+- **Why:** An at-a-glance, emotional cue that something is wrong, and exactly what to do, for non-technical people.
+- **Alternatives considered:** A different image per failure type (deferred: "good enough for now").
+- **Note:** The stored advice text is the same generic wording for all 12 plants (e.g. aloe and panda plant get "Water thoroughly..."), so the sentence is not yet plant-specific.
+
+---
+
 ### 2026-11-07: Alert sound for out-of-range readings
 - **Decision:** A reading outside the plant's healthy range (plant-data thresholds) plays an alert sound and shows what is wrong on the health page. MVP: every out-of-range reading alerts (nothing self-corrects). Later: a biosphere controller handles watering/temperature/humidity and the device alerts only for what it cannot change (e.g. soil quality), via the `AUTO_CORRECTED` list in `demo/src/lib/alerts.ts`.
 - **Air quality:** blanket limits for every plant, since the plant data has no CO2/dust ranges: CO2 > 1500 ppm, PM2.5 > 35 ug/m3 (EPA 24h), PM10 > 150 ug/m3 (EPA 24h). High on purpose so a busy room (e.g. the hackathon demo) does not alert constantly. PM1.0, PM4.0 and low values never alert. Stored fixes in `demo/src/lib/airQuality.ts`.

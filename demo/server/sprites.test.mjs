@@ -12,6 +12,11 @@ describe('plant sprites', () => {
     expect(missing).toEqual([])
   })
 
+  it('every plant type also has a wilted sprite for failures', () => {
+    const missing = plants.filter((p) => !existsSync(new URL(`../public/sprites/wilted/${p.plant_type_id}.png`, import.meta.url))).map((p) => p.plant_type_id)
+    expect(missing).toEqual([])
+  })
+
   it('sprite files are named after their plant_type_id', () => {
     for (const p of plants) expect(p.sprite_ref).toBe(`/sprites/${p.plant_type_id}.png`)
   })
