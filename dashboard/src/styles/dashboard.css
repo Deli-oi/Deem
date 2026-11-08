@@ -1,0 +1,1445 @@
+/* Greenhouse dashboard, cozy edition: warm parchment, wood and leaf greens, soft berry accents.
+   Still the device's pixel fonts (Silkscreen + VT323). The mini display in the pop-up stays dark,
+   like the little gadget it is. */
+:root {
+  --gh-bg: #faf3e0;
+  --gh-panel: #fffdf5;
+  --gh-panel2: #fff6e0;
+  --gh-line: #d9c39a;
+  --gh-line2: #b58a5a;
+  --gh-wood: #a8764a;
+  --gh-woodD: #7d5230;
+  --gh-ink: #4a3426;
+  --gh-muted: #8b7058;
+  --gh-faint: #a8917a;
+  --gh-green: #4f9d3a;
+  --gh-greenD: #3f7d2c;
+  --gh-leaf: #6aae48;
+  --gh-sun: #f0b43a;
+  --gh-amber: #d58a14;
+  --gh-berry: #d6455d;
+  --gh-berryBg: #fff0f2;
+  --gh-berryLine: #e8a5b0;
+  --gh-sky: #6cb7dd;
+  --gh-top: 56px;
+}
+
+/* The shared device CSS paints html/body/#root near-black; the dashboard is cream, so repaint the
+   page background on <html> and make the rest transparent. */
+html,
+body,
+#root {
+  height: auto;
+  min-height: 100%;
+  color: var(--gh-ink);
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--gh-top) + 8px);
+}
+
+body,
+#root {
+  background: transparent;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: var(--font-num), monospace;
+  font-size: 20px;
+}
+
+html {
+  background:
+    radial-gradient(circle at 12px 14px, rgba(240, 143, 176, 0.38) 2px, transparent 2.6px) 0 0 / 96px 96px,
+    radial-gradient(circle at 58px 62px, rgba(245, 201, 74, 0.42) 2px, transparent 2.6px) 0 0 / 118px 118px,
+    radial-gradient(circle at 32px 84px, rgba(106, 174, 72, 0.30) 3px, transparent 3.6px) 0 0 / 140px 140px,
+    radial-gradient(circle at 90px 20px, rgba(182, 154, 240, 0.30) 2px, transparent 2.6px) 0 0 / 160px 160px,
+    linear-gradient(#fcf6e6, #f6ecd0);
+  background-color: var(--gh-bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px dashed var(--gh-green);
+  outline-offset: 2px;
+}
+
+/* ---------- top bar: a wooden sign ---------- */
+.gh-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: var(--gh-top);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  color: #fff6dc;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 46px),
+    linear-gradient(#bb8656, #a8764a);
+  border-bottom: 4px solid var(--gh-woodD);
+  box-shadow: 0 4px 0 rgba(125, 82, 48, 0.25);
+}
+
+.gh-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.gh-brand b {
+  color: #fff3c9;
+  font-size: 16px;
+  text-shadow: 2px 2px 0 var(--gh-woodD);
+}
+
+.gh-brand span {
+  color: #f1d9a8;
+  font-size: 9px;
+}
+
+.gh-logo {
+  width: 24px;
+  height: 24px;
+  background:
+    linear-gradient(#fff3c9, #fff3c9) 10px 5px / 4px 12px no-repeat,
+    linear-gradient(#a7d672, #a7d672) 4px 7px / 6px 4px no-repeat,
+    linear-gradient(#a7d672, #a7d672) 14px 10px / 6px 4px no-repeat,
+    #5b9a3c;
+  border: 2px solid var(--gh-woodD);
+  border-radius: 6px;
+}
+
+.gh-top nav {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.gh-top nav a {
+  padding: 6px 12px;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fbe9c4;
+  border-radius: 8px;
+}
+
+.gh-top nav a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.gh-top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.gh-client {
+  font-size: 18px;
+  color: #fbe9c4;
+}
+
+.gh-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: rgba(255, 253, 245, 0.92);
+  border: 2px solid var(--gh-woodD);
+  border-radius: 999px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--gh-greenD);
+}
+
+.gh-live i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gh-green);
+  animation: gh-blink 1.4s steps(2, start) infinite;
+}
+
+@keyframes gh-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* ---------- hero: the greenhouse ---------- */
+.gh-hero {
+  min-height: calc(100vh - var(--gh-top));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 22px;
+}
+
+.gh-herobar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+}
+
+.gh-herobar h1 {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+  text-shadow: 2px 2px 0 #fff;
+}
+
+.gh-herobar p {
+  margin: 2px 0 0;
+  font-size: 18px;
+  color: var(--gh-muted);
+}
+
+.gh-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.gh-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--gh-panel);
+  border: 3px solid var(--gh-line);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 #e6d3ab;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-pill b {
+  font-family: var(--font-num);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--gh-green);
+  line-height: 1;
+}
+
+.gh-pill.bad {
+  border-color: var(--gh-berryLine);
+  background: var(--gh-berryBg);
+}
+
+.gh-pill.bad b {
+  color: var(--gh-berry);
+}
+
+.gh-legend {
+  display: flex;
+  gap: 14px;
+  margin: 0 0 0 auto;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gh-legend i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 2px solid rgba(74, 52, 38, 0.25);
+}
+
+.gh-scroll {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+  animation: gh-bob 1.6s steps(4) infinite;
+}
+
+@keyframes gh-bob {
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.gh-stage {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+/* the map sits in a wooden picture frame */
+.gh-map {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: 72 / 40;
+  width: min(100%, calc((100vh - var(--gh-top) - 128px) * 1.8));
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 5px var(--gh-wood),
+    0 0 0 9px var(--gh-woodD),
+    0 14px 0 6px rgba(125, 82, 48, 0.18),
+    0 22px 40px rgba(74, 52, 38, 0.28);
+}
+
+.gh-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  border-radius: 8px;
+}
+
+.gh-zone-label {
+  position: absolute;
+  padding: 0.25cqw 0.8cqw;
+  background: var(--gh-wood);
+  border: 2px solid var(--gh-woodD);
+  border-radius: 6px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  font-family: var(--font-pixel);
+  font-size: clamp(7px, 0.75cqw, 11px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff6dc;
+  text-shadow: 1px 1px 0 var(--gh-woodD);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gh-zone-label b {
+  color: #ffe08a;
+  margin-right: 0.4cqw;
+}
+
+.gh-plant {
+  position: absolute;
+  z-index: 5;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  transition: transform 90ms steps(2);
+}
+
+.gh-plant img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 0.3cqw 0 rgba(70, 45, 20, 0.25));
+}
+
+.gh-plant:hover,
+.gh-plant:focus-visible,
+.gh-plant.selected {
+  transform: translateY(-4%) scale(1.08);
+  z-index: 20;
+}
+
+.gh-plant.selected img,
+.gh-plant:hover img {
+  filter: drop-shadow(0 0 0.5cqw rgba(255, 224, 138, 1)) drop-shadow(0 0 0.2cqw #fff);
+}
+
+.gh-plant.dim {
+  opacity: 0.28;
+  filter: grayscale(0.8);
+}
+
+/* the health score hangs on a little paper tag */
+.gh-pin {
+  position: absolute;
+  top: -2%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.05cqw 0.5cqw;
+  background: var(--gh-panel);
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  box-shadow: 0 2px 0 rgba(70, 45, 20, 0.22);
+  font-family: var(--font-num);
+  font-size: clamp(9px, 1.05cqw, 16px);
+  line-height: 1.1;
+  pointer-events: none;
+}
+
+.gh-plant.status-great .gh-pin { color: #3f8a2c; }
+.gh-plant.status-good .gh-pin { color: #7a9a22; }
+.gh-plant.status-watch .gh-pin { color: #d58a14; }
+.gh-plant.status-alert .gh-pin { color: #fff; background: var(--gh-berry); border-color: #a8283f; }
+
+.gh-bang {
+  position: absolute;
+  top: -6%;
+  right: 2%;
+  width: 1.6cqw;
+  height: 1.6cqw;
+  min-width: 15px;
+  min-height: 15px;
+  display: grid;
+  place-items: center;
+  background: var(--gh-berry);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--font-pixel);
+  font-size: clamp(8px, 0.9cqw, 13px);
+  animation: gh-pulse 1.1s steps(2, start) infinite;
+  pointer-events: none;
+}
+
+.gh-plant.status-alert::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px dashed var(--gh-berry);
+  border-radius: 8px;
+  animation: gh-pulse 1.1s steps(2, start) infinite;
+  pointer-events: none;
+}
+
+@keyframes gh-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.gh-plant::after,
+.gh-hub::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 108%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  background: var(--gh-panel);
+  border: 3px solid var(--gh-line2);
+  border-radius: 8px;
+  box-shadow: 0 3px 0 rgba(74, 52, 38, 0.2);
+  font-family: var(--font-num);
+  font-size: 18px;
+  white-space: nowrap;
+  color: var(--gh-ink);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.gh-plant:hover::after,
+.gh-plant:focus-visible::after,
+.gh-hub:hover::after,
+.gh-hub:focus-visible::after {
+  opacity: 1;
+}
+
+.gh-hub {
+  position: absolute;
+  z-index: 6;
+  padding: 0;
+  background: transparent;
+  border: 3px dashed transparent;
+  border-radius: 8px;
+  color: inherit;
+}
+
+.gh-hub:hover,
+.gh-hub:focus-visible {
+  border-color: var(--gh-green);
+  background: rgba(106, 174, 72, 0.12);
+}
+
+.gh-hub-chip {
+  position: absolute;
+  left: 50%;
+  bottom: -3%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5cqw;
+  padding: 0.15cqw 0.6cqw;
+  background: var(--gh-panel);
+  border: 2px solid var(--gh-green);
+  border-radius: 6px;
+  box-shadow: 0 2px 0 rgba(70, 45, 20, 0.2);
+  font-family: var(--font-pixel);
+  font-size: clamp(6px, 0.62cqw, 9px);
+  color: var(--gh-greenD);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gh-hub-chip i {
+  font-style: normal;
+  font-family: var(--font-num);
+  font-size: clamp(9px, 0.95cqw, 14px);
+  color: var(--gh-ink);
+}
+
+/* two little butterflies drifting over the greenhouse */
+.gh-butterfly {
+  position: absolute;
+  z-index: 12;
+  width: 4px;
+  height: 4px;
+  pointer-events: none;
+}
+
+.gh-butterfly::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--wing);
+  box-shadow:
+    -3px -2px var(--wing),
+    3px -2px var(--wing),
+    -6px 0 var(--wing),
+    6px 0 var(--wing),
+    -3px 2px var(--wing),
+    3px 2px var(--wing),
+    0 -3px #4a3426,
+    0 3px #4a3426;
+  transform-origin: center;
+  animation: gh-flap 0.32s steps(2) infinite;
+}
+
+.gh-butterfly.one {
+  --wing: #f08fb0;
+  animation: gh-fly-one 26s linear infinite;
+}
+
+.gh-butterfly.two {
+  --wing: #b69af0;
+  animation: gh-fly-two 34s linear infinite 6s;
+}
+
+@keyframes gh-flap {
+  50% {
+    transform: scaleX(0.45);
+  }
+}
+
+@keyframes gh-fly-one {
+  0% { left: -2%; top: 68%; }
+  20% { left: 22%; top: 52%; }
+  40% { left: 44%; top: 74%; }
+  60% { left: 63%; top: 46%; }
+  80% { left: 84%; top: 62%; }
+  100% { left: 102%; top: 50%; }
+}
+
+@keyframes gh-fly-two {
+  0% { left: 102%; top: 28%; }
+  25% { left: 76%; top: 40%; }
+  50% { left: 50%; top: 22%; }
+  75% { left: 26%; top: 38%; }
+  100% { left: -2%; top: 30%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-butterfly,
+  .gh-butterfly::before,
+  .gh-plant.status-alert::before,
+  .gh-bang,
+  .gh-scroll,
+  .gh-live i {
+    animation: none;
+  }
+}
+
+/* ---------- sections ---------- */
+.gh-section {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 56px 20px 8px;
+}
+
+.gh-h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+  text-shadow: 2px 2px 0 #fff;
+}
+
+/* a tiny pixel sprout before each heading */
+.gh-h2::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  background:
+    linear-gradient(#4f9d3a, #4f9d3a) 11px 8px / 3px 14px no-repeat,
+    linear-gradient(#6aae48, #6aae48) 3px 4px / 8px 5px no-repeat,
+    linear-gradient(#8fcf62, #8fcf62) 14px 1px / 8px 5px no-repeat,
+    linear-gradient(#a8764a, #a8764a) 6px 20px / 13px 4px no-repeat;
+}
+
+.gh-h3 {
+  margin: 28px 0 10px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #8b5e34;
+}
+
+.gh-card .gh-h3 {
+  margin-top: 0;
+}
+
+.gh-note {
+  margin: 0 0 12px;
+  font-size: 19px;
+  color: var(--gh-muted);
+}
+
+.gh-empty {
+  margin: 8px 0;
+  color: var(--gh-muted);
+}
+
+.gh-card {
+  display: block;
+  width: 100%;
+  background: var(--gh-panel);
+  border: 3px solid var(--gh-line);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #e6d3ab;
+  padding: 16px;
+  color: var(--gh-ink);
+  text-align: left;
+  font: inherit;
+}
+
+button.gh-card:hover {
+  border-color: var(--gh-line2);
+  background: var(--gh-panel2);
+}
+
+.gh-health-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.gh-overall {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.gh-rings {
+  position: relative;
+}
+
+.gh-rings-score {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.gh-rings-score b {
+  font-family: var(--font-num);
+  font-size: 52px;
+  font-weight: 400;
+  line-height: 0.9;
+  color: var(--gh-ink);
+}
+
+.gh-rings-score span {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-ring-key {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 18px;
+  color: var(--gh-muted);
+  text-align: left;
+}
+
+.gh-ring-key li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gh-ring-key i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.gh-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.gh-stat {
+  display: grid;
+  align-content: space-between;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--gh-panel);
+  border: 3px solid var(--gh-line);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 #e6d3ab;
+}
+
+.gh-stat span {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-stat b {
+  font-family: var(--font-num);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--gh-green);
+}
+
+.gh-stat i {
+  font-style: normal;
+  font-size: 17px;
+  color: var(--gh-muted);
+}
+
+.gh-stat.warn b { color: var(--gh-amber); }
+.gh-stat.bad b { color: var(--gh-berry); }
+.gh-stat.bad { border-color: var(--gh-berryLine); background: var(--gh-berryBg); }
+
+.gh-zones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.gh-zone-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gh-zone-head b {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: #8b5e34;
+}
+
+.gh-zone-head span {
+  color: var(--gh-muted);
+}
+
+.gh-zone-head i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 38px;
+}
+
+.gh-zone p {
+  margin: 4px 0 12px;
+  color: var(--gh-muted);
+  font-size: 18px;
+}
+
+.gh-zone dl,
+.gh-type dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+  margin: 0 0 12px;
+}
+
+.gh-zone dl div,
+.gh-type dl div {
+  display: grid;
+}
+
+.gh-zone dt,
+.gh-type dt {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-zone dd,
+.gh-type dd {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.gh-zone-foot {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+}
+
+.gh-two {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.gh-todo,
+.gh-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.gh-todo button {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--gh-berryBg);
+  border: 3px solid var(--gh-berryLine);
+  border-radius: 12px;
+  text-align: left;
+  color: var(--gh-ink);
+}
+
+.gh-todo button:hover {
+  border-color: var(--gh-berry);
+}
+
+.gh-todo b {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gh-todo em {
+  display: block;
+  margin: 2px 0;
+  font-style: normal;
+  font-size: 22px;
+  color: var(--gh-berry);
+}
+
+.gh-todo small {
+  display: block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--gh-muted);
+}
+
+.gh-log li {
+  display: grid;
+  grid-template-columns: 74px 64px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 2px dotted var(--gh-line);
+  font-size: 19px;
+  line-height: 1.1;
+}
+
+.gh-log time {
+  color: var(--gh-muted);
+  font-size: 17px;
+}
+
+.gh-zone-tag {
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+}
+
+/* ---------- by type / every plant ---------- */
+.gh-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.gh-type.on {
+  border-color: var(--gh-green);
+  background: #f3f9e8;
+}
+
+.gh-type-head,
+.gh-plantcard-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gh-type-head b,
+.gh-plantcard-head b {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.gh-type-head span,
+.gh-plantcard-head span {
+  font-size: 17px;
+  color: var(--gh-muted);
+}
+
+.gh-type-head strong,
+.gh-plantcard-head strong {
+  margin-left: auto;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.gh-bar {
+  display: block;
+  height: 12px;
+  margin-bottom: 12px;
+  background: #efe3c6;
+  border: 2px solid var(--gh-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gh-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+}
+
+.gh-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 2px solid;
+  border-radius: 999px;
+}
+
+.gh-badge.ok { color: var(--gh-greenD); border-color: #a7d08a; background: #f1f8e6; }
+.gh-badge.bad { color: var(--gh-berry); border-color: var(--gh-berryLine); background: var(--gh-berryBg); }
+
+.gh-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.gh-filters button {
+  padding: 5px 12px;
+  background: var(--gh-panel);
+  border: 2px solid var(--gh-line);
+  border-radius: 999px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-filters button:hover {
+  border-color: var(--gh-line2);
+}
+
+.gh-filters button.on {
+  color: #fff;
+  background: var(--gh-green);
+  border-color: var(--gh-greenD);
+}
+
+.gh-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+  font-size: 19px;
+  color: var(--gh-muted);
+}
+
+.gh-plants {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+  gap: 12px;
+}
+
+.gh-plantcard {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.gh-plantcard.status-alert {
+  border-color: var(--gh-berryLine);
+  background: var(--gh-berryBg);
+}
+
+.gh-plantcard .gh-chip {
+  justify-self: start;
+}
+
+/* ---------- meters, chips ---------- */
+.gh-meter {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.gh-meter-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-meter-head b {
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--gh-ink);
+}
+
+.gh-meter-head i {
+  font-style: normal;
+  font-size: 16px;
+  color: var(--gh-muted);
+}
+
+.gh-meter-bar {
+  position: relative;
+  height: 12px;
+  background: #efe3c6;
+  border: 2px solid var(--gh-line);
+  border-radius: 7px;
+}
+
+.gh-meter-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(106, 174, 72, 0.38);
+  border-left: 2px solid var(--gh-green);
+  border-right: 2px solid var(--gh-green);
+}
+
+.gh-meter-mark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 5px;
+  margin-left: -2px;
+  background: var(--gh-ink);
+  border: 1px solid #fff;
+  border-radius: 2px;
+}
+
+.gh-meter.bad .gh-meter-mark { background: var(--gh-berry); }
+.gh-meter.bad .gh-meter-head b { color: var(--gh-berry); }
+
+.gh-meter-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--gh-faint);
+}
+
+.gh-meter.bad .gh-meter-foot span:nth-child(2) { color: var(--gh-berry); }
+
+.gh-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--gh-panel);
+  border: 2px solid;
+  border-radius: 999px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------- pop-ups ---------- */
+.gh-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: auto;
+  background: rgba(74, 52, 38, 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.gh-modal {
+  position: relative;
+  width: min(900px, 100%);
+  padding: 24px;
+  background: var(--gh-panel);
+  border: 5px solid var(--gh-wood);
+  border-radius: 18px;
+  box-shadow: 0 0 0 3px var(--gh-woodD), 0 24px 60px rgba(74, 52, 38, 0.5);
+  animation: gh-pop 140ms steps(3, end);
+}
+
+.gh-modal.wide {
+  width: min(720px, 100%);
+}
+
+@keyframes gh-pop {
+  from {
+    transform: translateY(10px) scale(0.97);
+    opacity: 0.4;
+  }
+}
+
+.gh-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  background: var(--gh-panel2);
+  border: 3px solid var(--gh-line2);
+  border-radius: 10px;
+  color: var(--gh-muted);
+  font-size: 16px;
+}
+
+.gh-close:hover {
+  color: #fff;
+  background: var(--gh-berry);
+  border-color: #a8283f;
+}
+
+.gh-popup {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.gh-mini {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.gh-mini .device {
+  width: 320px;
+  max-width: 100%;
+}
+
+.gh-mini-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.gh-mini-tabs button {
+  padding: 5px 12px;
+  background: var(--gh-panel2);
+  border: 2px solid var(--gh-line);
+  border-radius: 999px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-mini-tabs button.on {
+  background: var(--gh-green);
+  border-color: var(--gh-greenD);
+  color: #fff;
+}
+
+.gh-mini-hint {
+  margin: 0;
+  font-size: 17px;
+  color: var(--gh-faint);
+}
+
+.gh-popup-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-right: 40px;
+}
+
+.gh-popup-head h2 {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-greenD);
+}
+
+.gh-popup-head p {
+  margin: 3px 0 0;
+  font-size: 18px;
+  color: var(--gh-muted);
+}
+
+.gh-popup-head .gh-chip {
+  margin-left: auto;
+}
+
+.gh-popup-side h3,
+.gh-hubpop h3 {
+  margin: 16px 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #8b5e34;
+}
+
+.gh-callout {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--gh-berryBg);
+  border: 3px solid var(--gh-berry);
+  border-radius: 12px;
+}
+
+.gh-callout b {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-berry);
+}
+
+.gh-callout span {
+  font-size: 21px;
+  line-height: 1.05;
+}
+
+.gh-auto {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+}
+
+.gh-auto span {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 18px;
+  color: var(--gh-muted);
+}
+
+.gh-auto b {
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--gh-ink);
+}
+
+.gh-auto i {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 15px;
+  color: var(--gh-faint);
+}
+
+.gh-popup-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.gh-popup-foot button {
+  padding: 7px 14px;
+  background: var(--gh-panel2);
+  border: 3px solid var(--gh-line2);
+  border-radius: 999px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-ink);
+}
+
+.gh-popup-foot button:hover {
+  border-color: var(--gh-green);
+  background: #f3f9e8;
+}
+
+.gh-hub-icon {
+  width: 36px;
+  height: 36px;
+  background:
+    linear-gradient(var(--gh-green), var(--gh-green)) 24px 8px / 6px 6px no-repeat,
+    linear-gradient(#5fae9b, #5fae9b) 0 0 / 36px 6px no-repeat,
+    linear-gradient(#f7f0df, #f7f0df) 2px 6px / 32px 20px no-repeat,
+    linear-gradient(#a8764a, #a8764a) 14px 24px / 8px 12px no-repeat;
+  box-shadow: 0 0 0 2px var(--gh-woodD);
+  border-radius: 4px;
+}
+
+.gh-hubpop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 22px;
+  margin-top: 6px;
+}
+
+.gh-hub-actions {
+  display: flex;
+  gap: 22px;
+  margin: 14px 0 8px;
+  padding: 10px 14px;
+  background: var(--gh-panel2);
+  border: 3px solid var(--gh-line);
+  border-radius: 12px;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gh-muted);
+}
+
+.gh-hub-actions b {
+  margin-left: 6px;
+  font-family: var(--font-num);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--gh-green);
+}
+
+.gh-footer {
+  margin-top: 56px;
+  padding: 24px 20px 40px;
+  border-top: 4px dotted var(--gh-line);
+  text-align: center;
+  font-size: 18px;
+  color: var(--gh-muted);
+}
+
+.gh-footer b {
+  margin-right: 8px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  color: var(--gh-greenD);
+}
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 1000px) {
+  .gh-health-grid,
+  .gh-two,
+  .gh-zones,
+  .gh-popup {
+    grid-template-columns: 1fr;
+  }
+
+  .gh-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gh-top nav,
+  .gh-client,
+  .gh-legend {
+    display: none;
+  }
+
+  .gh-hubpop-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* On a narrow screen keep the map at a readable size and let it scroll sideways. */
+  .gh-hero {
+    min-height: 0;
+  }
+
+  .gh-stage {
+    display: block;
+    overflow-x: auto;
+    padding-bottom: 14px;
+  }
+
+  .gh-map {
+    width: 920px;
+    max-width: none;
+  }
+}

@@ -1,0 +1,19 @@
+[Unit]
+Description=Deem central controller (MQTT -> web endpoint relay)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+Requires=mosquitto.service
+
+[Service]
+Type=simple
+# Adjust User and paths to match your Pi setup.
+User=connorlamora
+WorkingDirectory=/home/connorlamora/Deem/pi
+# Load secrets (e.g. DEEM_SINK_TOKEN=...) from this file if present.
+EnvironmentFile=-/home/connorlamora/Deem/pi/.env
+ExecStart=/home/connorlamora/Deem/pi/.venv/bin/python -m deem_controller --config /home/connorlamora/Deem/pi/config.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
