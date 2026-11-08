@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  normalizeSoil,
-  parseAckMessage,
-  parseStatusMessage,
-  parseTelemetryMessage,
-  relayCommand,
-  sensorChecks,
-  topics,
-} from './telemetry'
+import { SENSORS, normalizeSoil, parseStatusMessage, parseTelemetryMessage, sensorProgress, topics } from './telemetry'
 
 const NOW = 1_731_000_000
 
@@ -73,50 +65,62 @@ describe('soil moisture units', () => {
   })
 })
 
-describe('status, ack, commands', () => {
+describe('status and topics', () => {
   it('parses status', () => {
     expect(parseStatusMessage('deem/esp32-pot-01/status', '{"state":"offline"}')).toEqual({
       device_id: 'esp32-pot-01',
       state: 'offline',
       fw: undefined,
+      sensors: undefined,
     })
     expect(() => parseStatusMessage('deem/esp32-pot-01/status', '{"state":"asleep"}')).toThrow()
   })
 
-  it('parses ack', () => {
-    expect(parseAckMessage('{"cmd_id":"a1","ok":true,"detail":"relay 1 on"}')).toEqual({
-      cmd_id: 'a1',
-      ok: true,
-      detail: 'relay 1 on',
-    })
-    expect(() => parseAckMessage('{"ok":true}')).toThrow()
+  it('reads the optional per-sensor init results', () => {
+    const s = parseStatusMessage('deem/esp32-pot-01/status', '{"state":"online","fw":"0.1.0","sensors":{"dht":true,"air":false,"soil":true}}')
+    expect(s.sensors).toEqual({ dht: true, air: false, soil: true })
+    expect(parseStatusMessage('deem/esp32-pot-01/status', '{"state":"online","sensors":{"dht":"yes"}}').sensors).toBeUndefined()
+    expect(parseStatusMessage('deem/esp32-pot-01/status', '{"state":"online","sensors":[]}').sensors).toBeUndefined()
   })
 
-  it('builds set_relay exactly as the contract shows', () => {
-    expect(relayCommand(1, true, 'c1', NOW)).toEqual({
-      cmd_id: 'c1',
-      ts: NOW,
-      action: 'set_relay',
-      params: { channel: 1, state: 'on' },
-    })
-    expect(relayCommand(1, false, 'c2', NOW).params).toEqual({ channel: 1, state: 'off' })
-  })
-
-  it('uses the contract topics', () => {
+  it('uses the contract topics (the app sends no commands, so only telemetry and status)', () => {
     expect(topics.telemetry('esp32-pot-01')).toBe('deem/esp32-pot-01/telemetry')
-    expect(topics.cmd('esp32-pot-01')).toBe('deem/esp32-pot-01/cmd')
-    expect(topics.ack('esp32-pot-01')).toBe('deem/esp32-pot-01/cmd/ack')
+    expect(topics.status('esp32-pot-01')).toBe('deem/esp32-pot-01/status')
   })
 })
 
-describe('sensor checks', () => {
-  it('passes when each sensor reports its metrics', () => {
-    const checks = sensorChecks({ soil_moisture: 40, co2_ppm: 600, temp_c: 22, rh_pct: 50 })
-    expect(checks.every((c) => c.ok)).toBe(true)
+describe('sensor progress (setup check)', () => {
+  const all = { temp_c: 22, rh_pct: 48, co2_ppm: 600, soil_moisture: 40 }
+
+  it('lists the sensors in the firmware init order: DHT11, SEN63C, Stemma soil', () => {
+    expect(SENSORS.map((s) => s.id)).toEqual(['dht', 'air', 'soil'])
+    expect(sensorProgress(undefined, undefined, false).map((p) => p.name)).toEqual(['Temp/RH', 'AQI', 'Soil'])
   })
 
-  it('flags a sensor whose metrics are missing', () => {
-    const checks = sensorChecks({ co2_ppm: 600, temp_c: 22, rh_pct: 50 })
-    expect(checks.find((c) => c.name === 'Soil')?.ok).toBe(false)
+  it('is all pending before anything has arrived', () => {
+    expect(sensorProgress(undefined, undefined, false).map((p) => p.state)).toEqual(['pending', 'pending', 'pending'])
+  })
+
+  it('marks a sensor ok as soon as its readings are there', () => {
+    const states = sensorProgress({ temp_c: 22, rh_pct: 48 }, undefined, false).map((p) => p.state)
+    expect(states).toEqual(['ok', 'pending', 'pending'])
+    expect(sensorProgress(all, undefined, false).every((p) => p.state === 'ok')).toBe(true)
+  })
+
+  it('needs both temperature and humidity for the DHT11', () => {
+    expect(sensorProgress({ temp_c: 22 }, undefined, false)[0].state).toBe('pending')
+  })
+
+  it('fails a sensor right away when the device says its init failed', () => {
+    const states = sensorProgress({ temp_c: 22, rh_pct: 48 }, { dht: true, air: false, soil: true }, false).map((p) => p.state)
+    expect(states).toEqual(['ok', 'fail', 'pending'])
+  })
+
+  it('a failed init is overruled if readings show up anyway', () => {
+    expect(sensorProgress(all, { air: false }, false)[1].state).toBe('ok')
+  })
+
+  it('fails whatever is still pending once we stop waiting', () => {
+    expect(sensorProgress({ temp_c: 22, rh_pct: 48 }, undefined, true).map((p) => p.state)).toEqual(['ok', 'fail', 'fail'])
   })
 })

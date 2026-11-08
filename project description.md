@@ -33,11 +33,11 @@ The model is similar to Pokemon Go. The consumer product is fun and friendly, bu
 | Capability | Notes |
 |------------|-------|
 | Soil moisture monitoring | Stemma I2C Soil Sensor |
-| Automatic watering | Water pump driven through a 5V relay module |
+| Automatic watering | **Not in the MVP** (no pump, no relay driven) |
 | Air quality (AQI) | Sensirion SEN63C (CO2, PM1.0 / 2.5 / 4.0 / 10, temperature, humidity) |
 | Temperature / humidity | DHT11 |
-| Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (the 10-minute reading and the "collect now" button). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
-| Data collection | One data point every 10 minutes, plus a physical **TEST** key that takes a test input immediately and shows it on the health page (used in the live demo) |
+| Camera | Raspberry Pi Camera 3. A photo is captured with every data collection (each 10-minute reading). Each data entry stored in MongoDB for the plant includes the image as one of its data points. No computer vision in the MVP. |
+| Data collection | One data point every 10 minutes. The physical **TEST** key shows the most recent reading and how old it is (there is no sample-now). |
 | Speaker and microphone | Voice alerts and voice input (USB speaker, USB mic) |
 
 ### Display
@@ -132,18 +132,18 @@ From `hardware_info.md` (updated by Zion):
 
 | Component | Part |
 |-----------|------|
-| Microcontroller (x1 in use) | ESP32 DevKit V1 — sensors + relay for the one MVP pot (second DevKit is spare) |
+| Microcontroller (x1 in use) | ESP32 DevKit V1 — the sensors for the one MVP pot (second DevKit is spare) |
 | Central computer | Raspberry Pi 5 (8 GB RAM, 256 GB SSD) — owns the 2.8" screen, camera, mic/speaker, UI + AI |
 | Air quality sensor | Sensirion SEN63C |
 | Temp / humidity sensor | DHT11 |
 | Soil moisture sensor | Stemma I2C Soil Sensor |
 | Camera | Raspberry Pi Camera 3 |
 | Display | 2.8" SPI serial TFT touch screen (**wired to the Pi**, Chromium kiosk) |
-| Relay | 5V relay module |
+| Relay | 5V relay module (not used in the MVP) |
 | Microphone | USB mic |
 | Speaker | USB speaker |
 
-Still missing from the list: the water pump.
+There is no water pump in the MVP.
 
 Existing firmware is in `e2/` (PlatformIO, ESP32 DevKit V1). It reads the SEN63C over I2C and serves a live dashboard from a WiFi access point. It also drives an SSD1306 128x64 OLED (legacy AP dashboard only — not the product UI). The Adafruit seesaw library (for the soil sensor) is already listed as a dependency but isn't used in code yet.
 
@@ -158,19 +158,19 @@ ESP32 (one pot: sensors + relay) --MQTT/JSON--> Raspberry Pi 5 (Mosquitto + deem
                                                       +-> Gemini, Fish Audio, MongoDB Atlas, camera, voice
 ```
 
-- **One ESP32** reads the sensors and drives the relay for the demo pot. It publishes JSON readings to `deem/<device_id>/telemetry` and receives commands on `deem/<device_id>/cmd`.
+- **One ESP32** reads the sensors for the demo pot (temperature and humidity from the DHT11, air quality from the SEN63C, soil from the Stemma probe). It publishes a JSON reading every 10 minutes to `deem/<device_id>/telemetry` (retained, so the screen gets the latest at once) and its status to `deem/<device_id>/status`. It handles no commands. Thresholds live in the app, not on the device.
 - **The Pi** runs the Mosquitto broker, the `pi/deem_controller` Python service, and the **2.8" product display** (Chromium kiosk). It validates readings, buffers them in SQLite, and relays them to a pluggable web endpoint.
 - **Web endpoint:** The data endpoints use JSON, and Connor is working on that. Our job is to collect input from all sensors in that JSON format, then do everything else in this document.
 - **Reading format:** A flat `metrics` object with keys such as `co2_ppm`, `temp_c`, `rh_pct`, `pm1_0`, `pm2_5`, `pm4_0`, `pm10_0`, `soil_moisture` and `soil_temp_c`.
-- **Commands:** `set_relay`, `set_interval`, `identify` and `reboot`. The pump runs through `set_relay`.
+- **Commands:** none in the MVP: no sample-now and no pump. The contract keeps the command format for later.
 - **Current firmware change:** The `e2/` firmware currently runs as a WiFi access point with its own web page. The architecture docs retire that. The ESP32 becomes a WiFi client that publishes over MQTT.
 
 ### What this means for our features
 
 - **10-minute collection:** Use `set_interval` to set the ESP32 publish rate to 600 seconds. The docs' sample code publishes every 5 seconds.
-- **"Collect now" button:** The contract has no command for an immediate reading. We need to add one (for example a `sample_now` action) to `docs/mqtt_contract.md`, and the firmware has to publish a reading when it receives it.
+- **TEST key:** There is no sample-now, so TEST shows the most recent reading and how old it is.
 - **Camera:** The contract has no camera support. The docs place the camera on the Pi. Our decision: capture a photo at every data collection, store it in MongoDB as one data point of that collection entry.
-- **Pump state and button presses:** Neither is in the contract yet.
+- **Setup sensor check:** follows the firmware's real startup order (DHT11, SEN63C, soil) and waits for each sensor to be ready.
 
 ## Team and roles
 
@@ -227,10 +227,8 @@ With better hardware and more time:
 
 ## Open questions
 
-- The water pump isn't listed in `hardware_info.md` yet.
 - The display's exact model number isn't listed, only its size and interface (Pi owns the panel; driver setup still needs the chip/product link).
 - The DHT11 and SEN63C both map to `temp_c` and `rh_pct` in the contract, so one overwrites the other. Decide which one is the source of truth, or give them separate keys.
-- The TEST button sends a new `sample_now` command (added to `docs/mqtt_contract.md`). The firmware needs to implement it.
 - The `e2/` firmware still runs as a WiFi access point. When does it move to MQTT client mode?
 - How are the sprites generated (an image model, hand-made, or a pixel-art tool)?
 - Which dracaena or panda plant is the live demo plant? (Decide later.)
