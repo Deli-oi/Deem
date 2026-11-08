@@ -31,7 +31,7 @@ npm run build && npm start      # serve the production build on :3000
 
 This is a separate service from the MVP device demo.
 
-1. In the Railway project, **New Service → GitHub repo → `Deli-oi/Deem`**.
+1. In the Railway project, **New Service → GitHub repo → `Deli-oi/Greenhouse-AI`**.
 2. In its **Settings → Source**, set **Root Directory** to `dashboard`. (`railway.toml` here builds with `npm run build` and starts with `npm start`.)
 3. No variables are needed: the dashboard calls no APIs and uses no secrets.
 
