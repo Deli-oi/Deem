@@ -19,6 +19,13 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-08: Dashboard goes cozy (Stardew Valley style)
+- **Decision:** The greenhouse dashboard was too industrial/brutalist. It now has a light, warm parchment background (less green, more nature), a wooden top bar, paper-style cards with soft shadows, leaf/sun/berry accents, and a redrawn map: wooden planter boxes, stone floor, boardwalks, rain barrels, fairy lights, flowers and bushes outside, a workbench, a plant shelf, seed sacks and a sleeping cat, with two butterflies drifting over it. Layout and behavior are unchanged.
+- **Why:** A friendlier, cuter look suits the product and the pitch.
+- **Unchanged:** The device itself and the mini display (it stays dark in the pop-up).
+
+---
+
 ### 2026-11-08: Every alert is "critical"
 - **Decision:** All failure labels say "critically": "Soil critically dry", "Soil critically wet", "Critically cold", "Critically hot", "Air critically dry", "Air critically humid", "CO2 critically high", "Fine dust critically high", "Dust critically high", plus "Soil minerals critically low/high" and "Light critically low/high" for sensors we don't have yet.
 - **Why:** You should only be notified when a reading is bad enough to harm the plant. A plant's range comes from the extremes it tolerates (and the air limits are set high on purpose), so out of range already means critical. Nothing alerts for a small drift.

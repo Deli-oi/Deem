@@ -68,9 +68,9 @@ export function HealthRings({ health, a, b, size = 168 }: { health: number; a: n
       <ActivityRings
         size={size}
         rings={[
-          { progress: health / 100, color: '#5df08a', track: '#1a3326' },
-          { progress: a / 100, color: '#c5ee6a', track: '#1a3326' },
-          { progress: b / 100, color: '#64d2ff', track: '#1a3326' },
+          { progress: health / 100, color: '#5b9a3c', track: '#eadfc4' },
+          { progress: a / 100, color: '#f0b43a', track: '#eadfc4' },
+          { progress: b / 100, color: '#6cb7dd', track: '#eadfc4' },
         ]}
       />
       <div className="gh-rings-score">
