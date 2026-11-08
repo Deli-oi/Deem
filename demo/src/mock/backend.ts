@@ -3,7 +3,8 @@ import { scoreHealth, withHealth } from '../lib/healthScore'
 import { AIR_QUALITY_SOLUTIONS } from '../lib/airQuality'
 import { hourKey } from '../lib/historyStore'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
-import type { SensorCheck } from '../lib/telemetry'
+import { SENSORS } from '../lib/telemetry'
+import type { SensorProgress } from '../lib/telemetry'
 import type {
   AskAnswer,
   HealthPoint,
@@ -73,23 +74,21 @@ export class MockBackend implements DeemBackend {
     void plant
   }
 
-  async checkSensors(): Promise<SensorCheck[]> {
-    await delay(320)
-    return [
-      { name: 'Soil', ok: true },
-      { name: 'AQI', ok: true },
-      { name: 'Temp/RH', ok: true },
-    ]
+  /** Simulates the real device: sensors come up one after another, in the firmware's init order. */
+  async checkSensors(onProgress: (progress: SensorProgress[]) => void): Promise<SensorProgress[]> {
+    const state = SENSORS.map((s) => ({ id: s.id, name: s.name, state: 'pending' as SensorProgress['state'] }))
+    onProgress(state.map((s) => ({ ...s })))
+    for (const s of state) {
+      await delay(450)
+      s.state = 'ok'
+      onProgress(state.map((x) => ({ ...x })))
+    }
+    return state
   }
 
   subscribe(listener: (event: BackendEvent) => void): () => void {
     void listener
     return () => {}
-  }
-
-  async setRelay(on: boolean): Promise<void> {
-    void on
-    await delay(150)
   }
 
   async getLatestTelemetry(plantTypeId: string): Promise<Telemetry> {

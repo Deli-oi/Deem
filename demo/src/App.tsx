@@ -12,12 +12,12 @@ import { voiceMessage } from './lib/voice'
 import type { Listening } from './lib/voice'
 import { voice } from './voice'
 import type { SensorState, VoiceState } from './components/screens/SetupFlow'
+import { SENSORS } from './lib/telemetry'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
 import './styles/global.css'
 
 type AppPhase = 'boot' | 'setup_prompt' | 'setup_match' | 'sensor_check' | 'live'
 
-const SENSOR_NAMES = ['Soil', 'AQI', 'Temp/RH']
 const PAGES: ScreenPage[] = ['health', 'inputs', 'history']
 /** Horizontal travel (px) that counts as a swipe. */
 const SWIPE_PX = 36
@@ -97,18 +97,16 @@ export default function App() {
   async function runSensorCheck(selected: PlantType) {
     setPhase('sensor_check')
     setSensorError(null)
-    setSensors(SENSOR_NAMES.map((name) => ({ name, state: 'pending' })))
+    setSensors(SENSORS.map((s) => ({ name: s.name, state: 'pending' })))
     try {
       backend.selectPlant(selected)
-      const checks = await backend.checkSensors()
-      for (const check of checks) {
-        await delay(320)
-        setSensors((prev) =>
-          prev.map((s) => (s.name === check.name ? { name: s.name, state: check.ok ? 'ok' : 'fail' } : s)),
-        )
-      }
-      if (checks.some((c) => !c.ok)) {
-        setSensorError('Some sensors are not reporting.')
+      // Each row follows the real device: it turns to a check when that sensor is up, an X if it failed.
+      const checks = await backend.checkSensors((progress) =>
+        setSensors(progress.map((p) => ({ name: p.name, state: p.state }))),
+      )
+      const failed = checks.filter((c) => c.state === 'fail').map((c) => c.name)
+      if (failed.length > 0) {
+        setSensorError(`${failed.join(' and ')} ${failed.length > 1 ? 'are' : 'is'} not reporting.`)
         return
       }
       const [tel, hist] = await Promise.all([
@@ -186,7 +184,7 @@ export default function App() {
     }
   }
 
-  // ---- TEST key: take a test input now. The health page then shows this most recent test.
+  // ---- TEST key: show the most recent test. (There is no sample-now: the device samples on its own schedule.)
   async function testKey() {
     if (phaseRef.current !== 'live' || !plant || busyRef.current || voiceRef.current !== 'idle') return
     setBusy(true)
@@ -197,7 +195,11 @@ export default function App() {
       const tel = await backend.collectNow(plant.plant_type_id)
       setTelemetry(tel)
       setHistory(await backend.getHistory(plant.plant_type_id))
-      setNotice(tel.ts === before?.ts ? 'no new reading' : `tested · health ${tel.health_score ?? '--'}`)
+      setNotice(
+        tel.ts === before?.ts
+          ? `latest reading · ${ageLabel(Date.now() / 1000 - tel.ts)}`
+          : `tested · health ${tel.health_score ?? '--'}`,
+      )
     } catch (err) {
       setNotice(err instanceof Error ? err.message : 'test failed')
     } finally {
@@ -368,6 +370,13 @@ export default function App() {
       </div>
     </div>
   )
+}
+
+/** "just now", "4 min ago", "2 h ago". */
+export function ageLabel(seconds: number): string {
+  if (seconds < 60) return 'just now'
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`
+  return `${Math.floor(seconds / 3600)} h ago`
 }
 
 function delay(ms: number) {
