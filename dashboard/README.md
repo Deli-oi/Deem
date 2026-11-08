@@ -2,7 +2,7 @@
 
 A standalone web app that shows how Deem **scales from one plant to a whole greenhouse**. It is a UI mock: every reading is simulated, and it is not connected to the MVP hardware, MQTT, or any database.
 
-Same retro look as the device (Silkscreen + VT323, chunky borders, activity rings), but greener.
+Same pixel fonts as the device (Silkscreen + VT323) in a cozy, Stardew-Valley-style look: warm parchment page with tiny wildflowers, a wooden sign for the top bar, paper cards, and a sunny greenhouse with wooden planters, rain barrels, fairy lights, flowers outside and a sleeping cat. The mini display in the pop-up stays dark, like the little gadget it is.
 
 ## What it shows
 

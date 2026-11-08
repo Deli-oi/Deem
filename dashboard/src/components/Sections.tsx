@@ -83,15 +83,15 @@ export function HealthSection({ g, summary, onPlant, onHub }: { g: Greenhouse; s
           <HealthRings health={summary.avgHealth} a={Math.round((summary.healthy / summary.plantCount) * 100)} b={summary.mineralsInRange} />
           <ul className="gh-ring-key">
             <li>
-              <i style={{ background: '#5df08a' }} />
+              <i style={{ background: '#5b9a3c' }} />
               Average plant health
             </li>
             <li>
-              <i style={{ background: '#c5ee6a' }} />
+              <i style={{ background: '#f0b43a' }} />
               Plants doing well
             </li>
             <li>
-              <i style={{ background: '#64d2ff' }} />
+              <i style={{ background: '#6cb7dd' }} />
               Soil minerals in range
             </li>
           </ul>
