@@ -7,6 +7,11 @@
  * -D flags in platformio.ini build_flags, e.g.  -DSAMPLE_INTERVAL_S=60
  */
 
+/* Your WiFi name and password go in secrets.h (next to this file, ignored by git). See secrets.example.h. */
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
 #ifndef WIFI_SSID
 #define WIFI_SSID "WIFIUSER"
 #endif
@@ -43,10 +48,10 @@
  * The ESP32 has no RTC. If this server is reachable the samples carry a real
  * epoch "ts"; if not, ts is sent as 0 and the Pi stamps its own received_ts
  * (as the contract allows). On a LAN with no internet, point this at the Pi
- * if it runs an NTP server.
+ * if it runs an NTP server. By default, use the MQTT Pi as the NTP server.
  */
 #ifndef NTP_SERVER
-#define NTP_SERVER "pool.ntp.org"
+#define NTP_SERVER MQTT_HOST
 #endif
 
 #endif /* DEEM_CONFIG_H */

@@ -21,9 +21,9 @@
 #include <cmath>
 #include "config.h"
 
-/* Change this one number to scale: 30 -> 60 is a 1 minute sample. */
+/* Sample interval in seconds. */
 #ifndef SAMPLE_INTERVAL_S
-#define SAMPLE_INTERVAL_S 30
+#define SAMPLE_INTERVAL_S 600
 #endif
 #define SAMPLE_INTERVAL_MS (SAMPLE_INTERVAL_S * 1000UL)
 

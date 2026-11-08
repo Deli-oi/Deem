@@ -18,3 +18,9 @@ pi/config.yaml
 .DS_Store
 .idea/
 .vscode/
+
+# ESP32 firmware (PlatformIO)
+.pio/
+hackathon2026/.pio/
+# WiFi name/password and other secrets for the board: copy hackathon2026/src/secrets.example.h to secrets.h
+hackathon2026/src/secrets.h

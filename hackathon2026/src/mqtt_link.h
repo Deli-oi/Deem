@@ -46,6 +46,15 @@ static char _link_topic_tel[64];
 static char _link_topic_status[64];
 static char _link_topic_cmd[64];
 static char _link_topic_ack[64];
+static bool _link_sensor_dht_started = false;
+static bool _link_sensor_air_started = false;
+static bool _link_sensor_soil_started = false;
+
+static inline void link_set_sensor_status(bool dhtStarted, bool airStarted, bool soilStarted) {
+  _link_sensor_dht_started = dhtStarted;
+  _link_sensor_air_started = airStarted;
+  _link_sensor_soil_started = soilStarted;
+}
 
 static inline void link_on_command(char *topic, byte *payload, unsigned int len) {
   (void)topic;
@@ -86,7 +95,7 @@ static inline void link_begin() {
   _link_mqtt.setBufferSize(LINK_PACKET_MAX);
   _link_mqtt.setSocketTimeout(MQTT_SOCKET_TIMEOUT_S);
 
-  configTime(0, 0, NTP_SERVER);
+  configTime(0, 0, NTP_SERVER, "pool.ntp.org"); /* Pi first, public pool as fallback */
 }
 
 /*
@@ -110,7 +119,17 @@ static inline bool link_loop() {
       Serial.printf("MQTT connection failed, state=%d\n", _link_mqtt.state());
       return false;
     }
-    if (!_link_mqtt.publish(_link_topic_status, "{\"state\":\"online\",\"fw\":\"" FW_VERSION "\"}", true)) {
+    char status[192];
+    int statusLength = snprintf(
+        status, sizeof(status),
+        "{\"state\":\"online\",\"fw\":\"%s\",\"sensors\":{\"dht\":%s,\"air\":%s,\"soil\":%s}}",
+        FW_VERSION,
+        _link_sensor_dht_started ? "true" : "false",
+        _link_sensor_air_started ? "true" : "false",
+        _link_sensor_soil_started ? "true" : "false");
+    if (statusLength < 0 || (size_t)statusLength >= sizeof(status)) {
+      Serial.println("Failed to format MQTT online status");
+    } else if (!_link_mqtt.publish(_link_topic_status, status, true)) {
       Serial.println("Failed to publish MQTT online status");
     }
     if (!_link_mqtt.subscribe(_link_topic_cmd, 1)) {
@@ -140,7 +159,7 @@ static inline int link_flush(Batch &b) {
   while (_link_mqtt.connected() && batch_peek(b, s)) {
     int n = sample_to_json(s, buf, sizeof(buf));
     if (n > 0) {
-      if (!_link_mqtt.publish(_link_topic_tel, (const uint8_t *)buf, (unsigned int)n, false)) break;
+      if (!_link_mqtt.publish(_link_topic_tel, (const uint8_t *)buf, (unsigned int)n, true)) break;
       sent++;
     }
     batch_pop(b);
