@@ -13,6 +13,8 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 export const MAX_UTTERANCE = 200
 export const MAX_QUESTION = 300
 const CACHE_MS = 5 * 60_000
+// Keep in step with AIR_QUALITY_LIMITS in src/lib/airQuality.ts (a test checks they match).
+export const AIR_LIMITS = { co2_ppm: 1500, pm2_5: 35, pm10_0: 150 }
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS plant_types (
@@ -163,6 +165,8 @@ export function createKnowledge({ pool = null, seedPath, gemini = {}, fetchImpl 
     const facts = [
       `Plant: ${(plant.common_names ?? [])[0] ?? plant.plant_type_id} (${plant.scientific_name})`,
       `Healthy ranges: soil moisture ${range('soil_moisture')} %, air temp ${range('temp_c')} C, humidity ${range('rh_pct')} %`,
+      // the same blanket limits the screen alerts on (src/lib/airQuality.ts): the plant data has none for air quality
+      `Air-quality limits (same for every plant): CO2 above ${AIR_LIMITS.co2_ppm} ppm is stale air, PM2.5 above ${AIR_LIMITS.pm2_5} ug/m3 and PM10 above ${AIR_LIMITS.pm10_0} ug/m3 are too dusty. Below those the air is fine.`,
       `Care notes: ${JSON.stringify(plant.care ?? {}).slice(0, 1500)}`,
       `Known fixes: ${(plant.solutions ?? []).map((s) => s.advice ?? '').filter(Boolean).slice(0, 8).join(' | ').slice(0, 1200)}`,
       `Latest readings: ${readings.map(([, label, v]) => `${label} ${v}`).join(', ') || 'none'}`,

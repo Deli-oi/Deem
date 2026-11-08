@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url'
 import { newDb } from 'pg-mem'
 import { describe, expect, it, vi } from 'vitest'
 import { createHandler } from './handler.mjs'
-import { createKnowledge } from './knowledge.mjs'
+import { AIR_LIMITS, createKnowledge } from './knowledge.mjs'
+import { AIR_QUALITY_LIMITS } from '../src/lib/airQuality'
 
 const seedPath = fileURLToPath(new URL('../public/plants/seed_all.json', import.meta.url))
 const silent = { error: () => {} }
@@ -102,6 +103,16 @@ describe('answering a question with Gemini', () => {
     expect(prompt).toContain('soil moisture % 7.3')
     expect(prompt).toContain('should I water it?')
     expect(prompt).toContain('Known fixes')
+  })
+
+  it('knows the same air-quality limits the screen alerts on, so "is the air ok?" agrees with the alert', async () => {
+    for (const [metric, limit] of Object.entries(AIR_LIMITS)) expect(AIR_QUALITY_LIMITS[metric].max).toBe(limit)
+    const fetchImpl = fakeGemini({ answer: 'The air is stale.' })
+    const k = createKnowledge({ seedPath, gemini: { apiKey: 'key' }, fetchImpl, log: silent })
+    await k.ask({ plantTypeId: 'dracaena', question: 'is the air ok?', metrics: { co2_ppm: 1600 } })
+    const prompt = JSON.parse(fetchImpl.mock.calls[0][1].body).contents[0].parts[0].text
+    expect(prompt).toContain('CO2 above 1500 ppm is stale air')
+    expect(prompt).toContain('CO2 ppm 1600')
   })
 
   it('rejects an empty question and an unknown plant without calling Gemini', async () => {
