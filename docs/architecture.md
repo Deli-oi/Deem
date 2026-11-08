@@ -30,7 +30,7 @@ It decouples the sensors from the Pi, is well supported on the ESP32, and the La
 ## Data flow
 1. The ESP32 samples every 10 minutes and publishes JSON to `deem/<device_id>/telemetry`.
 2. The Pi screen shows it immediately (WebSocket subscription) and scores it against the plant's healthy ranges; out-of-range values raise an alert and a sound.
-3. `deem-controller` buffers the reading and POSTs batches to the ingest service, which stores them in Tiger.
+3. `deem-controller` buffers the reading and POSTs batches to the ingest service. **Ingest only stores a reading if a collection session covers it**: the screen starts a session when setup finishes (plant confirmed, all sensors checked), sends a heartbeat every minute, and ends it with the STOP button. Before that, after STOP, or if the screen is gone for over 3 minutes, readings are dropped.
 4. The dashboard and Gemini read from there (history for trends, the latest reading for the LIVE plant).
 5. Voice: mic tap, then audio goes to the Deem server, to Fish Audio, back as text. Matching and answers go to Gemini. If the cloud fails, the screen falls back to a local matcher and canned answers.
 

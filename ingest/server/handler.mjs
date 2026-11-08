@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'node:crypto'
+import { randomUUID, timingSafeEqual } from 'node:crypto'
 import { sanitizeMetrics } from './sanity.mjs'
 
 // The metric keys of the MQTT contract (docs/mqtt_contract.md, v1). Anything else is ignored.
@@ -11,6 +11,13 @@ const MAX_BODY = 1_000_000
 const MAX_BATCH = 500
 const MIN_EPOCH = 1_700_000_000 // anything earlier means the device clock was not synced
 const DEVICE_RE = /^[A-Za-z0-9_-]{1,64}$/
+const PLANT_RE = /^[a-z0-9_]{1,64}$/
+
+/** A session covers a reading only while the screen's heartbeat is this fresh (the screen beats every minute). */
+export const SESSION_TTL_MS = 3 * 60_000
+/** A reading that arrived with no session is handed to the next session if it is at most this old. */
+const PENDING_MAX_AGE_MS = 15 * 60_000
+const SESSION_RATE_LIMIT = 120 // per IP per minute
 
 /** Turns one relayed record into a row to store, or returns null if it is not a usable reading. */
 export function normalizeReading(rec, nowSec) {
@@ -71,16 +78,85 @@ function send(res, status, body, extra = {}) {
 
 /**
  * Routes:
- *   POST /ingest                       Pi relay (Bearer token). Body {"readings":[...]}.
+ *   POST /ingest                       Pi relay (Bearer token). Body {"readings":[...]}. Only readings that a
+ *                                      session covers are stored; the rest are counted as no_session.
+ *   POST /api/session/start            the screen: setup is finished. Body {device_id, plant_type_id}
+ *   POST /api/session/heartbeat        the screen, every minute. Body {session_id}
+ *   POST /api/session/stop             the screen's STOP button. Body {session_id}
+ *   GET  /api/session?device_id=       is a session running? (public, read-only)
  *   GET  /api/devices                  latest reading per device (public, read-only)
  *   GET  /api/readings?device_id=&hours=24&limit=1000   history for one device (public, read-only)
  *   GET  /healthz
  */
-export function createHandler({ store, token, now = () => Date.now() / 1000 }) {
+export function createHandler({
+  store,
+  token,
+  now = () => Date.now() / 1000,
+  allowedOrigins = [],
+  allowedDevices = ['esp32-pot-01'], // one pot for now
+  newId = () => randomUUID(),
+}) {
   const cors = { 'Access-Control-Allow-Origin': '*' }
+  const origins = new Set(allowedOrigins)
+  const corsFor = (origin) => (origin && origins.has(origin) ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' } : {})
+  const hits = new Map()
+  const limited = (ip) => {
+    const t = now() * 1000
+    const recent = (hits.get(ip) ?? []).filter((x) => t - x < 60_000)
+    recent.push(t)
+    hits.set(ip, recent)
+    return recent.length > SESSION_RATE_LIMIT
+  }
+  const clientIp = (req) => req.headers['x-forwarded-for']?.split(',')[0].trim() ?? req.socket.remoteAddress ?? 'unknown'
+
+  async function sessionRoutes(req, res, url) {
+    const origin = req.headers.origin
+    if (req.method === 'OPTIONS') {
+      const c = corsFor(origin)
+      if (!c['Access-Control-Allow-Origin']) return send(res, 403, { error: 'forbidden' })
+      res.writeHead(204, { ...c, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '600' })
+      return res.end()
+    }
+    // only our own pages (the Pi screen, the hosted page) may start or stop collection from a browser
+    if (origin && !origins.has(origin)) return send(res, 403, { error: 'forbidden' })
+    const c = corsFor(origin)
+    if (limited(clientIp(req))) return send(res, 429, { error: 'rate_limited' }, c)
+    const tMs = Math.round(now() * 1000)
+
+    if (req.method === 'GET' && url.pathname === '/api/session') {
+      const id = url.searchParams.get('device_id') ?? ''
+      if (!DEVICE_RE.test(id)) return send(res, 400, { error: 'device_id required' }, { ...cors, ...c })
+      const open = await store.openSession(id)
+      const live = open !== null && tMs - new Date(open.last_seen).getTime() <= SESSION_TTL_MS
+      return send(res, 200, { device_id: id, collecting: live, session: open }, { ...cors, ...c })
+    }
+    if (req.method !== 'POST') return send(res, 405, { error: 'method_not_allowed' }, c)
+    const body = await readJson(req)
+
+    if (url.pathname === '/api/session/start') {
+      const device = body?.device_id
+      const plant = body?.plant_type_id
+      if (typeof device !== 'string' || !allowedDevices.includes(device)) return send(res, 400, { error: 'unknown_device' }, c)
+      if (typeof plant !== 'string' || !PLANT_RE.test(plant)) return send(res, 400, { error: 'bad_plant' }, c)
+      const id = await store.startSession(device, plant, tMs, newId())
+      // the newest reading that arrived before setup finished becomes the first stored one, so no 10-minute wait
+      const pending = await store.takePending(device, tMs - PENDING_MAX_AGE_MS)
+      const firstStored = pending ? (await store.insertMany([pending])) > 0 : false
+      return send(res, 200, { session_id: id, ttl_ms: SESSION_TTL_MS, first_reading_stored: firstStored }, c)
+    }
+    if (url.pathname === '/api/session/heartbeat' || url.pathname === '/api/session/stop') {
+      const id = body?.session_id
+      if (typeof id !== 'string' || id.length === 0 || id.length > 64) return send(res, 400, { error: 'bad_session' }, c)
+      if (url.pathname.endsWith('/heartbeat')) return send(res, 200, { active: await store.heartbeat(id, tMs) }, c)
+      return send(res, 200, { stopped: await store.stopSession(id, tMs) }, c)
+    }
+    return send(res, 404, { error: 'not found' }, c)
+  }
+
   return async (req, res) => {
     try {
       const url = new URL(req.url ?? '/', 'http://x')
+      if (url.pathname.startsWith('/api/session')) return await sessionRoutes(req, res, url)
       if (req.method === 'OPTIONS') {
         res.writeHead(204, { ...cors, 'Access-Control-Allow-Methods': 'GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' })
         return res.end()
@@ -99,9 +175,24 @@ export function createHandler({ store, token, now = () => Date.now() / 1000 }) {
         if (list.length > MAX_BATCH) return send(res, 413, { error: `at most ${MAX_BATCH} readings per request` })
         const t = now()
         const rows = list.map((r) => normalizeReading(r, t)).filter(Boolean)
-        const stored = await store.insertMany(rows)
-        // 200 even when some records were unusable: retrying them would never help
-        return send(res, 200, { received: list.length, stored, duplicates: rows.length - stored, rejected: list.length - rows.length })
+        // Only readings a session covers are stored. The rest (setup not finished, screen gone) are dropped;
+        // the newest per device is kept aside so the next session can start with it.
+        const accepted = []
+        const newestUncovered = new Map()
+        for (const r of rows) {
+          if (await store.sessionCovers(r.device_id, r.received_at, SESSION_TTL_MS)) accepted.push(r)
+          else if (!newestUncovered.has(r.device_id) || newestUncovered.get(r.device_id).received_at < r.received_at) newestUncovered.set(r.device_id, r)
+        }
+        for (const r of newestUncovered.values()) await store.stashPending(r)
+        const stored = await store.insertMany(accepted)
+        // 200 even when some records were unusable or not wanted: retrying them would never help
+        return send(res, 200, {
+          received: list.length,
+          stored,
+          duplicates: accepted.length - stored,
+          rejected: list.length - rows.length,
+          no_session: rows.length - accepted.length,
+        })
       }
       if (req.method === 'GET' && url.pathname === '/api/devices') {
         return send(res, 200, { devices: (await store.latest()).map(cleanRow) }, cors)

@@ -11,6 +11,7 @@ import { evaluateAlerts } from './lib/alerts'
 import { voiceMessage } from './lib/voice'
 import type { Listening } from './lib/voice'
 import { voice } from './voice'
+import { session } from './session'
 import type { SensorState, VoiceState } from './components/screens/SetupFlow'
 import { SENSORS } from './lib/telemetry'
 import type { AskAnswer, HealthPoint, PlantMatch, PlantType, ScreenPage, Telemetry } from './lib/types'
@@ -115,11 +116,31 @@ export default function App() {
       setTelemetry(tel)
       setHistory(hist)
       await delay(280)
+      // Setup is finished (plant confirmed, every sensor checked): from now on the cloud stores this pot's readings.
+      session.start(selected.plant_type_id)
       setPhase('live')
       setPage('health')
     } catch (err) {
       setSensorError(err instanceof Error ? err.message : 'Sensor check failed.')
     }
+  }
+
+  /** The STOP button on the history page: end data collection and go back to the setup prompt. */
+  async function stopCollection() {
+    await session.stop()
+    lastAlertedTs.current = null
+    pendingAlert.current = false
+    setAnswer(null)
+    setVoiceError(null)
+    setHeard(null)
+    setMatch(null)
+    setPlant(null)
+    setTelemetry(null)
+    setHistory([])
+    setSensors([])
+    setSensorError(null)
+    setPage('health')
+    setPhase('setup_prompt')
   }
 
   // Live updates: a new reading (every 10 minutes) and the device's link status.
@@ -302,7 +323,7 @@ export default function App() {
                     <HealthScreen plant={plant} telemetry={telemetry} alerts={alerts} />
                   )}
                   <InputsScreen plant={plant} telemetry={telemetry} />
-                  <HistoryScreen plant={plant} points={history} />
+                  <HistoryScreen plant={plant} points={history} onStop={() => void stopCollection()} />
                 </div>
                 {(answer || voiceError) && voiceState === 'idle' && (
                   <button

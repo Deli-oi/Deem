@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { HealthPoint, PlantType } from '../../lib/types'
 import { PageFoot } from '../PageFoot'
 import { Sprite } from '../Sprite'
@@ -5,6 +6,8 @@ import { Sprite } from '../Sprite'
 type Props = {
   plant: PlantType
   points: HealthPoint[]
+  /** Ends data collection and goes back to setup. Asked twice, so a stray touch cannot end it. */
+  onStop?: () => void
 }
 
 const W = 260
@@ -18,7 +21,13 @@ export function hourLabel(hour: string): string {
 }
 
 /** Plotted line of the average health per hour (0-100), oldest to newest. */
-export function HistoryScreen({ plant, points }: Props) {
+export function HistoryScreen({ plant, points, onStop }: Props) {
+  const [confirming, setConfirming] = useState(false)
+  useEffect(() => {
+    if (!confirming) return
+    const t = window.setTimeout(() => setConfirming(false), 4000)
+    return () => window.clearTimeout(t)
+  }, [confirming])
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
   const x = (i: number) => (points.length < 2 ? PAD.left + plotW / 2 : PAD.left + (i / (points.length - 1)) * plotW)
@@ -79,6 +88,18 @@ export function HistoryScreen({ plant, points }: Props) {
           </svg>
         )}
       </div>
+
+      {onStop && (
+        <button
+          type="button"
+          className={confirming ? 'stop-btn confirm' : 'stop-btn'}
+          aria-label={confirming ? 'Tap again to end data collection and go back to setup' : 'Stop data collection'}
+          onClick={() => (confirming ? onStop() : setConfirming(true))}
+        >
+          {confirming ? 'TAP AGAIN TO END' : 'STOP COLLECTING'}
+          <span className="stop-sub">{confirming ? 'then back to setup' : 'end data collection'}</span>
+        </button>
+      )}
 
       <PageFoot index={2} hint="← swipe" />
     </div>

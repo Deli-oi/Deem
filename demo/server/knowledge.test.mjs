@@ -216,7 +216,7 @@ describe('history and trends for answers', () => {
 
   async function withReadings(rows) {
     const p = pool()
-    await p.query('CREATE TABLE readings (device_id text NOT NULL, ts timestamptz NOT NULL, received_at timestamptz, fw text, metrics jsonb NOT NULL)')
+    await p.query('CREATE TABLE readings (device_id text NOT NULL, ts timestamptz NOT NULL, received_at timestamptz, fw text, metrics jsonb NOT NULL, label text)')
     for (const r of rows) await p.query('INSERT INTO readings (device_id, ts, metrics) VALUES ($1, $2, $3)', [r.device, r.ts, JSON.stringify(r.metrics)])
     return p
   }
@@ -246,6 +246,18 @@ describe('history and trends for answers', () => {
     expect(await k.history("x'; DROP TABLE readings;--")).toEqual([])
     const broken = createKnowledge({ pool: { query: async () => { throw new Error('db down') } }, seedPath, gemini: { apiKey: 'key' }, fetchImpl: fakeGemini({ answer: 'still works' }), log: silent })
     expect((await broken.ask({ plantTypeId: 'dracaena', question: 'hi' })).answer).toBe('still works')
+  })
+
+  it('ignores readings labelled as bad test data', async () => {
+    const p = await withReadings([
+      { device: 'esp32-pot-01', ts: hoursAgo(5), metrics: { soil_moisture: 80 } },
+      { device: 'esp32-pot-01', ts: hoursAgo(3), metrics: { soil_moisture: 70 } },
+      { device: 'esp32-pot-01', ts: hoursAgo(2), metrics: { soil_moisture: 60 } },
+    ])
+    await p.query("UPDATE readings SET label = 'bad_test_data' WHERE ts < $1", [hoursAgo(2.5)])
+    const k = createKnowledge({ pool: p, seedPath, gemini: { apiKey: 'key' }, fetchImpl: fakeGemini({ answer: 'ok' }), now: () => NOW, log: silent })
+    const rows = await k.history('esp32-pot-01')
+    expect(rows.map((r) => r.metrics.soil_moisture)).toEqual([60])
   })
 
   it('tells Gemini the light and mineral ranges exist but are not measured', async () => {

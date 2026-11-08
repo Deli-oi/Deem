@@ -29,6 +29,11 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
     beforeEach(async () => {
       store = makeStore()
       await store.init()
+      // readings are only stored while a session covers them: these tests run inside one (for both pots)
+      for (const dev of ['esp32-pot-01', 'esp32-pot-02']) {
+        await store.startSession(dev, 'dracaena', (NOW - 86_400) * 1000, `s-${dev}`)
+        await store.heartbeat(`s-${dev}`, NOW * 1000)
+      }
       server = createServer(createHandler({ store, token: TOKEN, now: () => NOW }))
       await new Promise((r) => server.listen(0, '127.0.0.1', r))
       base = `http://127.0.0.1:${server.address().port}`
@@ -47,7 +52,7 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
     it('stores a batch exactly as the Pi relays it', async () => {
       const res = await post({ readings: [reading(), reading({ ts: NOW - 660, received_ts: NOW - 655 })] })
       assert.equal(res.status, 200)
-      assert.deepEqual(await res.json(), { received: 2, stored: 2, duplicates: 0, rejected: 0 })
+      assert.deepEqual(await res.json(), { received: 2, stored: 2, duplicates: 0, rejected: 0, no_session: 0 })
       const dev = await (await fetch(`${base}/api/devices`)).json()
       assert.equal(dev.devices.length, 1)
       assert.equal(dev.devices[0].device_id, 'esp32-pot-01')
@@ -59,7 +64,7 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
       await post({ readings: [reading()] })
       const again = await (await post({ readings: [reading()] })).json()
       // (the in-memory Postgres used here over-reports inserts on a conflict; real Postgres returns no row)
-      if (name === 'MemoryStore') assert.deepEqual(again, { received: 1, stored: 0, duplicates: 1, rejected: 0 })
+      if (name === 'MemoryStore') assert.deepEqual(again, { received: 1, stored: 0, duplicates: 1, rejected: 0, no_session: 0 })
       const h = await (await fetch(`${base}/api/readings?device_id=esp32-pot-01`)).json()
       assert.equal(h.readings.length, 1)
     })
@@ -85,7 +90,7 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
           null,
         ],
       })
-      assert.deepEqual(await res.json(), { received: 5, stored: 1, duplicates: 0, rejected: 4 })
+      assert.deepEqual(await res.json(), { received: 5, stored: 1, duplicates: 0, rejected: 4, no_session: 0 })
     })
 
     it('returns 400 for bad JSON or a body without readings, and 413 for oversized batches', async () => {
@@ -116,7 +121,7 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
           reading({ ts: NOW - 5, metrics: { co2_ppm: 32767, temp_c: 57.4, rh_pct: 95 } }), // nothing real left: rejected
         ],
       })
-      assert.deepEqual(await res.json(), { received: 2, stored: 1, duplicates: 0, rejected: 1 })
+      assert.deepEqual(await res.json(), { received: 2, stored: 1, duplicates: 0, rejected: 1, no_session: 0 })
       const dev = await (await fetch(`${base}/api/devices`)).json()
       assert.deepEqual(dev.devices[0].metrics, { soil_moisture: 9, soil_temp_c: 27.8 })
     })
@@ -131,11 +136,158 @@ for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgS
       assert.deepEqual(hist.readings[0].metrics, { soil_moisture: 9 })
     })
 
+    it('labelled test data is kept but never served, and only older rows get labelled', async () => {
+      await post({ readings: [reading({ ts: NOW - 3000 }), reading({ ts: NOW - 2000 }), reading({ ts: NOW - 100 })] })
+      const cutoff = new Date((NOW - 1000) * 1000).toISOString()
+      assert.equal(await store.countUnlabeledBefore(cutoff), 2)
+      assert.equal(await store.labelBefore(cutoff, 'bad_test_data'), 2)
+      assert.equal(await store.labelBefore(cutoff, 'bad_test_data'), 0) // already labelled: nothing to do twice
+      const hist = await (await fetch(`${base}/api/readings?device_id=esp32-pot-01`)).json()
+      assert.equal(hist.readings.length, 1)
+      assert.equal(new Date(hist.readings[0].ts).getTime(), (NOW - 100) * 1000)
+      const dev = await (await fetch(`${base}/api/devices`)).json()
+      assert.equal(new Date(dev.devices[0].ts).getTime(), (NOW - 100) * 1000)
+      // everything old is labelled: with only labelled rows left, no device is reported
+      await store.labelBefore(new Date(NOW * 1000).toISOString(), 'bad_test_data')
+      assert.deepEqual((await (await fetch(`${base}/api/devices`)).json()).devices, [])
+    })
+
+    it('labelling can be limited to one device', async () => {
+      await post({ readings: [reading({ ts: NOW - 500 }), reading({ device_id: 'esp32-pot-02', ts: NOW - 500 })] })
+      const cutoff = new Date(NOW * 1000).toISOString()
+      assert.equal(await store.labelBefore(cutoff, 'bad_test_data', 'esp32-pot-02'), 1)
+      const dev = await (await fetch(`${base}/api/devices`)).json()
+      assert.deepEqual(dev.devices.map((d) => d.device_id), ['esp32-pot-01'])
+    })
+
     it('read endpoints are open to browsers (CORS) but cannot be used to write', async () => {
       const res = await fetch(`${base}/api/devices`)
       assert.equal(res.headers.get('access-control-allow-origin'), '*')
       assert.equal((await fetch(`${base}/api/devices`, { method: 'POST', body: '{}' })).status, 404)
       assert.equal((await fetch(`${base}/healthz`)).status, 200)
+    })
+  })
+}
+
+// Data collection only starts when setup is finished on the screen (a session) and stops when the screen stops.
+for (const [name, makeStore] of [['MemoryStore', () => new MemoryStore()], ['PgStore (SQL)', pgStore]]) {
+  describe(`sessions gate what is stored (${name})`, () => {
+    const PI = 'http://localhost:3000'
+    let server, base, store, clock
+    beforeEach(async () => {
+      store = makeStore()
+      await store.init()
+      clock = NOW
+      let n = 0
+      server = createServer(createHandler({ store, token: TOKEN, now: () => clock, allowedOrigins: [PI], newId: () => `sess-${++n}` }))
+      await new Promise((r) => server.listen(0, '127.0.0.1', r))
+      base = `http://127.0.0.1:${server.address().port}`
+    })
+    afterEach(async () => {
+      await new Promise((r) => server.close(r))
+    })
+
+    const ingest = (readings) =>
+      fetch(`${base}/ingest`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` }, body: JSON.stringify({ readings }) }).then((r) => r.json())
+    const session = (path, body, headers = {}) =>
+      fetch(`${base}/api/session${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) })
+    const start = async () => (await (await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'dracaena' }, { Origin: PI })).json()).session_id
+    const stored = async () => (await (await fetch(`${base}/api/readings?device_id=esp32-pot-01&hours=48`)).json()).readings.length
+    const at = (secondsAgo) => reading({ ts: clock - secondsAgo, received_ts: clock - secondsAgo })
+
+    it('stores nothing before setup is finished', async () => {
+      const out = await ingest([at(60), at(30)])
+      assert.equal(out.stored, 0)
+      assert.equal(out.no_session, 2)
+      assert.equal(await stored(), 0)
+      assert.deepEqual((await (await fetch(`${base}/api/devices`)).json()).devices, [])
+    })
+
+    it('starts storing when setup finishes, and the newest earlier reading becomes the first row', async () => {
+      await ingest([at(400), at(120)]) // arrived before setup was done
+      const res = await (await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'dracaena' }, { Origin: PI })).json()
+      assert.equal(res.first_reading_stored, true)
+      assert.equal(res.ttl_ms, 180000)
+      assert.equal(await stored(), 1) // only the newest one, not both
+      clock += 30 // a reading that arrives after the session started
+      const out = await ingest([at(5)])
+      assert.equal(out.stored, 1)
+      assert.equal(await stored(), 2)
+    })
+
+    it('a reading older than 15 minutes is not promoted into the new session', async () => {
+      await ingest([at(20 * 60)])
+      const res = await (await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'dracaena' })).json()
+      assert.equal(res.first_reading_stored, false)
+      assert.equal(await stored(), 0)
+    })
+
+    it('keeps storing while the screen sends heartbeats, and stops when they stop for more than 3 minutes', async () => {
+      const id = await start()
+      clock += 60
+      assert.equal((await (await session('/heartbeat', { session_id: id })).json()).active, true)
+      assert.equal((await ingest([at(2)])).stored, 1)
+      clock += 170 // 2 min 50 s after the last heartbeat: still covered
+      assert.equal((await ingest([at(1)])).stored, 1)
+      clock += 600 // the screen went away (reboot, page closed)
+      const late = await ingest([at(1)])
+      assert.equal(late.stored, 0)
+      assert.equal(late.no_session, 1)
+      assert.equal((await (await fetch(`${base}/api/session?device_id=esp32-pot-01`)).json()).collecting, false)
+    })
+
+    it('STOP ends collection: later readings are dropped, earlier ones were kept', async () => {
+      const id = await start()
+      clock += 30
+      assert.equal((await ingest([at(5)])).stored, 1)
+      clock += 30
+      assert.equal((await (await session('/stop', { session_id: id })).json()).stopped, true)
+      clock += 30
+      assert.equal((await ingest([at(2)])).no_session, 1)
+      assert.equal(await stored(), 1)
+      assert.equal((await (await session('/heartbeat', { session_id: id })).json()).active, false) // the screen learns it is over
+      assert.equal((await (await session('/stop', { session_id: id })).json()).stopped, false) // twice is harmless
+    })
+
+    it('a replayed reading is judged by when it arrived, not when it was replayed', async () => {
+      const id = await start()
+      clock += 20
+      await session('/stop', { session_id: id })
+      clock += 5000
+      const out = await ingest([reading({ ts: NOW + 10, received_ts: NOW + 10 })]) // arrived during the session, replayed later
+      assert.equal(out.stored, 1)
+      const out2 = await ingest([reading({ ts: NOW + 4000, received_ts: NOW + 4000 })]) // arrived after STOP
+      assert.equal(out2.no_session, 1)
+    })
+
+    it('starting again ends the previous session, and starting is for the known pot with a real plant id only', async () => {
+      const first = await start()
+      const second = await start()
+      assert.notEqual(first, second)
+      assert.equal((await (await session('/heartbeat', { session_id: first })).json()).active, false)
+      assert.equal((await (await session('/heartbeat', { session_id: second })).json()).active, true)
+      assert.equal((await session('/start', { device_id: 'esp32-pot-07', plant_type_id: 'dracaena' })).status, 400)
+      assert.equal((await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'Dr acaena!' })).status, 400)
+      assert.equal((await session('/heartbeat', { session_id: '' })).status, 400)
+    })
+
+    it('only our own pages may start or stop collection from a browser; preflight works for the listed one', async () => {
+      assert.equal((await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'dracaena' }, { Origin: 'https://evil.example' })).status, 403)
+      const ok = await session('/start', { device_id: 'esp32-pot-01', plant_type_id: 'dracaena' }, { Origin: PI })
+      assert.equal(ok.status, 200)
+      assert.equal(ok.headers.get('access-control-allow-origin'), PI)
+      const pre = await fetch(`${base}/api/session/start`, { method: 'OPTIONS', headers: { Origin: PI, 'Access-Control-Request-Method': 'POST' } })
+      assert.equal(pre.status, 204)
+      assert.equal((await fetch(`${base}/api/session/start`, { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } })).status, 403)
+    })
+
+    it('reports whether collection is running', async () => {
+      assert.equal((await (await fetch(`${base}/api/session?device_id=esp32-pot-01`)).json()).collecting, false)
+      await start()
+      const st = await (await fetch(`${base}/api/session?device_id=esp32-pot-01`)).json()
+      assert.equal(st.collecting, true)
+      assert.equal(st.session.plant_type_id, 'dracaena')
+      assert.equal('id' in st.session, false) // the session id is a secret of the screen
     })
   })
 }

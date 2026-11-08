@@ -22,6 +22,7 @@ Built at a 22-hour hackathon.
 ```
 
 - **The device screen works on its own.** It reads the ESP32 over the Pi's MQTT broker. Only the microphone and Gemini need the internet; if the cloud is down the screen falls back to a local matcher and canned answers.
+- **Data is only stored after setup.** The screen starts a collection session when the plant is confirmed and every sensor check passes, keeps it alive with a heartbeat, and ends it with the STOP button on the history page (which returns to setup). The ESP32 publishes the whole time, but the cloud only keeps readings that arrive during a session.
 - **Thresholds live in the app**, not the firmware. The firmware only sends raw readings. It never receives commands (no pump, no relay in the MVP).
 - **Plant knowledge** (12 plants from the open-source [MiFloraDB](https://github.com/khronimo/MiFloraDB): healthy ranges, care notes, fixes) is stored in the Tiger database. Gemini picks the plant you named from that closed list and answers questions using the plant's notes, the latest reading and the last 24 hours.
 
@@ -74,6 +75,7 @@ Variables (names only; the values live in Railway and are never committed):
 | `GEMINI_API_KEY` (optional `GEMINI_MODEL`) | Deem server (matching, answers) |
 | `TIGER_DATABASE_URL` | Deem server and ingest (a `postgres://` connection string) |
 | `DEEM_SINK_TOKEN` | ingest (and the Pi's `pi/.env`) |
+| `ALLOWED_ORIGINS` (ingest) | ingest: pages that may start/stop data collection (e.g. `http://localhost:3000`) |
 | `ALLOWED_ORIGINS` | Deem server (e.g. `http://localhost:3000` for the Pi screen) |
 | `VITE_INGEST_URL` | dashboard build |
 
