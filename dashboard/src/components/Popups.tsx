@@ -44,9 +44,13 @@ export function PlantPopup({ plant, onClose, onStep }: { plant: PlantRecord; onC
           <header className="gh-popup-head">
             <Sprite plantTypeId={plant.typeId} spriteRef={plant.type.sprite_ref} title={name} />
             <div>
-              <h2>{name}</h2>
+              <h2>
+                {name}
+                {plant.live && <span className="gh-live-tag"> LIVE</span>}
+              </h2>
               <p>
                 Bed {plant.id} · Zone {zone.id}, {zone.name}
+                {plant.live && ' · real device'}
               </p>
             </div>
             <StatusChip status={plant.status} />

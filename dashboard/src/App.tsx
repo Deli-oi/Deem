@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { greenhouseAt, summarize, summarizeByType } from './data/greenhouse'
+import { fetchHistory, fetchLatest, liveConfig, withLivePlant } from './data/live'
+import type { LiveReading } from './data/live'
 import { GreenhouseMap } from './map/GreenhouseMap'
 import { HubPopup, PlantPopup } from './components/Popups'
 import { HealthSection, HeroBar, PlantsSection, TopBar, TypeSection } from './components/Sections'
@@ -17,9 +19,35 @@ function useNow(ms: number) {
   return now
 }
 
+/** How often the real pot's latest reading is fetched (it only changes every 10 minutes). */
+const LIVE_POLL_MS = 30_000
+const LIVE = liveConfig(import.meta.env as Record<string, string | undefined>)
+
+/** The real pot's readings from the ingest service. Nothing is shown (and nothing breaks) while it is unreachable. */
+function useLivePot() {
+  const [latest, setLatest] = useState<LiveReading | null>(null)
+  const [history, setHistory] = useState<LiveReading[]>([])
+  useEffect(() => {
+    if (!LIVE.ingestUrl) return
+    const ctl = new AbortController()
+    const load = () => {
+      fetchLatest(LIVE, ctl.signal).then(setLatest).catch(() => setLatest(null))
+      fetchHistory(LIVE, ctl.signal).then(setHistory).catch(() => {})
+    }
+    load()
+    const id = window.setInterval(load, LIVE_POLL_MS)
+    return () => {
+      ctl.abort()
+      window.clearInterval(id)
+    }
+  }, [])
+  return { latest, history }
+}
+
 export default function App() {
   const now = useNow(TICK_MS)
-  const g = useMemo(() => greenhouseAt(now), [now])
+  const { latest, history } = useLivePot()
+  const g = useMemo(() => withLivePlant(greenhouseAt(now), LIVE, latest, history, now), [now, latest, history])
   const summary = useMemo(() => summarize(g), [g])
   const types = useMemo(() => summarizeByType(g), [g])
 
@@ -65,7 +93,7 @@ export default function App() {
         <PlantsSection plants={g.plants} focusType={focusType} onFocus={setFocusType} onlyAlerts={onlyAlerts} onOnlyAlerts={setOnlyAlerts} onPlant={setSelectedId} />
       </main>
       <footer className="gh-footer">
-        <b>DEEM</b> Greenhouse is a mock of how Deem scales from one plant to a whole greenhouse. All readings are simulated and not connected to any hardware or database.
+        <b>DEEM</b> Greenhouse is a mock of how Deem scales from one plant to a whole greenhouse. All readings are simulated, except the plant tagged LIVE, which shows the real device through the ingest service.
       </footer>
 
       {selected && <PlantPopup plant={selected} onClose={() => setSelectedId(null)} onStep={step} />}

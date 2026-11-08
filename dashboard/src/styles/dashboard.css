@@ -1443,3 +1443,15 @@ button.gh-card:hover {
     max-width: none;
   }
 }
+
+.gh-live-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 0.6em;
+  letter-spacing: 0.08em;
+  vertical-align: middle;
+}

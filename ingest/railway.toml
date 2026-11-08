@@ -1,0 +1,9 @@
+# A separate Railway service. Set its Root Directory to `ingest`.
+# Variables: TIGER_DATABASE_URL (already set in Railway), DEEM_SINK_TOKEN (shared secret with the Pi).
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/healthz"
+restartPolicyType = "ON_FAILURE"

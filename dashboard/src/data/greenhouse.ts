@@ -34,6 +34,8 @@ export type PlantRecord = {
   status: Status
   soil: SoilQuality
   history: HealthPoint[]
+  /** true for the one plant that shows the real pot's readings */
+  live?: boolean
 }
 
 export type AirMetrics = { co2_ppm: number; pm2_5: number; pm10_0: number; temp_c: number; rh_pct: number }
