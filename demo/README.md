@@ -46,6 +46,23 @@ When a reading is **outside the plant's healthy range** (the thresholds in the p
 - Browsers only allow sound after a key press or touch (the first one unlocks it). A kiosk Chromium can skip that with `--autoplay-policy=no-user-gesture-required`.
 - `?silent` in the URL turns the sound off (rehearsing, development). The on-screen alert still shows.
 
+**Seeing every failure (browser mock):** press the TEST key (**T**) repeatedly to step through them in order, then it wraps back to healthy. Add `?silent` to the URL to mute the alert sound.
+
+| TEST press | Screen says | Fixture |
+|---|---|---|
+| 0 (start) | normal health page | `healthy` |
+| 1 | Soil too dry | `dry_soil` |
+| 2 | Soil too wet | `overwatered` |
+| 3 | Too cold | `cold_snap` |
+| 4 | Too hot | `too_hot` |
+| 5 | Air too dry | `dry_air` |
+| 6 | Air too humid | `humid_air` |
+| 7 | Stuffy air (CO2) | `high_co2` |
+| 8 | Dusty or smoky air | `dusty_pm25` |
+| 9 | Dusty air | `dusty_pm10` |
+
+Fixtures are in `src/mock/fixtures/dracaena/`; each breaks only its own rule. `src/mock/failures.test.tsx` checks all of them.
+
 ## Voice (Fish Audio speech-to-text)
 
 Hold MIC → the browser records → `POST /api/transcribe` → `server/` forwards to Fish Audio (`transcribe-1-pro`) → text.
