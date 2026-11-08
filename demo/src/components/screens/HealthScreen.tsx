@@ -1,5 +1,6 @@
 import { ActivityRings, metricProgress } from '../ActivityRings'
 import { healthLabel } from '../../lib/healthScore'
+import type { Alert } from '../../lib/alerts'
 import type { PlantType, Telemetry } from '../../lib/types'
 import { PageFoot } from '../PageFoot'
 import { Sprite } from '../Sprite'
@@ -7,9 +8,11 @@ import { Sprite } from '../Sprite'
 type Props = {
   plant: PlantType
   telemetry: Telemetry
+  /** Readings outside the healthy range right now. */
+  alerts?: Alert[]
 }
 
-export function HealthScreen({ plant, telemetry }: Props) {
+export function HealthScreen({ plant, telemetry, alerts = [] }: Props) {
   const score = telemetry.health_score ?? 0
   const testedAt = new Date((telemetry.received_ts ?? telemetry.ts) * 1000).toLocaleTimeString([], {
     hour: 'numeric',
@@ -39,6 +42,13 @@ export function HealthScreen({ plant, telemetry }: Props) {
           <b>{testedAt}</b>
         </div>
       </header>
+
+      {alerts.length > 0 && (
+        <div className="alert-bar" role="alert">
+          <span className="voice-dot" />
+          <span>{alerts.map((a) => a.label).join(' · ')}</span>
+        </div>
+      )}
 
       <div className="act-main">
         <div className="act-stats">

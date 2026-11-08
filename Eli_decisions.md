@@ -2,6 +2,19 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
+## 2026-11-07: Wilting failure screen
+
+- Every plant sprite has a wilting, slightly gray version that takes up most of the screen when something needs fixing, with one sentence on what to do.
+- The same wilted image is used for every failure for now (not one per failure type).
+- The sentence comes from the plant's stored fix for that failure.
+
+## 2026-11-07: Alert sound for readings that need fixing
+
+- When something is below (or above) the plant's healthy range and needs to be fixed, the device plays an alert sound, and the health page says what is wrong.
+- MVP: every out-of-range reading alerts, because nothing corrects itself yet (no automatic watering).
+- Air quality alerts too, with blanket limits for every plant (the plant data has none): CO2 above 1500 ppm, PM2.5 above 35, PM10 above 150. Set high on purpose so a busy room doesn't set it off.
+- Later: a biosphere controller for the whole greenhouse fixes watering, temperature and humidity, and the device alerts only for what can't be changed (e.g. soil quality). This is for the full-greenhouse dashboard that shows how it scales.
+
 ## 2026-11-07: MIC and TEST are physical keys; voice is Fish Audio only
 
 - MIC and TEST are **hardware**: mechanical-keyboard keys, never drawn on the screen. Only confirm/retry are on the screen.

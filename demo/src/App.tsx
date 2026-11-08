@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { FailureScreen } from './components/screens/FailureScreen'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
 import { InputsScreen } from './components/screens/InputsScreen'
 import { SetupFlow } from './components/screens/SetupFlow'
 import { backend } from './backend'
+import { playAlert, soundEnabled, unlockAudio } from './lib/alertSound'
+import { evaluateAlerts } from './lib/alerts'
 import { hardwareKeyFor } from './lib/keys'
 import { voiceMessage } from './lib/voice'
 import type { Listening } from './lib/voice'
@@ -48,9 +51,22 @@ export default function App() {
   const listenRef = useRef<Listening | null>(null)
   const holdingRef = useRef(false)
   const startedAtRef = useRef(0)
+  const lastAlertedTs = useRef<number | null>(null)
+  const pendingAlert = useRef(false)
   phaseRef.current = phase
   voiceRef.current = voiceState
   busyRef.current = busy
+
+  // Browsers only allow sound after a key press or touch; the first one unlocks the alert sound.
+  useEffect(() => {
+    const unlock = () => unlockAudio()
+    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener('pointerdown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('keydown', unlock)
+      window.removeEventListener('pointerdown', unlock)
+    }
+  }, [])
 
   useEffect(() => {
     const t = window.setTimeout(() => setPhase('setup_prompt'), 500)
@@ -244,6 +260,27 @@ export default function App() {
     if (Math.abs(dx) >= SWIPE_PX) go(dx < 0 ? 1 : -1)
   }
 
+  // Readings outside the plant's healthy range. Every new reading that has one plays the alert
+  // sound (and it repeats with each reading while the problem lasts). Never while the mic is
+  // recording, or the beeps would be heard as speech: it waits until the mic is idle.
+  const alerts = plant && telemetry ? evaluateAlerts(plant, telemetry.metrics) : []
+  const alertCount = alerts.length
+  useEffect(() => {
+    if (phase !== 'live' || !telemetry) return
+    if (alertCount === 0) {
+      pendingAlert.current = false
+      return
+    }
+    if (lastAlertedTs.current !== telemetry.ts) {
+      lastAlertedTs.current = telemetry.ts
+      pendingAlert.current = true
+    }
+    if (pendingAlert.current && voiceState === 'idle' && soundEnabled()) {
+      pendingAlert.current = false
+      playAlert()
+    }
+  }, [phase, telemetry, alertCount, voiceState])
+
   const sheetText = answer ? answer.answer : notice
 
   return (
@@ -300,7 +337,11 @@ export default function App() {
                   </div>
                 )}
                 <div className="screen-track" data-page={page}>
-                  <HealthScreen plant={plant} telemetry={telemetry} />
+                  {alerts.length > 0 ? (
+                    <FailureScreen plant={plant} telemetry={telemetry} alerts={alerts} />
+                  ) : (
+                    <HealthScreen plant={plant} telemetry={telemetry} alerts={alerts} />
+                  )}
                   <InputsScreen plant={plant} telemetry={telemetry} />
                   <HistoryScreen plant={plant} points={history} />
                 </div>
