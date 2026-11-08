@@ -17,10 +17,11 @@ TTYVHangup=yes
 StandardInput=tty
 StandardOutput=journal
 StandardError=journal
-# Where the UI is served (matches PORT in deem-ui.service) and which framebuffer
-# the SPI TFT exposes (change if your overlay creates something other than fb1).
+# Where the UI is served (matches deem-ui.service) and which framebuffer the SPI
+# TFT exposes. On this Pi the fbtft ili9341 overlay creates /dev/fb0 (there is no
+# HDMI framebuffer holding fb0). If your board enumerates it as fb1, change this.
 Environment=DEEM_UI_URL=http://localhost:3000
-Environment=DEEM_FB=/dev/fb1
+Environment=DEEM_FB=/dev/fb0
 ExecStart=/home/connorlamora/Deem/pi/deploy/kiosk/kiosk-session.sh
 Restart=on-failure
 RestartSec=5

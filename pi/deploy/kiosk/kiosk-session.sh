@@ -5,15 +5,17 @@
 #
 # How it works on a headless Pi (Raspberry Pi OS Lite):
 #   1. The display overlay (set in config.txt) exposes the SPI panel as a Linux
-#      framebuffer, usually /dev/fb1.
+#      framebuffer. On this Pi (headless, no HDMI) the fbtft ili9341 overlay
+#      creates /dev/fb0.
 #   2. The fbdev Xorg driver (deploy/kiosk/99-fbdev-tft.conf) binds X to that fb.
 #   3. xinit starts X on tty1 and runs start-kiosk.sh (Chromium kiosk) in it.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
-# The SPI TFT framebuffer. Override if your overlay creates a different node.
-export FRAMEBUFFER="${DEEM_FB:-/dev/fb1}"
+# The SPI TFT framebuffer. Override via DEEM_FB if your overlay creates a
+# different node (e.g. /dev/fb1 when an HDMI framebuffer already holds fb0).
+export FRAMEBUFFER="${DEEM_FB:-/dev/fb0}"
 
 if [ ! -e "${FRAMEBUFFER}" ]; then
   echo "framebuffer ${FRAMEBUFFER} not found." >&2

@@ -92,69 +92,93 @@ Because there's no desktop, the kiosk service starts its **own minimal X server*
 directly on the TFT framebuffer and launches Chromium under it (`xinit` +
 `fbdev`), taking over `tty1`.
 
-### 1. Turn the SPI panel into a framebuffer
-Enable SPI and your panel's display overlay in `/boot/firmware/config.txt`
-(older Pi OS: `/boot/config.txt`), then reboot. The exact `dtoverlay` line
-depends on your panel:
-```ini
-dtparam=spi=on
-# Adafruit 2.8" resistive PiTFT (ILI9341 + touch), for example:
-dtoverlay=pitft28-resistive,rotate=90,speed=64000000,fps=30
-# Generic ILI9341 panels instead use an fbtft overlay; ST7789 panels differ again.
-```
-Confirm the framebuffer appears (usually `/dev/fb1`):
-```bash
-ls /dev/fb*
-dmesg | grep -iE 'fb|ili9341|st77|tft'
-```
-If it's not `/dev/fb1`, set `DEEM_FB=/dev/fbN` in `deem-kiosk.service` and the
-`fbdev` path in `deploy/kiosk/99-fbdev-tft.conf`.
+> This section documents the exact setup running on the Deem Pi: a 2.8" ILI9341
+> panel with an XPT2046 resistive touch controller, Raspberry Pi OS / Debian 13
+> (Trixie), headless (no HDMI), so the fbtft panel is `/dev/fb0`.
 
-### 2. Install X (no desktop) + Chromium
+### 1. Turn the SPI panel into a framebuffer
+Append the overlays in `deploy/kiosk/config.txt.additions` to
+`/boot/firmware/config.txt`, then reboot:
+```ini
+dtoverlay=fbtft,spi0-0,ili9341,bgr,reset_pin=25,dc_pin=24,rotate=0,speed=32000000,fps=30
+dtoverlay=deem-touch
+```
+`rotate=0` gives the native 240x320 **portrait** framebuffer, which matches the
+`demo/` UI's 3:4 design. Confirm it appears:
+```bash
+cat /sys/class/graphics/fb0/virtual_size   # -> 240,320
+dmesg | grep -iE 'ili9341|ads7846'
+```
+On a Pi that also has an HDMI framebuffer, the panel may instead be `/dev/fb1`;
+then set `DEEM_FB=/dev/fb1` in `deem-kiosk.service` and the `fbdev` path in
+`deploy/kiosk/99-fbdev-tft.conf`.
+
+### 2. Touch (XPT2046) with debounce
+Wire **`T_IRQ` (PENIRQ) → GPIO17** (the driver only samples on this interrupt),
+then build and load the touch overlay:
+```bash
+sudo dtc -@ -I dts -O dtb -o /boot/firmware/overlays/deem-touch.dtbo \
+  deploy/kiosk/deem-touch-overlay.dts
+# (deem-touch is already referenced in config.txt.additions; reboot to load)
+```
+The overlay binds the `ads7846` driver to CE1 and adds driver-level debouncing
+(`ti,debounce-*`, `settle-delay`) the stock overlay lacks. After reboot the
+panel registers as `ADS7846 Touchscreen` (`/dev/input/event*`).
+
+### 3. Install X (no desktop) + Chromium
 ```bash
 sudo apt install -y \
   xserver-xorg-core xserver-xorg-video-fbdev xinit x11-xserver-utils \
-  matchbox-window-manager unclutter chromium-browser
-# Let the kiosk start X from a systemd service (not a console login):
-echo 'allowed_users=anybody' | sudo tee /etc/X11/Xwrapper.config
+  matchbox-window-manager unclutter chromium
+sudo cp deploy/kiosk/Xwrapper.config   /etc/X11/Xwrapper.config
 sudo cp deploy/kiosk/99-fbdev-tft.conf /etc/X11/xorg.conf.d/
 ```
 
-### 3. Build the UI in live mode
+### 4. Build the UI in live mode
 Bakes the broker URL + pot id into the build (`VITE_*` are compile-time):
 ```bash
 cd ~/Deem/pi
 # defaults: ws://localhost:9001 and esp32-pot-01 — override via env if needed
-deploy/build-ui.sh
-# e.g. a second pot: VITE_DEVICE_ID=esp32-pot-02 deploy/build-ui.sh
+deploy/build-ui.sh            # produces demo/dist
 ```
-Node 20+ is required (`sudo apt install -y nodejs npm` or nvm).
+Node 20+ is required to build (`deploy/build-ui.sh`); the UI is **served** at
+display time by `deem-ui.service` using Python's stdlib `http.server`, so the Pi
+needs no Node runtime once `demo/dist` exists.
 
-### 4. Enable the services
+### 5. Enable the services + boot straight to the kiosk
 ```bash
 sudo cp deploy/deem-ui.service deploy/deem-kiosk.service /etc/systemd/system/
-# edit User/paths inside the units if your layout differs
 sudo systemctl daemon-reload
-sudo systemctl enable --now deem-ui.service    # serves demo/dist on :3000
+sudo systemctl enable --now mosquitto
+sudo systemctl enable --now deem-ui.service    # python http.server on :3000
 sudo systemctl enable --now deem-kiosk.service # minimal X + Chromium on the TFT
+# Boot to console (no desktop) so nothing else grabs the display / :0:
+sudo systemctl set-default multi-user.target
+sudo systemctl disable lightdm 2>/dev/null || true
 ```
-`deem-ui.service` serves the built UI; `deem-kiosk.service` runs
-`deploy/kiosk/kiosk-session.sh`, which starts X on the TFT framebuffer and runs
-`start-kiosk.sh` (Chromium `--kiosk`). Rerun `deploy/build-ui.sh` and
-`sudo systemctl restart deem-ui` after pulling UI changes.
+`deem-kiosk.service` runs `deploy/kiosk/kiosk-session.sh`, which starts X on the
+TFT framebuffer and runs `start-kiosk.sh` (Chromium `--kiosk`). Rerun
+`deploy/build-ui.sh` and `sudo systemctl restart deem-ui` after pulling UI
+changes.
 
-### Try it once before enabling at boot
+### 6. Calibrate touch
+Install the calibration InputClass, then tap-calibrate the four corners:
 ```bash
-cd ~/Deem/demo && PORT=3000 npm start &     # serve the UI
-sudo systemctl stop getty@tty1              # free tty1
-sudo DEEM_FB=/dev/fb1 DEEM_UI_URL=http://localhost:3000 \
-  ~/Deem/pi/deploy/kiosk/kiosk-session.sh   # should paint the UI on the TFT
+sudo cp deploy/kiosk/40-deem-touch.conf /etc/X11/xorg.conf.d/
+# Guided 4-corner calibration (writes the CalibrationMatrix into that file):
+sudo python3 deploy/kiosk/touch-calibrate.py   # then tap TL,TR,BR,BL
+sudo systemctl restart deem-kiosk
 ```
+The committed matrix is panel-specific (it corrects the resistive panel's Y-flip
+for the portrait display); regenerate it for your hardware. `calib.html` is an
+optional on-screen target sheet you can serve from `demo/dist` during calibration.
 
-> Troubleshooting: no `/dev/fb1` → the overlay didn't load (step 1). X exits
-> immediately → check `journalctl -u deem-kiosk -f` and that
-> `99-fbdev-tft.conf` points at the right `fbdev`. Blank panel but no errors →
-> wrong `rotate=`/driver for your controller.
+> Troubleshooting: no `/dev/fb0` → the overlay didn't load (step 1). X exits
+> immediately → `journalctl -u deem-kiosk -f`; usually `lightdm`/labwc is holding
+> `:0` (step 5 disables it) or `99-fbdev-tft.conf` points at the wrong `fbdev`.
+> Display orientation wrong → change `rotate=` in the fbtft line (0/180 portrait,
+> 90/270 landscape). Touch dead → confirm `T_IRQ` is on GPIO17 and the IRQ fires
+> (`grep ads7846 /proc/interrupts` should climb as you press).
 
 ## Sending a command to a device
 ```bash

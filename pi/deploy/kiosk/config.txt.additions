@@ -1,0 +1,15 @@
+# Append these to /boot/firmware/config.txt (Raspberry Pi OS / Debian 13 Trixie).
+# They drive the 2.8" ILI9341 SPI TFT + XPT2046 touch as the Pi's only display.
+#
+# Requires: dtparam=spi=on (usually already present).
+
+# ILI9341 panel via the fbtft driver -> /dev/fb0, 240x320 portrait.
+#   rotate=0  : portrait (matches the demo/ UI's 3:4 design). Use 90/180/270 to
+#               re-orient; 0/180 are portrait, 90/270 are landscape.
+dtoverlay=fbtft,spi0-0,ili9341,bgr,reset_pin=25,dc_pin=24,rotate=0,speed=32000000,fps=30
+
+# XPT2046 resistive touch with driver-level debounce (build the .dtbo first:
+#   sudo dtc -@ -I dts -O dtb -o /boot/firmware/overlays/deem-touch.dtbo \
+#       pi/deploy/kiosk/deem-touch-overlay.dts
+# PENIRQ (T_IRQ) must be wired to GPIO17.
+dtoverlay=deem-touch
