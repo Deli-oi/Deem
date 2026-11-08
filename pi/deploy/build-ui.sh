@@ -17,12 +17,14 @@ VITE_MQTT_URL="${VITE_MQTT_URL:-ws://localhost:9001}"
 VITE_DEVICE_ID="${VITE_DEVICE_ID:-esp32-pot-01}"
 # The Pi serves static files only, so voice (Fish Audio speech-to-text) goes to the hosted Deem server,
 # which holds the API key. The key is never on the Pi.
-VITE_TRANSCRIBE_URL="${VITE_TRANSCRIBE_URL:-https://deem-production.up.railway.app/api/transcribe}"
+VITE_API_BASE="${VITE_API_BASE:-https://deem-production.up.railway.app}"
+VITE_TRANSCRIBE_URL="${VITE_TRANSCRIBE_URL:-${VITE_API_BASE}/api/transcribe}"
 
 echo "building Deem UI (live mode)"
 echo "  broker:  ${VITE_MQTT_URL}"
 echo "  device:  ${VITE_DEVICE_ID}"
 echo "  voice:   ${VITE_TRANSCRIBE_URL}"
+echo "  plants + answers (Gemini): ${VITE_API_BASE}"
 
 # .env.local is git-ignored (keeps the device-specific URL out of the repo) and
 # is loaded by Vite for the production build.
@@ -31,6 +33,7 @@ cat > .env.local <<EOF
 VITE_BACKEND=mqtt
 VITE_MQTT_URL=${VITE_MQTT_URL}
 VITE_DEVICE_ID=${VITE_DEVICE_ID}
+VITE_API_BASE=${VITE_API_BASE}
 VITE_TRANSCRIBE_URL=${VITE_TRANSCRIBE_URL}
 EOF
 
