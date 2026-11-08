@@ -79,15 +79,48 @@ sink:
 If the endpoint expects a different JSON shape than `{"readings": [...]}`, edit
 `HttpSink.build_body()` in `deem_controller/sink.py`.
 
-## Touchscreen display (kiosk)
-The Pi's 2.8" touchscreen shows the live **plant-health** UI (the `demo/` app).
-It subscribes to the ESP32 over Mosquitto's WebSocket listener (`:9001`, already
-in `deploy/mosquitto.conf`) and refreshes on every telemetry message, so the
-screen always shows the most recent reading + health score. This runs *alongside*
-the controller: the UI is just a live view, while `deem_controller` is what
-aggregates readings, relays them to the cloud, and wipes local storage on success.
+## Touchscreen display (kiosk, SPI TFT, no desktop)
+The Pi's 2.8" SPI TFT shows the live **plant-health** UI (the `demo/` app) as its
+*only* display — Raspberry Pi OS **Lite**, no desktop environment. The UI
+subscribes to the ESP32 over Mosquitto's WebSocket listener (`:9001`, already in
+`deploy/mosquitto.conf`) and refreshes on every telemetry message, so the panel
+always shows the most recent reading + health score. This runs *alongside* the
+controller: the UI is just a live view, while `deem_controller` aggregates
+readings, relays them to the cloud, and wipes local storage on success.
 
-### 1. Build the UI in live mode
+Because there's no desktop, the kiosk service starts its **own minimal X server**
+directly on the TFT framebuffer and launches Chromium under it (`xinit` +
+`fbdev`), taking over `tty1`.
+
+### 1. Turn the SPI panel into a framebuffer
+Enable SPI and your panel's display overlay in `/boot/firmware/config.txt`
+(older Pi OS: `/boot/config.txt`), then reboot. The exact `dtoverlay` line
+depends on your panel:
+```ini
+dtparam=spi=on
+# Adafruit 2.8" resistive PiTFT (ILI9341 + touch), for example:
+dtoverlay=pitft28-resistive,rotate=90,speed=64000000,fps=30
+# Generic ILI9341 panels instead use an fbtft overlay; ST7789 panels differ again.
+```
+Confirm the framebuffer appears (usually `/dev/fb1`):
+```bash
+ls /dev/fb*
+dmesg | grep -iE 'fb|ili9341|st77|tft'
+```
+If it's not `/dev/fb1`, set `DEEM_FB=/dev/fbN` in `deem-kiosk.service` and the
+`fbdev` path in `deploy/kiosk/99-fbdev-tft.conf`.
+
+### 2. Install X (no desktop) + Chromium
+```bash
+sudo apt install -y \
+  xserver-xorg-core xserver-xorg-video-fbdev xinit x11-xserver-utils \
+  matchbox-window-manager unclutter chromium-browser
+# Let the kiosk start X from a systemd service (not a console login):
+echo 'allowed_users=anybody' | sudo tee /etc/X11/Xwrapper.config
+sudo cp deploy/kiosk/99-fbdev-tft.conf /etc/X11/xorg.conf.d/
+```
+
+### 3. Build the UI in live mode
 Bakes the broker URL + pot id into the build (`VITE_*` are compile-time):
 ```bash
 cd ~/Deem/pi
@@ -97,23 +130,31 @@ deploy/build-ui.sh
 ```
 Node 20+ is required (`sudo apt install -y nodejs npm` or nvm).
 
-### 2. Install the browser + services
+### 4. Enable the services
 ```bash
-sudo apt install -y chromium-browser unclutter
 sudo cp deploy/deem-ui.service deploy/deem-kiosk.service /etc/systemd/system/
 # edit User/paths inside the units if your layout differs
 sudo systemctl daemon-reload
 sudo systemctl enable --now deem-ui.service    # serves demo/dist on :3000
-sudo systemctl enable --now deem-kiosk.service # full-screen Chromium on the panel
+sudo systemctl enable --now deem-kiosk.service # minimal X + Chromium on the TFT
 ```
 `deem-ui.service` serves the built UI; `deem-kiosk.service` runs
-`deploy/kiosk/start-kiosk.sh`, which waits for the UI, disables screen blanking,
-and opens Chromium in `--kiosk` mode. Rerun `deploy/build-ui.sh` and
+`deploy/kiosk/kiosk-session.sh`, which starts X on the TFT framebuffer and runs
+`start-kiosk.sh` (Chromium `--kiosk`). Rerun `deploy/build-ui.sh` and
 `sudo systemctl restart deem-ui` after pulling UI changes.
 
-> The kiosk service must run as the user that owns the Pi's graphical (X)
-> session; check `DISPLAY`/`XAUTHORITY` in `deem-kiosk.service` if the window
-> doesn't appear.
+### Try it once before enabling at boot
+```bash
+cd ~/Deem/demo && PORT=3000 npm start &     # serve the UI
+sudo systemctl stop getty@tty1              # free tty1
+sudo DEEM_FB=/dev/fb1 DEEM_UI_URL=http://localhost:3000 \
+  ~/Deem/pi/deploy/kiosk/kiosk-session.sh   # should paint the UI on the TFT
+```
+
+> Troubleshooting: no `/dev/fb1` → the overlay didn't load (step 1). X exits
+> immediately → check `journalctl -u deem-kiosk -f` and that
+> `99-fbdev-tft.conf` points at the right `fbdev`. Blank panel but no errors →
+> wrong `rotate=`/driver for your controller.
 
 ## Sending a command to a device
 ```bash
