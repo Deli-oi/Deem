@@ -144,6 +144,7 @@ export function createHandler({ distDir, fishKey, fetchImpl = fetch, now = Date.
         question: body?.question,
         metrics: body?.metrics && typeof body.metrics === 'object' ? body.metrics : {},
         healthScore: body?.health_score,
+        deviceId: typeof body?.device_id === 'string' ? body.device_id : undefined,
       }),
     )
   }
