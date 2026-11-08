@@ -19,6 +19,7 @@ public:
         available_ = false;
         failedReads_ = 0;
         lastRead_ = 0;
+        lastRetry_ = 0;
     }
 
     // Start the sensor. Returns true if it was found on I2C.
@@ -29,9 +30,15 @@ public:
 
     // Read the sensor. Safe to call every loop(); reads once per second.
     bool update() {
-        if (!available_) return false;
         if (millis() - lastRead_ < 1000) return false;
         lastRead_ = millis();
+        if (!available_) {                   // unplugged or glitched: try again every 30 s
+            if (millis() - lastRetry_ < 30000) return false;
+            lastRetry_ = millis();
+            available_ = ss_.begin(0x36);
+            failedReads_ = 0;
+            return false;
+        }
 
         float t = ss_.getTemp();             // Celsius
         uint16_t m = ss_.touchRead(0);       // capacitive moisture
@@ -66,6 +73,7 @@ private:
     bool available_;
     uint8_t failedReads_;
     unsigned long lastRead_;
+    unsigned long lastRetry_;
 };
 
 #endif // SOILSENS_H
