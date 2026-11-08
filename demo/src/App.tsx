@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { MicButton } from './components/MicButton'
 import { FailureScreen } from './components/screens/FailureScreen'
 import { HealthScreen } from './components/screens/HealthScreen'
 import { HistoryScreen } from './components/screens/HistoryScreen'
@@ -7,7 +8,6 @@ import { SetupFlow } from './components/screens/SetupFlow'
 import { backend } from './backend'
 import { playAlert, soundEnabled, unlockAudio } from './lib/alertSound'
 import { evaluateAlerts } from './lib/alerts'
-import { hardwareKeyFor } from './lib/keys'
 import { voiceMessage } from './lib/voice'
 import type { Listening } from './lib/voice'
 import { voice } from './voice'
@@ -21,9 +21,9 @@ type AppPhase = 'boot' | 'setup_prompt' | 'setup_match' | 'sensor_check' | 'live
 const PAGES: ScreenPage[] = ['health', 'inputs', 'history']
 /** Horizontal travel (px) that counts as a swipe. */
 const SWIPE_PX = 36
-/** A voice recording is cut off after this long even if the MIC key is still held. */
+/** A voice recording is cut off after this long even if the mic is never tapped off. */
 const MAX_LISTEN_MS = 8000
-/** Shorter than this is a tap, not speech: ignore it. */
+/** Shorter than this is an accidental double tap, not speech: ignore it. */
 const MIN_LISTEN_MS = 400
 
 export default function App() {
@@ -41,15 +41,13 @@ export default function App() {
   const [sensorError, setSensorError] = useState<string | null>(null)
   const [linkOnline, setLinkOnline] = useState(true)
   const [answer, setAnswer] = useState<AskAnswer | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
   const swipeStartX = useRef<number | null>(null)
 
-  // Key handlers are registered once; they read the latest state through these refs.
+  // The mic's async steps and the auto-stop timer read the latest state through these refs.
   const phaseRef = useRef(phase)
   const voiceRef = useRef(voiceState)
   const busyRef = useRef(busy)
   const listenRef = useRef<Listening | null>(null)
-  const holdingRef = useRef(false)
   const startedAtRef = useRef(0)
   const lastAlertedTs = useRef<number | null>(null)
   const pendingAlert = useRef(false)
@@ -124,7 +122,7 @@ export default function App() {
     }
   }
 
-  // Live updates: new readings (every 10 min, and whenever TEST is pressed) and link status.
+  // Live updates: a new reading (every 10 minutes) and the device's link status.
   useEffect(() => {
     if (phase !== 'live' || !plant) return
     return backend.subscribe((event) => {
@@ -137,34 +135,28 @@ export default function App() {
     })
   }, [phase, plant])
 
-  // ---- MIC key: hold to talk, release to send. Setup = say the plant; live = ask a question.
-  async function micDown() {
-    const p = phaseRef.current
-    if ((p !== 'setup_prompt' && p !== 'live') || voiceRef.current !== 'idle' || busyRef.current) return
-    holdingRef.current = true
+  // ---- Voice: tap the mic to start, tap again to stop and send. Setup = say the plant; live = ask a question.
+  async function startListening() {
     setVoiceError(null)
     setAnswer(null)
     try {
-      const active = await voice.listen(MAX_LISTEN_MS, () => void micUp())
+      const active = await voice.listen(MAX_LISTEN_MS, () => void stopListening())
       listenRef.current = active
       startedAtRef.current = performance.now()
       setVoiceState('recording')
-      if (!holdingRef.current) await micUp() // key was released while the mic was starting
     } catch (err) {
-      holdingRef.current = false
       setVoiceError(voiceMessage(err))
     }
   }
 
-  async function micUp() {
-    holdingRef.current = false
+  async function stopListening() {
     const active = listenRef.current
     if (!active) return
     listenRef.current = null
     if (performance.now() - startedAtRef.current < MIN_LISTEN_MS) {
       active.cancel()
       setVoiceState('idle')
-      setVoiceError('Hold the MIC key and speak.')
+      setVoiceError('Tap the mic, speak, then tap it again.')
       return
     }
     setVoiceState('transcribing')
@@ -184,27 +176,11 @@ export default function App() {
     }
   }
 
-  // ---- TEST key: show the most recent test. (There is no sample-now: the device samples on its own schedule.)
-  async function testKey() {
-    if (phaseRef.current !== 'live' || !plant || busyRef.current || voiceRef.current !== 'idle') return
-    setBusy(true)
-    setAnswer(null)
-    setNotice('testing...')
-    try {
-      const before = telemetry
-      const tel = await backend.collectNow(plant.plant_type_id)
-      setTelemetry(tel)
-      setHistory(await backend.getHistory(plant.plant_type_id))
-      setNotice(
-        tel.ts === before?.ts
-          ? `latest reading · ${ageLabel(Date.now() / 1000 - tel.ts)}`
-          : `tested · health ${tel.health_score ?? '--'}`,
-      )
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : 'test failed')
-    } finally {
-      setBusy(false)
-    }
+  function onMicTap() {
+    const p = phaseRef.current
+    if (p !== 'setup_prompt' && p !== 'live') return
+    if (voiceRef.current === 'recording') void stopListening()
+    else if (voiceRef.current === 'idle' && !busyRef.current) void startListening()
   }
 
   function go(direction: 1 | -1) {
@@ -215,32 +191,17 @@ export default function App() {
     setAnswer(null)
   }
 
-  // Latest handlers for the window listeners below.
-  const handlers = useRef({ micDown, micUp, testKey, go })
-  handlers.current = { micDown, micUp, testKey, go }
-
+  // Arrow keys also move between the pages (handy on a desktop).
+  const goRef = useRef(go)
+  goRef.current = go
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.repeat) return
-      const key = hardwareKeyFor(e.code)
-      if (key === 'mic') {
-        e.preventDefault()
-        void handlers.current.micDown()
-      } else if (key === 'test') {
-        e.preventDefault()
-        void handlers.current.testKey()
-      } else if (phaseRef.current === 'live' && e.code === 'ArrowRight') handlers.current.go(1)
-      else if (phaseRef.current === 'live' && e.code === 'ArrowLeft') handlers.current.go(-1)
+    const onKey = (e: KeyboardEvent) => {
+      if (phaseRef.current !== 'live') return
+      if (e.code === 'ArrowRight') goRef.current(1)
+      else if (e.code === 'ArrowLeft') goRef.current(-1)
     }
-    const up = (e: KeyboardEvent) => {
-      if (hardwareKeyFor(e.code) === 'mic') void handlers.current.micUp()
-    }
-    window.addEventListener('keydown', down)
-    window.addEventListener('keyup', up)
-    return () => {
-      window.removeEventListener('keydown', down)
-      window.removeEventListener('keyup', up)
-    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   // Swipe on the touch screen: finger (or mouse drag) left/right.
@@ -283,14 +244,16 @@ export default function App() {
     }
   }, [phase, telemetry, alertCount, voiceState])
 
-  const sheetText = answer ? answer.answer : notice
+  // The voice button sits along the bottom of setup's first step and of every live page,
+  // and those screens are made shorter to leave room for it.
+  const showMic = phase === 'setup_prompt' || phase === 'live'
 
   return (
     <div className="app-stage">
       <div className="device">
         <div className="bezel">
           <div
-            className="screen"
+            className={`screen${showMic ? ' has-mic' : ''}`}
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             onPointerCancel={() => (swipeStartX.current = null)}
@@ -332,12 +295,6 @@ export default function App() {
             {phase === 'live' && plant && telemetry && (
               <>
                 {!linkOnline && <div className="link-banner">device offline</div>}
-                {voiceState !== 'idle' && (
-                  <div className={`voice-note ${voiceState}`}>
-                    <span className="voice-dot" />
-                    {voiceState === 'recording' ? 'LISTENING' : 'HEARING'}
-                  </div>
-                )}
                 <div className="screen-track" data-page={page}>
                   {alerts.length > 0 ? (
                     <FailureScreen plant={plant} telemetry={telemetry} alerts={alerts} />
@@ -347,36 +304,30 @@ export default function App() {
                   <InputsScreen plant={plant} telemetry={telemetry} />
                   <HistoryScreen plant={plant} points={history} />
                 </div>
-                {(sheetText || voiceError) && voiceState === 'idle' && (
+                {(answer || voiceError) && voiceState === 'idle' && (
                   <button
                     type="button"
                     className="ask-sheet"
                     onClick={() => {
                       setAnswer(null)
-                      setNotice(null)
                       setVoiceError(null)
                     }}
                   >
-                    <div className="ask-sheet-label">{answer ? 'ASK' : voiceError ? 'MIC' : 'TEST'}</div>
+                    <div className="ask-sheet-label">{answer ? 'ASK' : 'MIC'}</div>
                     {answer && <div className="ask-q">"{answer.question}"</div>}
-                    <div>{voiceError ?? sheetText}</div>
+                    <div>{voiceError ?? answer?.answer}</div>
                     <div className="ask-sheet-dismiss">tap to close</div>
                   </button>
                 )}
               </>
             )}
+
+            {showMic && <MicButton state={voiceState} disabled={busy} onTap={onMicTap} />}
           </div>
         </div>
       </div>
     </div>
   )
-}
-
-/** "just now", "4 min ago", "2 h ago". */
-export function ageLabel(seconds: number): string {
-  if (seconds < 60) return 'just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`
-  return `${Math.floor(seconds / 3600)} h ago`
 }
 
 function delay(ms: number) {

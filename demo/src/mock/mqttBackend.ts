@@ -191,11 +191,6 @@ export class MqttBackend implements DeemBackend {
     return this.waitForTelemetry(FIRST_TELEMETRY_TIMEOUT_MS)
   }
 
-  /** There is no sample-now: TEST shows the newest reading the device sent. */
-  async collectNow(plantTypeId: string): Promise<Telemetry> {
-    return this.getLatestTelemetry(plantTypeId)
-  }
-
   async getHistory(plantTypeId: string): Promise<HealthPoint[]> {
     void plantTypeId
     return this.store.hours()

@@ -6,7 +6,7 @@ import { evaluateAlerts } from '../lib/alerts'
 import { adviceFor, firstSentence } from '../lib/advice'
 import { AIR_QUALITY_SOLUTIONS } from '../lib/airQuality'
 import type { PlantType, Telemetry } from '../lib/types'
-import { FIXTURE_CYCLE, MockBackend } from './backend'
+import { FIXTURE_CYCLE, MockBackend, SCENARIO_IDS } from './backend'
 
 const seedText = readFileSync('public/plants/seed_all.json', 'utf8')
 const dracaena = (JSON.parse(seedText) as PlantType[]).find((p) => p.plant_type_id === 'dracaena')!
@@ -54,21 +54,32 @@ describe('failure fixtures', () => {
   })
 })
 
-describe('TEST key cycle', () => {
+describe('?scenario= (mock only)', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', async () => ({ ok: true, json: async () => JSON.parse(seedText) }))
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  it('visits healthy then all 9 failures once, in order, then wraps', async () => {
-    const backend = new MockBackend()
-    const seen: string[][] = []
-    const read = (t: Telemetry) =>
-      seen.push(evaluateAlerts(dracaena, t.metrics, new Set()).map((a) => a.label))
-    read(await backend.getLatestTelemetry('dracaena'))
-    for (let i = 0; i < 9; i++) read(await backend.collectNow('dracaena'))
-    expect(seen).toEqual([[], ...FAILURES.map((f) => [f.label])])
-    read(await backend.collectNow('dracaena'))
-    expect(seen[10]).toEqual([])
+  const labelsFor = async (scenario?: string | null) => {
+    const backend = new MockBackend({ scenario })
+    const t = await backend.getLatestTelemetry('dracaena')
+    return evaluateAlerts(dracaena, t.metrics, new Set()).map((a) => a.label)
+  }
+
+  it('defaults to a healthy plant', async () => {
+    expect(await labelsFor()).toEqual([])
+    expect(await labelsFor(null)).toEqual([])
+  })
+
+  it.each(FAILURES.map((f) => [f.fixture, f.label]))('%s shows exactly "%s"', async (fixture, label) => {
+    expect(await labelsFor(fixture)).toEqual([label])
+  })
+
+  it('ignores an unknown scenario', async () => {
+    expect(await labelsFor('nonsense')).toEqual([])
+  })
+
+  it('lists every scenario: healthy plus the nine failures', () => {
+    expect(SCENARIO_IDS).toEqual(['healthy', ...FAILURES.map((f) => f.fixture)])
   })
 })

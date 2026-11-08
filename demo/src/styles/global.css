@@ -612,33 +612,6 @@ input {
   }
 }
 
-.voice-note {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  border: 2px solid var(--soil);
-  border-radius: 6px;
-  background: #1c1c1e;
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  color: var(--soil);
-}
-
-.voice-note .voice-dot {
-  width: 6px;
-  height: 6px;
-}
-
-.voice-note.transcribing {
-  border-color: var(--rh);
-  color: var(--rh);
-}
-
 .ask-q {
   margin-bottom: 4px;
   color: var(--muted);
@@ -691,6 +664,7 @@ html.kiosk .screen {
 
 /* On the real 240x320 panel the canvas is scaled 0.8x, so the pixel font's small sizes would
    land under its 8px grid. Keep every label at >= 10px design size (8px on the panel). */
+html.kiosk .mic-bar,
 html.kiosk .failure-label,
 html.kiosk .failure-chip,
 html.kiosk .alert-bar,
@@ -809,4 +783,92 @@ html.kiosk .page-dots i {
   line-height: 1.05;
   text-align: center;
   color: var(--ink);
+}
+
+/* ---- The voice button along the bottom of the screen. Tap to turn the mic on, tap again to turn it off.
+   The screens above it are made shorter to leave room. ---- */
+.screen.has-mic .screen-track,
+.screen.has-mic .setup-screen {
+  height: calc(100% - 62px);
+}
+
+.screen.has-mic .ask-sheet {
+  bottom: 66px;
+}
+
+.mic-bar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 6;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 10px;
+  background: #2a2410;
+  border: 3px solid #ffb340;
+  border-radius: 12px;
+  color: #ffb340;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+}
+
+.mic-bar:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.mic-bar:disabled {
+  opacity: 0.55;
+}
+
+.mic-sub {
+  font-family: var(--font-num);
+  font-size: 18px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #c9a45c;
+}
+
+/* a tiny pixel microphone */
+.mic-icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 20px;
+  background:
+    linear-gradient(currentColor, currentColor) 4px 0 / 6px 11px no-repeat,
+    linear-gradient(currentColor, currentColor) 1px 6px / 2px 6px no-repeat,
+    linear-gradient(currentColor, currentColor) 11px 6px / 2px 6px no-repeat,
+    linear-gradient(currentColor, currentColor) 1px 12px / 12px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 6px 14px / 2px 4px no-repeat,
+    linear-gradient(currentColor, currentColor) 3px 18px / 8px 2px no-repeat;
+}
+
+.mic-bar.recording {
+  background: #3a1018;
+  border-color: var(--soil);
+  color: #ff6b86;
+}
+
+.mic-bar.recording .mic-sub {
+  color: #ff9aae;
+}
+
+.mic-bar.recording .mic-icon {
+  animation: voice-blink 0.7s steps(2, start) infinite;
+}
+
+.mic-bar.transcribing {
+  border-color: var(--rh);
+  color: var(--rh);
+  background: #0e2430;
+}
+
+.mic-bar.transcribing .mic-sub {
+  color: #8fcdea;
 }

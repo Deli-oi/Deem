@@ -11,8 +11,8 @@ Status: **Pi owns the panel** (decided). App side is ready; **not verified on re
 
 - **Fit:** `http://<host>/?kiosk` makes the page the screen itself: no bezel, no cursor, no scrolling. The UI is designed on a 300x400 (3:4, portrait) canvas and scaled to the viewport: **240x320 gets exactly 0.8x.** Labels are kept at 8px or larger on the panel. Checked at 240x320: all three pages fit with no overflow.
 - **Portrait only:** The panel must be set to **portrait** (240 wide, 320 tall). In landscape (320x240) the canvas would shrink to 0.6x.
-- **Physical keys:** MIC (hold to talk) and TEST are keyboard keys, `KeyM` and `KeyT` by default. Remap them in `demo/src/lib/keys.ts` to the real keys (e.g. `F13`, `Numpad0`).
-- **Touch:** Used for confirm/retry buttons and swiping between pages. The panel's touch layer needs its own driver (section 3) to produce pointer events.
+- **Mic:** an on-screen toggle button at the bottom (tap to turn on, tap again to turn off and send). Every screen is shortened to make room. The production device will use a physical button instead.
+- **Touch:** Used for confirm/retry, the mic button, and swiping between pages. The panel's touch layer needs its own driver (section 3) to produce pointer events.
 
 ## 3. Pi 5 display path (to verify once we know the module)
 

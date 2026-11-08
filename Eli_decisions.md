@@ -87,3 +87,6 @@ From the software-lead product pass, still in force unless a later bullet above 
 - History is one point per day: the average of that day's health scores.
 - A hint on the health page points down at the physical ask button.
 - Camera is not on this screen for the first iteration.
+
+## 2026-11-08: Mic is an on-screen toggle button
+- Physical buttons are not feasible (Connor). Tap the on-screen MIC once to start, again to stop and send. Screens are compressed to fit it. TEST is gone. Production will use a physical button.
