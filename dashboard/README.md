@@ -1,6 +1,6 @@
-# Deem greenhouse dashboard (mock)
+# Greenhouse AI: greenhouse dashboard
 
-A standalone web app that shows how Deem **scales from one plant to a whole greenhouse**. It is a UI mock: every reading is simulated, and it is not connected to the MVP hardware, MQTT, or any database.
+A standalone web app that shows how Greenhouse AI **scales from one plant to a whole greenhouse**. The greenhouse is a simulation (45 plants, 3 zones), with one exception: the plant tagged **LIVE** (default `A-1-1`) shows the real pot, fed by the ingest service (Pi relay, then the Tiger database): its real readings, alerts and hourly history. If the service is unreachable or the newest reading is older than 25 minutes, that plant goes back to simulated. Set `VITE_INGEST_URL` (and optionally `VITE_LIVE_PLANT_ID`, `VITE_LIVE_DEVICE_ID`) at build time to turn it on.
 
 Same pixel fonts as the device (Silkscreen + VT323) in a cozy, Stardew-Valley-style look: warm parchment page with tiny wildflowers, a wooden sign for the top bar, paper cards, and a sunny greenhouse with wooden planters, rain barrels, fairy lights, flowers outside and a sleeping cat. The mini display in the pop-up stays dark, like the little gadget it is.
 

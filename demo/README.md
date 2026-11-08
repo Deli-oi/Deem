@@ -1,9 +1,6 @@
-# Deem local device demo
+# Greenhouse AI: device screen
 
-Scaled mock of the ESP display + hardware buttons, backed by a **swappable mock
-backend**. Replace `src/mock/backend.ts`’s exported `backend` with a Railway /
-Tiger database / Gemini implementation later — the UI talks only to the `DeemBackend`
-interface.
+The UI for the 2.8" 240x320 touchscreen (also runs in any browser), plus the Node server that hosts it (`server/`). It has two backends behind one `DeemBackend` interface: a **fixture mock** (no hardware; `?scenario=<id>` shows each failure) and a **live** one that reads the real ESP32 over MQTT. In live mode, plant matching and answers come from the hosted server (Gemini + the Tiger database) with the mock as the offline fallback.
 
 ## Run (visual test)
 
@@ -103,7 +100,7 @@ npm run dev
 
 What the UI does against the contract:
 
-- Subscribes to `deem/<id>/telemetry`, `deem/<id>/status` and `deem/<id>/cmd/ack`.
+- Subscribes to `deem/<id>/telemetry` and `deem/<id>/status` only (it sends nothing).
 - Every telemetry message updates the screens live. Missing metrics show `--`. Unknown numeric keys still show on the Inputs page. Malformed packets are dropped.
 - `ts: 0` is fine (no clock on the ESP32): arrival time is used.
 - **Setup's sensor check follows the device's real startup.** The rows are in the firmware's init order: Temp/RH (DHT11), AQI (SEN63C), Soil (Stemma). It first waits for the device to say it is online (its retained `status`), then each row turns to a check as that sensor's readings arrive (Temp/RH: `temp_c` + `rh_pct`, AQI: `co2_ppm`, Soil: `soil_moisture`). If the device reports its sensors' startup results in `status.sensors` (`{"dht":true,"air":false,"soil":true}`), a sensor whose startup failed turns to an X at once. It waits up to a minute for a slow sensor (the air sensor needs a few seconds of warm-up), then fails whatever is still silent. If the device never comes online, setup says so.
@@ -118,8 +115,15 @@ Things for the firmware to confirm:
 - `temp_c` / `rh_pct` come from the DHT11; the firmware is the source of truth.
 - Telemetry should be **retained** and sent every 10 minutes, and `status` should carry `sensors`. See `docs/firmware_changes_for_zion.md`.
 
-## Swap the knowledge backend later
+## Plant knowledge, matching and answers (server)
 
-Plant matching, Q&A and sprites still come from the mock (`MockBackend`). Tiger database / Gemini replace that
-by implementing `listPlants`, `matchPlant` and `ask` and passing it as `knowledge` in `src/backend.ts`.
-Telemetry, status, commands and history are already real in live mode.
+In live mode `src/backend.ts` passes a `RemoteKnowledge` (`src/lib/remoteKnowledge.ts`) to the MQTT backend. It calls the hosted server (`VITE_API_BASE`, default `https://deem-production.up.railway.app` on the Pi build):
+
+| Route | What |
+|-------|------|
+| `GET /api/plants` | the 12 plants, from the Tiger database (`plant_types`; the seed file if the database is down) |
+| `POST /api/plants/match` | Gemini picks the plant you named from that closed list, or no match |
+| `POST /api/ask` | Gemini answers from the plant's care notes and healthy ranges, the latest reading, the blanket air-quality limits and the last 24 h of history (trends) from Tiger |
+| `POST /api/transcribe` | Fish Audio speech to text |
+
+All four are limited to our own page plus `ALLOWED_ORIGINS` (the Pi screen), rate limited per IP, and keep every key on the server. If any call fails or is slow, `RemoteKnowledge` falls back to the local matcher and canned answers, so the screen never hangs. Server code: `server/knowledge.mjs`, `server/handler.mjs`. Model: `gemini-flash-latest` (override with `GEMINI_MODEL`). Telemetry, status and history are real in live mode.

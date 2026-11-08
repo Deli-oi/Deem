@@ -1,3 +1,5 @@
+> **SUPERSEDED.** This guide describes the old `e2/` firmware (WiFi access point) and a command channel (`cmd`, `set_relay`, `sample_now`). The project now has one firmware, `hackathon2026/`, which only publishes telemetry and status and receives nothing. See `docs/mqtt_contract.md` (current), `docs/firmware_changes_for_zion.md`, and `.github/copilot-instructions.md`. Kept only as history.
+
 # ESP32 ↔ Pi Integration Guide (firmware side)
 
 For the teammate working in `e2/`. This explains how to make the ESP32 talk to
