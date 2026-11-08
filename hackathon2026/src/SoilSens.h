@@ -64,8 +64,9 @@ public:
     bool isAvailable() const { return available_; }
 
 private:
-    static const int DRY_RAW = 333;    // raw value in dry air  (calibrate!)
-    static const int WET_RAW = 700;   // raw value in water    (calibrate!)
+    // Measured: bone-dry 530, dry ~570, healthy/slightly overwatered 915-935, too wet ~980.
+    static const int DRY_RAW = 530;
+    static const int WET_RAW = 980;
 
     Adafruit_seesaw ss_;
     uint16_t moisture_;
