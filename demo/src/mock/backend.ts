@@ -1,5 +1,6 @@
 import { matchPlantLocal } from '../lib/matchPlant'
 import { scoreHealth, withHealth } from '../lib/healthScore'
+import { AIR_QUALITY_SOLUTIONS } from '../lib/airQuality'
 import { hourKey } from '../lib/historyStore'
 import type { BackendEvent, DeemBackend } from '../lib/backendTypes'
 import type { SensorCheck } from '../lib/telemetry'
@@ -126,7 +127,7 @@ export class MockBackend implements DeemBackend {
     await delay(400)
 
     const m = telemetry.metrics
-    const hits = plant.solutions.filter((s) => {
+    const hits = [...plant.solutions, ...AIR_QUALITY_SOLUTIONS].filter((s) => {
       const t = s.trigger
       if (!t) return false
       const value = (m as Record<string, number>)[t.metric]

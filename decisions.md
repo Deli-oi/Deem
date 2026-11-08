@@ -21,6 +21,7 @@ A log of key project decisions. Add newest entries at the top.
 
 ### 2026-11-07: Alert sound for out-of-range readings
 - **Decision:** A reading outside the plant's healthy range (plant-data thresholds) plays an alert sound and shows what is wrong on the health page. MVP: every out-of-range reading alerts (nothing self-corrects). Later: a biosphere controller handles watering/temperature/humidity and the device alerts only for what it cannot change (e.g. soil quality), via the `AUTO_CORRECTED` list in `demo/src/lib/alerts.ts`.
+- **Air quality:** blanket limits for every plant, since the plant data has no CO2/dust ranges: CO2 > 1500 ppm, PM2.5 > 35 ug/m3 (EPA 24h), PM10 > 150 ug/m3 (EPA 24h). High on purpose so a busy room (e.g. the hackathon demo) does not alert constantly. PM1.0, PM4.0 and low values never alert. Stored fixes in `demo/src/lib/airQuality.ts`.
 - **Why:** Without automation, the person must act on these problems, and a sound gets attention when no one is looking at the screen.
 - **Alternatives considered:** Alerting only on large deviations (rejected: the healthy range already defines what needs fixing). Spoken alerts through Fish Audio text-to-speech (a possible next step).
 

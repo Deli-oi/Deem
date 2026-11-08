@@ -6,6 +6,7 @@ What Eli asked for on the device screen. Newest first. Hardware and cloud calls 
 
 - When something is below (or above) the plant's healthy range and needs to be fixed, the device plays an alert sound, and the health page says what is wrong.
 - MVP: every out-of-range reading alerts, because nothing corrects itself yet (no automatic watering).
+- Air quality alerts too, with blanket limits for every plant (the plant data has none): CO2 above 1500 ppm, PM2.5 above 35, PM10 above 150. Set high on purpose so a busy room doesn't set it off.
 - Later: a biosphere controller for the whole greenhouse fixes watering, temperature and humidity, and the device alerts only for what can't be changed (e.g. soil quality). This is for the full-greenhouse dashboard that shows how it scales.
 
 ## 2026-11-07: MIC and TEST are physical keys; voice is Fish Audio only
