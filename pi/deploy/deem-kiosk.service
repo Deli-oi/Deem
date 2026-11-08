@@ -1,0 +1,23 @@
+[Unit]
+Description=Deem touchscreen kiosk (Chromium full-screen plant-health UI)
+# Needs the local UI server and the Pi's graphical session to be up.
+After=deem-ui.service graphical.target
+Wants=deem-ui.service
+Requires=graphical.target
+
+[Service]
+Type=simple
+# Adjust User and paths to match your Pi setup. Must be the user that owns the
+# graphical (X) session on the touchscreen.
+User=connorlamora
+# The Pi's local display + X auth so Chromium can open a window.
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/connorlamora/.Xauthority
+# Where the UI is served (matches PORT in deem-ui.service).
+Environment=DEEM_UI_URL=http://localhost:3000
+ExecStart=/home/connorlamora/Deem/pi/deploy/kiosk/start-kiosk.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target
