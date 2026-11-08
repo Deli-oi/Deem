@@ -18,20 +18,20 @@ const plant = {
 } as unknown as PlantType
 
 const telemetry = { device_id: 'esp32-pot-01', ts: 1731000000, metrics: { soil_moisture: 9 } } as Telemetry
-const dry: Alert = { metric: 'soil_moisture', direction: 'low', value: 9, limit: 15, label: 'Soil too dry' }
+const dry: Alert = { metric: 'soil_moisture', direction: 'low', value: 9, limit: 15, label: 'Soil critically dry' }
 
 describe('FailureScreen', () => {
   it('shows the wilted plant, what is wrong, and ONE sentence on what to do', () => {
     const { container } = render(<FailureScreen plant={plant} telemetry={telemetry} alerts={[dry]} />)
     const img = container.querySelector('.wilted-sprite') as HTMLImageElement
     expect(img.getAttribute('src')).toBe('/sprites/wilted/dracaena.png')
-    expect(screen.getByText('Soil too dry')).toBeTruthy()
+    expect(screen.getByText('Soil critically dry')).toBeTruthy()
     expect(screen.getByText('Water thoroughly until water drains, then empty the saucer.')).toBeTruthy()
     expect(screen.queryByText(/bone-dry/)).toBeNull()
   })
 
   it('uses the same image whatever the failure is', () => {
-    const cold: Alert = { metric: 'temp_c', direction: 'low', value: 5, limit: 10, label: 'Too cold' }
+    const cold: Alert = { metric: 'temp_c', direction: 'low', value: 5, limit: 10, label: 'Critically cold' }
     const a = render(<FailureScreen plant={plant} telemetry={telemetry} alerts={[dry]} />)
     const srcA = (a.container.querySelector('.wilted-sprite') as HTMLImageElement).getAttribute('src')
     cleanup()
@@ -40,9 +40,9 @@ describe('FailureScreen', () => {
   })
 
   it('lists every problem but gives advice for the most important', () => {
-    const cold: Alert = { metric: 'temp_c', direction: 'low', value: 5, limit: 10, label: 'Too cold' }
+    const cold: Alert = { metric: 'temp_c', direction: 'low', value: 5, limit: 10, label: 'Critically cold' }
     render(<FailureScreen plant={plant} telemetry={telemetry} alerts={[dry, cold]} />)
-    expect(screen.getByText('Soil too dry · Too cold')).toBeTruthy()
+    expect(screen.getByText('Soil critically dry · Critically cold')).toBeTruthy()
     expect(screen.getByText(/Water thoroughly/)).toBeTruthy()
   })
 

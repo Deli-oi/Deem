@@ -19,6 +19,13 @@ A log of key project decisions. Add newest entries at the top.
 
 ---
 
+### 2026-11-08: Every alert is "critical"
+- **Decision:** All failure labels say "critically": "Soil critically dry", "Soil critically wet", "Critically cold", "Critically hot", "Air critically dry", "Air critically humid", "CO2 critically high", "Fine dust critically high", "Dust critically high", plus "Soil minerals critically low/high" and "Light critically low/high" for sensors we don't have yet.
+- **Why:** You should only be notified when a reading is bad enough to harm the plant. A plant's range comes from the extremes it tolerates (and the air limits are set high on purpose), so out of range already means critical. Nothing alerts for a small drift.
+- **Not changed:** The thresholds themselves. They were already the tolerable extremes.
+
+---
+
 ### 2026-11-07: Mock full-greenhouse dashboard (scalability demo)
 - **Decision:** A standalone web app in `dashboard/`, deployed as its own Railway service (Root Directory `dashboard`), shows how Deem scales to a whole greenhouse. All data is simulated; it is not connected to the hardware or any database. Most of the screen is a top-down pixel-art floor plan of the greenhouse; each plant is clickable and opens the same mini display the MVP uses, plus that plant's soil quality. Scrolling down shows overall greenhouse health, then health by plant type, then every plant.
 - **Story it tells:** at scale, larger sensors and a biosphere controller keep climate, air and watering in range automatically, so only what it cannot change (soil minerals) alerts a person. Each plant keeps its own soil probe. This is the `AUTO_CORRECTED` idea from the device alerts, switched on.
