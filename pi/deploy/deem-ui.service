@@ -1,18 +1,17 @@
 [Unit]
-Description=Deem health UI (serves the built demo/ UI over HTTP for the kiosk)
+Description=Deem health UI (static server for the kiosk)
 After=network-online.target
-Wants=network-online.target
 
 [Service]
 Type=simple
 # Adjust User and paths to match your Pi setup.
 User=connorlamora
-WorkingDirectory=/home/connorlamora/Deem/demo
-# Port the kiosk browser points at (see deem-kiosk.service DEEM_UI_URL).
-Environment=PORT=3000
-# Build first with pi/deploy/build-ui.sh so demo/dist exists, then:
-#   npm start -> serves demo/dist on $PORT (uses the `serve` dep).
-ExecStart=/usr/bin/npm start
+# Serve the pre-built UI. Build it first with pi/deploy/build-ui.sh so that
+# demo/dist exists (Vite output). We serve it with Python's stdlib http.server
+# so the Pi needs no Node runtime at display time. Bound to localhost: only the
+# on-box kiosk browser reaches it.
+WorkingDirectory=/home/connorlamora/Deem/demo/dist
+ExecStart=/usr/bin/python3 -m http.server 3000 --bind 127.0.0.1
 Restart=on-failure
 RestartSec=5
 

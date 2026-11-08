@@ -1,23 +1,30 @@
 [Unit]
-Description=Deem touchscreen kiosk (Chromium full-screen plant-health UI)
-# Needs the local UI server and the Pi's graphical session to be up.
-After=deem-ui.service graphical.target
+Description=Deem SPI-TFT kiosk (minimal X + Chromium plant-health UI, no desktop)
+# Needs the local UI server; takes over tty1 instead of the login getty.
+After=deem-ui.service systemd-user-sessions.service getty@tty1.service
 Wants=deem-ui.service
-Requires=graphical.target
+Conflicts=getty@tty1.service
 
 [Service]
 Type=simple
-# Adjust User and paths to match your Pi setup. Must be the user that owns the
-# graphical (X) session on the touchscreen.
+# Adjust User and paths to match your Pi setup.
 User=connorlamora
-# The Pi's local display + X auth so Chromium can open a window.
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=/home/connorlamora/.Xauthority
-# Where the UI is served (matches PORT in deem-ui.service).
+# Start our own X server on the console (no desktop environment).
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+# Where the UI is served (matches deem-ui.service) and which framebuffer the SPI
+# TFT exposes. On this Pi the fbtft ili9341 overlay creates /dev/fb0 (there is no
+# HDMI framebuffer holding fb0). If your board enumerates it as fb1, change this.
 Environment=DEEM_UI_URL=http://localhost:3000
-ExecStart=/home/connorlamora/Deem/pi/deploy/kiosk/start-kiosk.sh
+Environment=DEEM_FB=/dev/fb0
+ExecStart=/home/connorlamora/Deem/pi/deploy/kiosk/kiosk-session.sh
 Restart=on-failure
 RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
