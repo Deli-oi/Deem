@@ -142,3 +142,6 @@ A log of key project decisions. Add newest entries at the top.
 ### 2026-11-08: Ingest service: Pi relay -> Tiger database -> dashboard
 - **Decision:** A small Railway service (`ingest/`) takes the Pi controller's HTTP relay (Bearer token), stores readings in the Tiger database, and serves them read-only. The dashboard shows one plant (A-1-1) as the real pot, tagged LIVE; the other plants stay simulated. The device screen still reads MQTT directly and does not depend on this service.
 - **Why:** Gives the relay in PR #30 a real destination and gets real history into the database without touching the device app.
+
+### 2026-11-08: Repo renamed to Greenhouse-AI
+- **Decision:** The GitHub repo `Deli-oi/Deem` is now `Deli-oi/Greenhouse-AI` (GitHub names cannot contain spaces). The old URL redirects, so existing clones keep working; update with `git remote set-url origin https://github.com/Deli-oi/Greenhouse-AI.git`. Interface names that say `deem` (MQTT topic prefix, `deem_controller`, Railway service names, `DEEM_SINK_*` variables) are unchanged on purpose.

@@ -18,7 +18,7 @@ npm run build
 npm start   # serves dist on PORT (default 3000) — Railway style
 ```
 
-Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`, no forks).
+Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Greenhouse-AI`, no forks).
 
 ## Demo flow
 
