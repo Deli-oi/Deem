@@ -29,6 +29,9 @@ export function GreenhouseMap({ plants, hubs, selectedId, focusType, onPlant, on
     <div className="gh-map" role="group" aria-label="Greenhouse floor plan">
       <canvas ref={canvas} width={MAP_COLS * TILE} height={MAP_ROWS * TILE} className="gh-canvas" aria-hidden="true" />
 
+      <span className="gh-butterfly one" aria-hidden="true" />
+      <span className="gh-butterfly two" aria-hidden="true" />
+
       {ZONES.map((z) => (
         <div key={z.id} className="gh-zone-label" style={{ left: pctX(z.x0), top: pctY(3.25) }}>
           <b>ZONE {z.id}</b> {z.name}

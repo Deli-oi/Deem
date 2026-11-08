@@ -58,12 +58,12 @@ export function statusFor(score: number, alerts: Alert[]): Status {
   return 'watch'
 }
 
-/** Colors used for health everywhere in the dashboard. */
+/** Colors used for health everywhere in the dashboard (readable on the light, cozy theme). */
 export const STATUS_COLOR: Record<Status, string> = {
-  great: '#7dff9a',
-  good: '#c5ee6a',
-  watch: '#ffb340',
-  alert: '#ff4d6d',
+  great: '#3f8a2c',
+  good: '#7a9a22',
+  watch: '#d58a14',
+  alert: '#d6455d',
 }
 
 export const STATUS_LABEL: Record<Status, string> = {
