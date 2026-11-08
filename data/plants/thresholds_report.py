@@ -9,9 +9,9 @@ root = Path(__file__).resolve().parents[2]
 plants = json.loads((root / "demo/public/plants/seed_all.json").read_text(encoding="utf-8"))
 
 MEASURED = [  # readings our sensors report that have ranges in the plant data
-    ("soil_moisture", "Soil moisture (%)", "Soil too dry", "Soil too wet"),
-    ("temp_c", "Temperature (°C)", "Too cold", "Too hot"),
-    ("rh_pct", "Air humidity (%)", "Air too dry", "Air too humid"),
+    ("soil_moisture", "Soil moisture (%)", "Soil critically dry", "Soil critically wet"),
+    ("temp_c", "Temperature (°C)", "Critically cold", "Critically hot"),
+    ("rh_pct", "Air humidity (%)", "Air critically dry", "Air critically humid"),
 ]
 NO_SENSOR = [("soil_ec", "Soil nutrients EC (µS/cm)"), ("light_lux", "Light (lux)"), ("light_mmol", "Light (mmol)")]
 
@@ -36,7 +36,7 @@ lines = [
     "",
     "A reading **outside** a plant's healthy range raises an alert (sound + on-screen message). "
     "The ranges come from MiFloraDB (Xiaomi Flower Care), i.e. the extremes the plant tolerates, not an ideal range, "
-    "so an alert means it needs fixing now.",
+    "so every alert is **critical**: the plant is already being harmed. Small drifts never alert.",
     "",
     "## Plant readings we measure (alerts work today)",
     "",
@@ -57,9 +57,9 @@ lines += ["", "These start alerting automatically as soon as a sensor reports `s
           "The plant data has no per-species CO2 or dust ranges, so the SEN63C readings use blanket limits "
           "(`demo/src/lib/airQuality.ts`). They are set high on purpose, so a busy room does not set off the alert constantly.", "",
           "| Reading | Alerts above | Alert text | Why |", "|---|---|---|---|",
-          "| `co2_ppm` | 1500 ppm | Stuffy air (CO2) | Clearly stale air. Outdoors is ~420, a normal room 600-1000, 1000 is the usual poor-ventilation guideline. |",
-          "| `pm2_5` | 35 ug/m3 | Dusty or smoky air | US EPA 24-hour limit (WHO guideline is stricter, 15). |",
-          "| `pm10_0` | 150 ug/m3 | Dusty air | US EPA 24-hour limit. |", "",
+          "| `co2_ppm` | 1500 ppm | CO2 critically high | Clearly stale air. Outdoors is ~420, a normal room 600-1000, 1000 is the usual poor-ventilation guideline. |",
+          "| `pm2_5` | 35 ug/m3 | Fine dust critically high | US EPA 24-hour limit (WHO guideline is stricter, 15). |",
+          "| `pm10_0` | 150 ug/m3 | Dust critically high | US EPA 24-hour limit. |", "",
           "Low values never alert. `pm1_0` and `pm4_0` have no standard, so they never alert. A plant-specific range, if one is ever added, overrides these.", "",
           "## Measured, but no ranges", "",
           "- `soil_temp_c` (Stemma soil sensor): no ranges. No alerts yet.", ""]

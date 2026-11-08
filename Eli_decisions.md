@@ -2,6 +2,11 @@
 
 What Eli asked for on the device screen. Newest first. Hardware and cloud calls that are not about the screen are in `decisions.md`.
 
+## 2026-11-08: Failures say "critically"
+
+- Every failure label uses the word **critical**: "Soil critically dry", "Critically cold", and so on.
+- You are only notified when a reading is out of range far enough to be hurting the plant.
+
 ## 2026-11-07: Wilting failure screen
 
 - Every plant sprite has a wilting, slightly gray version that takes up most of the screen when something needs fixing, with one sentence on what to do.

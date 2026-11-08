@@ -12,15 +12,15 @@ const seedText = readFileSync('public/plants/seed_all.json', 'utf8')
 const dracaena = (JSON.parse(seedText) as PlantType[]).find((p) => p.plant_type_id === 'dracaena')!
 
 const FAILURES = [
-  { fixture: 'dry_soil', metric: 'soil_moisture', direction: 'low', label: 'Soil too dry' },
-  { fixture: 'overwatered', metric: 'soil_moisture', direction: 'high', label: 'Soil too wet' },
-  { fixture: 'cold_snap', metric: 'temp_c', direction: 'low', label: 'Too cold' },
-  { fixture: 'too_hot', metric: 'temp_c', direction: 'high', label: 'Too hot' },
-  { fixture: 'dry_air', metric: 'rh_pct', direction: 'low', label: 'Air too dry' },
-  { fixture: 'humid_air', metric: 'rh_pct', direction: 'high', label: 'Air too humid' },
-  { fixture: 'high_co2', metric: 'co2_ppm', direction: 'high', label: 'Stuffy air (CO2)' },
-  { fixture: 'dusty_pm25', metric: 'pm2_5', direction: 'high', label: 'Dusty or smoky air' },
-  { fixture: 'dusty_pm10', metric: 'pm10_0', direction: 'high', label: 'Dusty air' },
+  { fixture: 'dry_soil', metric: 'soil_moisture', direction: 'low', label: 'Soil critically dry' },
+  { fixture: 'overwatered', metric: 'soil_moisture', direction: 'high', label: 'Soil critically wet' },
+  { fixture: 'cold_snap', metric: 'temp_c', direction: 'low', label: 'Critically cold' },
+  { fixture: 'too_hot', metric: 'temp_c', direction: 'high', label: 'Critically hot' },
+  { fixture: 'dry_air', metric: 'rh_pct', direction: 'low', label: 'Air critically dry' },
+  { fixture: 'humid_air', metric: 'rh_pct', direction: 'high', label: 'Air critically humid' },
+  { fixture: 'high_co2', metric: 'co2_ppm', direction: 'high', label: 'CO2 critically high' },
+  { fixture: 'dusty_pm25', metric: 'pm2_5', direction: 'high', label: 'Fine dust critically high' },
+  { fixture: 'dusty_pm10', metric: 'pm10_0', direction: 'high', label: 'Dust critically high' },
 ] as const
 
 const byId = (id: string) => FIXTURE_CYCLE.find((f) => f.id === id) as Telemetry
