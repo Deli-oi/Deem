@@ -138,3 +138,7 @@ A log of key project decisions. Add newest entries at the top.
 ### 2026-11-08: Tiger database replaces MongoDB Atlas; no camera in the MVP
 - **Decision:** Plant knowledge and per-plant data live in the Tiger database (already provisioned on Railway; its connection secret is set there). MongoDB Atlas is dropped. The camera is not part of the MVP: no photos, no image data points.
 - **Supersedes:** every earlier mention of MongoDB Atlas and of capturing a photo with each data collection.
+
+### 2026-11-08: Ingest service: Pi relay -> Tiger database -> dashboard
+- **Decision:** A small Railway service (`ingest/`) takes the Pi controller's HTTP relay (Bearer token), stores readings in the Tiger database, and serves them read-only. The dashboard shows one plant (A-1-1) as the real pot, tagged LIVE; the other plants stay simulated. The device screen still reads MQTT directly and does not depend on this service.
+- **Why:** Gives the relay in PR #30 a real destination and gets real history into the database without touching the device app.
