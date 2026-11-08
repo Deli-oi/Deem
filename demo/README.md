@@ -40,10 +40,28 @@ Repo workflow: `docs/dev_workflow.md` (branch → push → PR on `Deli-oi/Deem`,
 When a reading is **outside the plant's healthy range** (the thresholds in the plant data: soil moisture, temperature, humidity, and soil nutrients / light if a sensor reports them), **or past the blanket air-quality limits** (CO2 above 1500 ppm, PM2.5 above 35, PM10 above 150; the same for every plant, see `src/lib/airQuality.ts`), the device plays an alert sound (five alternating beeps, synthesized with Web Audio) and the health page shows what is wrong, e.g. "Soil too dry".
 
 - **MVP:** nothing corrects itself, so *every* out-of-range reading alerts. It repeats with each new reading while the problem lasts (every 10 minutes, or on TEST).
+- **Failure screen:** while any alert is active, the health page is replaced by a wilting, slightly gray version of the plant filling most of the screen, with what is wrong (e.g. "Soil too dry") and **one sentence** on what to do. The sentence is the first sentence of the plant's stored fix for that case (or the shared air-quality fix), so it matches what the assistant says. The same wilted image is used for every kind of failure. The normal health page returns once the reading is back in range. The wilted images are `public/sprites/wilted/<plant_type_id>.png`, made from the healthy sprites by `data/plants/sprites/generate_wilted.py`.
 - It never plays while the MIC key is recording (it would be heard as speech); it waits until the mic is idle.
 - **Later (full-greenhouse dashboard):** a biosphere controller fixes what it can (watering, temperature, humidity), and the device alerts only for what it cannot change, e.g. soil quality. Switch that on by listing the controller's metrics in `AUTO_CORRECTED` in `src/lib/alerts.ts`, or build with `VITE_AUTO_CORRECTED="soil_moisture,temp_c,rh_pct,co2_ppm"` (a ventilation controller would take over CO2).
 - Browsers only allow sound after a key press or touch (the first one unlocks it). A kiosk Chromium can skip that with `--autoplay-policy=no-user-gesture-required`.
 - `?silent` in the URL turns the sound off (rehearsing, development). The on-screen alert still shows.
+
+**Seeing every failure (browser mock):** press the TEST key (**T**) repeatedly to step through them in order, then it wraps back to healthy. Add `?silent` to the URL to mute the alert sound.
+
+| TEST press | Screen says | Fixture |
+|---|---|---|
+| 0 (start) | normal health page | `healthy` |
+| 1 | Soil too dry | `dry_soil` |
+| 2 | Soil too wet | `overwatered` |
+| 3 | Too cold | `cold_snap` |
+| 4 | Too hot | `too_hot` |
+| 5 | Air too dry | `dry_air` |
+| 6 | Air too humid | `humid_air` |
+| 7 | Stuffy air (CO2) | `high_co2` |
+| 8 | Dusty or smoky air | `dusty_pm25` |
+| 9 | Dusty air | `dusty_pm10` |
+
+Fixtures are in `src/mock/fixtures/dracaena/`; each breaks only its own rule. `src/mock/failures.test.tsx` checks all of them.
 
 ## Voice (Fish Audio speech-to-text)
 

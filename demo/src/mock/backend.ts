@@ -17,14 +17,24 @@ import drySoil from './fixtures/dracaena/dry_soil.json'
 import highCo2 from './fixtures/dracaena/high_co2.json'
 import coldSnap from './fixtures/dracaena/cold_snap.json'
 import overwatered from './fixtures/dracaena/overwatered.json'
+import tooHot from './fixtures/dracaena/too_hot.json'
+import dryAir from './fixtures/dracaena/dry_air.json'
+import humidAir from './fixtures/dracaena/humid_air.json'
+import dustyPm25 from './fixtures/dracaena/dusty_pm25.json'
+import dustyPm10 from './fixtures/dracaena/dusty_pm10.json'
 import historyDaily from './fixtures/dracaena/history_daily.json'
 
-const FIXTURE_CYCLE: Telemetry[] = [
+export const FIXTURE_CYCLE: Telemetry[] = [
   healthy as Telemetry,
   drySoil as Telemetry,
-  highCo2 as Telemetry,
-  coldSnap as Telemetry,
   overwatered as Telemetry,
+  coldSnap as Telemetry,
+  tooHot as Telemetry,
+  dryAir as Telemetry,
+  humidAir as Telemetry,
+  highCo2 as Telemetry,
+  dustyPm25 as Telemetry,
+  dustyPm10 as Telemetry,
 ]
 
 /** Fixture-driven stand-in. Used for local UI work when no ESP32 is attached. */
