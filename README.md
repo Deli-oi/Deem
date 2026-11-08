@@ -8,9 +8,9 @@ the central controller: it ingests telemetry from the ESP32s over MQTT, buffers
 it, relays it to a web endpoint, and sends commands back down.
 
 ```
-ESP32(s)  ──MQTT──▶  Raspberry Pi 5  ──HTTPS──▶  web endpoint (TBD)
- sensors   ◀─cmds──   central ctrl    ◀───────    cloud / dashboard
- + relays
+ESP32 (x1) ──MQTT──▶  Raspberry Pi 5  ──HTTPS──▶  web endpoint (TBD)
+ sensors    ◀─cmds──   central ctrl    ◀───────    cloud / dashboard
+ + relay               + 2.8" TFT kiosk UI
 ```
 
 See **`docs/architecture.md`** for the full picture.
