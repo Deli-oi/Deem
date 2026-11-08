@@ -20,6 +20,7 @@ See **`docs/architecture.md`** for the full picture.
 |------|------|
 | `e2/` | ESP32 firmware (PlatformIO) |
 | `pi/` | Raspberry Pi central controller (Python) — see `pi/README.md` |
+| `dashboard/` | **Mock full-greenhouse dashboard** (standalone web app, simulated data) showing how Deem scales. See `dashboard/README.md` |
 | `docs/architecture.md` | system overview |
 | `docs/mqtt_contract.md` | **MQTT interface spec** both tiers code against |
 | `docs/esp32_integration.md` | firmware-side integration guide + example code |

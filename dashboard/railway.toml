@@ -1,0 +1,9 @@
+# A separate Railway service from the MVP device demo. Set this service's Root Directory to `dashboard`.
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+restartPolicyType = "ON_FAILURE"

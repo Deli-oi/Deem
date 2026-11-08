@@ -223,7 +223,7 @@ With better hardware and more time:
    - sensor data collection
    - alerts to the user
    - Gemini, Fish Audio and MongoDB Atlas vector search coming up with solutions to problems
-2. **Mock, large scale (last step):** Show a mock version of the master dashboard at large scale, with the full greenhouse model and many monitors. This is only to show scalability. The real, working system is the single-plant monitor above.
+2. **Mock, large scale (last step):** Show a mock version of the master dashboard at large scale, with the full greenhouse model and many monitors. It is built: a standalone web app in `dashboard/` (its own Railway service, simulated data). A pixel-art greenhouse map where each plant opens the device display, then overall greenhouse health, health by plant type, and every plant. This is only to show scalability. The real, working system is the single-plant monitor above.
 
 ## Open questions
 
